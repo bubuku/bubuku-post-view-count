@@ -1,0 +1,25 @@
+{
+    "name": "bubuku/post-view-count",
+    "description": "Bubuku Post View Count WordPress Plugin",
+	"license": "GPL-3.0+",
+	"version": "1.0.0",
+	"keywords": [
+		"wordpress",
+		"plugin"
+	],
+	"require": {
+		"php": ">=5.4.0"
+	},
+	"homepage": "https://github.com/bubuku/bubuku-post-view-count",
+    "authors": [
+        {
+            "name": "Bubuku",
+            "email": "icode@bubuku.com"
+        }
+    ],
+	"autoload": {
+		"psr-4": {
+			"Bubuku\\Plugins\\PostViewCount\\": "src/"
+		}
+	}
+}
