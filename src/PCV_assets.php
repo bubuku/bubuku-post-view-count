@@ -5,7 +5,7 @@
  * @package Bubuku Post View Count
  * @author     Luis Ruiz <lruiz@bubuku.com>
  * @copyright  2022 Bubuku
- * @version    1.0.0
+ * @version    1.0.1
  */
 
 namespace Bubuku\Plugins\PostViewCount;
@@ -28,7 +28,7 @@ class PCV_assets {
     public function enqueue_front_assets() {
         global $post;
 
-        if ( !is_admin() && 'post' === get_post_type() ) {
+        if ( !is_admin() && is_singular('post') ) {
             $js_dependencies = ['jquery'];
             
             wp_enqueue_script(

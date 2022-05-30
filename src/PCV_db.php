@@ -5,7 +5,7 @@
  * @package Bubuku Post View Count
  * @author     Luis Ruiz <lruiz@bubuku.com>
  * @copyright  2022 Bubuku
- * @version    1.0.0
+ * @version    1.0.1
  */
 
 namespace Bubuku\Plugins\PostViewCount;
