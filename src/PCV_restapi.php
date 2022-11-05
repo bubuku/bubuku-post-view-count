@@ -5,7 +5,7 @@
  * @package Bubuku Post View Count
  * @author     Luis Ruiz <lruiz@bubuku.com>
  * @copyright  2022 Bubuku
- * @version    1.0.1
+ * @version    1.0.2
  */
 
 namespace Bubuku\Plugins\PostViewCount;
@@ -55,7 +55,7 @@ class PCV_restapi {
             $nonce = $request['_wpnonce'];
 
             if ( BBK_PLUGIN_NONCE !== $nonce && empty($post_id)) {
-                wp_send_json_error( __('empty Post ID', 'bbkpostview') );
+                wp_send_json_error( __('empty Post ID', 'bubuku-post-view-count') );
                 die();
             }
 
