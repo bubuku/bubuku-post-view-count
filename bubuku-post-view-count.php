@@ -4,10 +4,10 @@
  * Description: Plugin created by Bubuku to count how many times a post has been viewed
  * Requires at least: 5.2
  * Requires PHP:      7.2
- * Version:     1.0.1
+ * Version:     1.0.2
  * Author:      Bubuku
  * Author URI:  https://www.bubuku.com/
- * Text Domain: bbkpostview
+ * Text Domain: bubuku-post-view-count
  * Domain Path: /languages
  * License:     EUPL v1.2
  * License URI: https://www.eupl.eu/1.2/en/
