@@ -38,7 +38,14 @@ class PCV_restapi {
         register_rest_route( $this->_namespace, 'set-post-views', array(
             'methods'  => 'POST',
             'callback' => array ($this, 'set_post_views'),
-            'args'     => array('post_id'),
+            'args'     => array(
+                'post_id' => array(
+                    'required' => true,
+                    'validate_callback' => function($param, $request, $key) {
+                        return is_numeric( $param );
+                    }
+                ),
+            ),
             'permission_callback' => '__return_true'
         ));
     }
