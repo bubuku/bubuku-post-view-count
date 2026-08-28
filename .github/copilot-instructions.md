@@ -23,7 +23,7 @@ bash scripts/setup-skills.sh --list  # ver enlazados
 bash scripts/setup-skills.sh --add wp-admin
 ```
 
-Skills enlazados por defecto en este scaffold:
+Skills enlazados actualmente en este repositorio:
 
 | Skill | Cuándo cargarlo |
 |---|---|
@@ -31,6 +31,8 @@ Skills enlazados por defecto en este scaffold:
 | `wp-coding` | Cualquier cambio en `src/` — WPCS, formato, IIFE, i18n |
 | `wp-security` | Formularios, AJAX, REST, sanitize/escape, nonces |
 | `git-conventions` | Mensajes de commit y títulos de PR |
+
+Estos enlaces viven en `skills/` y se mantienen con `bash scripts/setup-skills.sh`. Si se añade o elimina un skill del monorepo, repite el comando para sincronizar la documentación y los symlinks del proyecto.
 
 Para más skills (admin, REST API, frontend React, CSV, build, etc.) ver `skills/_meta/catalog.json` del monorepo y enlazarlos bajo demanda.
 

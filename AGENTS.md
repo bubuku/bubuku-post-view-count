@@ -23,14 +23,24 @@ bash scripts/setup-skills.sh --list  # ver enlazados
 bash scripts/setup-skills.sh --add wp-admin
 ```
 
-Skills enlazados por defecto en este scaffold:
+Skills enlazados actualmente en este repositorio:
 
 | Skill | Cuándo cargarlo |
 |---|---|
-| `wp-scaffold` | Generar estructura inicial del plugin |
-| `wp-coding` | Cualquier cambio en `src/` — WPCS, formato, IIFE, i18n |
-| `wp-security` | Formularios, AJAX, REST, sanitize/escape, nonces |
 | `git-conventions` | Mensajes de commit y títulos de PR |
+| `wordpress-router` | Clasificar la base de código WordPress y enrutar al workflow correcto |
+| `wp-admin` | Páginas de ajustes, menús del admin, notices y assets del dashboard |
+| `wp-build` | Build, versionado, packaging, release y CI/CD del plugin |
+| `wp-coding` | Cualquier cambio en `src/` — WPCS, formato, IIFE, i18n |
+| `wp-frontend` | Assets frontend/admin en `assets/src/`, React, SCSS y build de frontend |
+| `wp-performance` | Optimización de rendimiento y diagnóstico de consultas/cron/HTTP |
+| `wp-php` | Lógica PHP, hooks, opciones, consultas y clases del plugin |
+| `wp-plugin-development` | Arquitectura general de plugin, hooks, seguridad y release packaging |
+| `wp-rest-api` | Endpoints REST, permisos, schema y respuesta de API |
+| `wp-scaffold` | Generar estructura inicial del plugin |
+| `wp-security` | Formularios, AJAX, REST, sanitize/escape, nonces |
+
+Estos enlaces viven en `skills/` y se mantienen con `bash scripts/setup-skills.sh`. Si se añade o elimina un skill del monorepo, repite el comando para sincronizar la documentación y los symlinks del proyecto.
 
 Para más skills (admin, REST API, frontend React, CSV, build, etc.) ver `skills/_meta/catalog.json` del monorepo y enlazarlos bajo demanda.
 
