@@ -8,7 +8,7 @@ Plugin público de WordPress (WordPress.org) que cuenta las visitas de un Post s
 
 | Concepto | Valor |
 |---|---|
-| **Versión actual** | Header PHP `1.1.0` (`readme.txt` trae `Stable tag: 1.4.1` desincronizado — verificar con el usuario antes de tocar versión) |
+| **Versión actual** | `1.1.0` (Header PHP, fuente de verdad). `readme.txt` trae `Stable tag: 1.4.1` desincronizado — corregir a `1.1.0` solo si el usuario lo pide explícitamente |
 | **Prefijo PHP** | `PCV_` (clases) / `bbk` (constantes, hooks, funciones globales) |
 | **Namespace PHP** | `Bubuku\Plugins\PostViewCount\` (ya correcto — objetivo pendiente: quitar prefijo `PCV_`, ver `docs/MIGRATION-PSR4.md`) |
 | **Estructura actual** | `src/PCV_*.php` plano, sin subcarpetas (`Core/`, `Api/`, `Frontend/`) |
@@ -108,7 +108,12 @@ bash scripts/build.sh                # genera dist/bubuku-post-view-count-{versi
 
 - Solo el usuario decide cuándo subir la versión del plugin. El agente **nunca** sube la versión por iniciativa propia, aunque el cambio lo justifique (nueva feature, fix, etc.).
 - Si un cambio parece justificar un bump de versión, el agente debe **sugerirlo** (y proponer el tipo: patch/minor/major) y esperar confirmación explícita del usuario antes de tocar header PHP, `readme.txt` o `docs/CHANGELOG.md`.
-- Nota: el header PHP actual (`1.1.0`) y el `Stable tag` de `readme.txt` (`1.4.1`) están desincronizados — señalarlo al usuario si surge la ocasión, no corregirlo por iniciativa propia.
+- Nota: el header PHP (`1.1.0`, fuente de verdad, confirmada por el usuario) y el `Stable tag` de `readme.txt` (`1.4.1`) están desincronizados — señalarlo al usuario si surge la ocasión, no corregirlo por iniciativa propia.
+
+### Plugin Check (WordPress.org)
+
+- Ejecutar siempre Plugin Check sobre el zip generado por `bash scripts/build.sh` (`dist/bubuku-post-view-count-{version}.zip`), nunca sobre la carpeta de desarrollo enlazada en `wp-content/plugins/`. El checkout de desarrollo contiene `Tests/`, `docs/`, `skills/` y `scripts/` — código y contenido que `.distignore` ya excluye del paquete distribuido pero que Plugin Check sí escanea si el symlink apunta al repo completo.
+- Hallazgos de Plugin Check dentro de `Tests/` (WPCS de escaping, `fwrite`, `var_export`, referencias a `test.wp.local`) son ruido esperado de un harness CLI (`php Tests/run.php`) — no requieren fix; confirmar primero que no aparecen al escanear el zip de `dist/`.
 
 ### Lo que nunca debes hacer
 
