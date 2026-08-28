@@ -26,9 +26,11 @@ GEMINI.md
 README.md
 
 # Dev dependencies
+# vendor/ only holds dev tooling (PHPCS, WPCS). The plugin has no runtime
+# Composer dependencies — see the spl_autoload_register() call in the main
+# plugin file — so it's never needed in the distributed package.
 /node_modules/
 /vendor/
-/scripts/
 /dist/
 /assets/src
 
@@ -50,5 +52,6 @@ phpunit.xml
 
 # Tests
 /tests/
--e 
+
+# Build/dev scripts (not part of the runtime plugin)
 /scripts/

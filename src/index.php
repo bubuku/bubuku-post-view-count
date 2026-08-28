@@ -1,1 +1,1 @@
-<?php die("Hello, Pepiño!");
+<?php die( 'Hello, Pepiño!' );

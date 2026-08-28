@@ -5,45 +5,62 @@
  * @package Bubuku Post View Count
  * @author     Luis Ruiz <lruiz@bubuku.com>
  * @copyright  2022 Bubuku
- * @version    1.0.4
+ * @version    1.1.0
  */
+
+declare( strict_types=1 );
 
 namespace Bubuku\Plugins\PostViewCount;
 
-defined( 'ABSPATH') || die( 'Hello, Pepiño!' );
+defined( 'ABSPATH' ) || exit;
 
 class PCV_assets {
 
-    public function __construct() {
+	public function __construct() {
 		$this->init();
 	}
 
 	private function init() {
-		add_action( 'enqueue_block_assets', [ $this, 'enqueue_front_assets' ] );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_front_assets' ) );
 	}
 
-    /**
+	/**
 	 * Enqueue Front Scripts
 	 */
-    public function enqueue_front_assets() {
-        global $post;
+	public function enqueue_front_assets() {
+		if ( is_admin() || ! is_singular( 'post' ) ) {
+			return;
+		}
 
-        if ( !is_admin() && is_singular('post') ) {
-            $js_dependencies = ['jquery'];
-            
-            wp_enqueue_script(
-                'bk-post-view-js',
-                BBK_PLUGIN_ASSETS_URL . '/js/common.js',
-                $js_dependencies,
-                true
-            );
+		// Don't count views from users who can already edit content.
+		if ( current_user_can( 'edit_posts' ) ) {
+			return;
+		}
 
-            $args = array(
-                'nonce'         => BBK_PLUGIN_NONCE,
-                'api_public'    => '/wp-json/'. BBK_PLUGIN_ENDPOINTS_URL,
-                'post_id'       => $post->ID
-            );
-            wp_localize_script( 'bk-post-view-js', 'bbk_post_view', $args );
-        }
-    }
+		$post_id = get_queried_object_id();
+
+		if ( ! $post_id ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'bk-post-view-js',
+			BBK_PLUGIN_ASSETS_URL . '/js/common.js',
+			array(),
+			BBK_PLUGIN_VERSION,
+			array(
+				'strategy'  => 'defer',
+				'in_footer' => true,
+			)
+		);
+
+		wp_localize_script(
+			'bk-post-view-js',
+			'bbk_post_view',
+			array(
+				'api_public' => rest_url( BBK_PLUGIN_ENDPOINTS_URL ),
+				'post_id'    => $post_id,
+			)
+		);
+	}
 }

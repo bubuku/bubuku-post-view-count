@@ -2,9 +2,9 @@
 /**
  * Plugin Name: Bubuku Post View Count
  * Description: Plugin created by Bubuku to count how many times a post has been viewed
- * Requires at least: 5.2
- * Requires PHP:      7.2
- * Version:     1.0.4
+ * Requires at least: 5.7
+ * Requires PHP:      7.4
+ * Version:     1.1.0
  * Author:      Bubuku
  * Author URI:  https://www.bubuku.com/
  * Text Domain: bubuku-post-view-count
@@ -22,19 +22,57 @@
  * Prefix:      bbk
  */
 
+declare( strict_types=1 );
+
 // Detects if the plugin has been entered directly.
-defined( 'ABSPATH') || die( 'Hello, Pepiño!' );
+defined( 'ABSPATH' ) || exit;
+
+define( 'BBK_PLUGIN_FILE', __FILE__ );
+define( 'BBK_PLUGIN_PATH', untrailingslashit( plugin_dir_path( __FILE__ ) ) );
+define( 'BBK_PLUGIN_URL', untrailingslashit( plugin_dir_url( __FILE__ ) ) );
+define( 'BBK_PLUGIN_ASSETS_PATH', BBK_PLUGIN_PATH . '/assets' );
+define( 'BBK_PLUGIN_ASSETS_URL', BBK_PLUGIN_URL . '/assets' );
+define( 'BBK_PLUGIN_ENDPOINTS_URL', 'bbk_postview/v1' );
+
+$bbk_plugin_data = get_file_data( __FILE__, array( 'Version' => 'Version' ) );
+define( 'BBK_PLUGIN_VERSION', $bbk_plugin_data['Version'] );
+unset( $bbk_plugin_data );
+
+/**
+ * PSR-4 autoloader for the Bubuku\Plugins\PostViewCount\ namespace.
+ *
+ * The plugin has no runtime Composer dependencies, so a hand-rolled
+ * autoloader avoids shipping vendor/ in the distributed package.
+ * Composer is still used for dev tooling only (see composer.json).
+ *
+ * @param string $class_name Fully qualified class name.
+ * @return void
+ */
+function bbk_autoload( $class_name ) {
+	$prefix = 'Bubuku\\Plugins\\PostViewCount\\';
+
+	if ( 0 !== strpos( $class_name, $prefix ) ) {
+		return;
+	}
+
+	$file = BBK_PLUGIN_PATH . '/src/' . substr( $class_name, strlen( $prefix ) ) . '.php';
+
+	if ( file_exists( $file ) ) {
+		require $file;
+	}
+}
+spl_autoload_register( 'bbk_autoload' );
 
 /**
  * Bootstrap the plugin.
  */
-require_once 'vendor/autoload.php';
+( static function () {
+	if ( ! class_exists( 'Bubuku\Plugins\PostViewCount\PCV_plugin' ) ) {
+		return;
+	}
 
-use Bubuku\Plugins\PostViewCount\PCV_plugin;
+	$plugin = new Bubuku\Plugins\PostViewCount\PCV_plugin();
 
-if ( class_exists( 'Bubuku\Plugins\PostViewCount\PCV_plugin' ) ) {
-	$the_plugin = new PCV_plugin();
-}
-
-register_activation_hook( __FILE__, [ $the_plugin, 'activate' ] );
-register_deactivation_hook( __FILE__, [ $the_plugin, 'deactivate' ] );
+	register_activation_hook( __FILE__, array( $plugin, 'activate' ) );
+	register_deactivation_hook( __FILE__, array( $plugin, 'deactivate' ) );
+} )();

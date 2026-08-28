@@ -1,10 +1,10 @@
 === Bubuku post view count ===
 Contributors: lruizcode
 Tags: page view count, post views, post count, posts, post view count
-Requires at least: 5.2
+Requires at least: 5.7
 Tested up to: 6.5.3
-Requires PHP: 7.2
-Stable tag: 1.0.4
+Requires PHP: 7.4
+Stable tag: 1.1.0
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -25,6 +25,14 @@ WordPress installation and then activate the Plugin from Plugins page.
 
 
 == Changelog ==
+
+= 1.1.0 =
+* Fix: production zip was missing the Composer autoloader, causing a fatal error on activation. The plugin now uses its own lightweight autoloader and no longer depends on `vendor/` at runtime.
+* Security: the view-count endpoint no longer accepts arbitrary/invalid post IDs, and now deduplicates repeated views per visitor instead of relying on a broken nonce check.
+* Fix: race condition that could undercount concurrent views; the counter is now incremented atomically.
+* Fix: the tracking script was loaded in the page `<head>` with jQuery as an unused dependency instead of deferred in the footer.
+* Fix: translations were never loaded due to an incorrect textdomain path.
+* Improvement: added multisite support to the uninstall routine.
 
 = 1.0.4 =
 * Compatibility: WordPress 6.2 – WordPress 6.5.3

@@ -5,50 +5,48 @@
  * @package Bubuku Post View Count
  * @author     Luis Ruiz <lruiz@bubuku.com>
  * @copyright  2022 Bubuku
- * @version    1.0.4
+ * @version    1.1.0
  */
+
+declare( strict_types=1 );
 
 namespace Bubuku\Plugins\PostViewCount;
 
-defined( 'ABSPATH') || die( 'Hello, Pepiño!' );
+defined( 'ABSPATH' ) || exit;
 
 class PCV_db {
 
-    public function __construct() {
-		$this->init();
+	/**
+	 * Increment (atomically) the "views" meta of a post and return the new total.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return int
+	 */
+	public function set_post_views( int $post_id ): int {
+		global $wpdb;
+
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->postmeta} SET meta_value = meta_value + 1 WHERE post_id = %d AND meta_key = 'views'",
+				$post_id
+			)
+		);
+
+		if ( ! $updated ) {
+			add_post_meta( $post_id, 'views', 1, true );
+		}
+
+		wp_cache_delete( $post_id, 'post_meta' );
+
+		return (int) get_post_meta( $post_id, 'views', true );
 	}
 
-	private function init() {
-
-    }
-
-    /**
-     * set_post_views
-     *
-     * @param string $post_id
-     * @return string
-     */
-    public function set_post_views($post_id){
-        $count = get_post_meta( $post_id, 'views', true );
-
-        if ( $count == '' ) {
-            delete_post_meta( $post_id, 'views' );
-            add_post_meta( $post_id, 'views', 1 );
-        } else {
-            update_post_meta( $post_id, 'views', ++$count );
-        }
-
-        return $count;
-    }
-
-    /**
-     * Remove all meta "views" from posts
-     *
-     * @return void
-     */
-    public function remove_all_post_meta(){
-        global $wpdb;
-        $wpdb->query( "DELETE FROM $wpdb->postmeta WHERE meta_key = 'views'" );
-        return true;
-    }
+	/**
+	 * Remove all "views" post meta from the current site.
+	 *
+	 * @return void
+	 */
+	public function remove_all_post_meta() {
+		delete_post_meta_by_key( 'views' );
+	}
 }

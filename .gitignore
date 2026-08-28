@@ -1,0 +1,14 @@
+# Composer dev tooling (PHPCS/WPCS) — regenerate with `composer install`.
+# Not needed at runtime; never required in the distributed package either.
+/vendor/
+
+# Node dependencies, if the project ever adds an npm-based asset build.
+/node_modules/
+
+# Build output (scripts/build.sh).
+/dist/
+
+# OS / editor cruft.
+.DS_Store
+.vscode/
+.idea/
