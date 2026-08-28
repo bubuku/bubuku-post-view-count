@@ -27,21 +27,8 @@ class PCV_plugin {
 	 * Initialize plugin
 	 */
 	public function init() {
-		add_action( 'init', array( $this, 'load_textdomain' ) );
-
 		new PCV_assets();
 		new PCV_restapi();
-	}
-
-	/**
-	 * Load plugin translations.
-	 */
-	public function load_textdomain() {
-		load_plugin_textdomain(
-			'bubuku-post-view-count',
-			false,
-			dirname( plugin_basename( BBK_PLUGIN_FILE ) ) . '/languages'
-		);
 	}
 
 	/**

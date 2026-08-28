@@ -25,6 +25,7 @@ class PCV_db {
 	public function set_post_views( int $post_id ): int {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- A direct query is required for an atomic increment.
 		$updated = $wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$wpdb->postmeta} SET meta_value = meta_value + 1 WHERE post_id = %d AND meta_key = 'views'",
