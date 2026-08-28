@@ -1,10 +1,54 @@
-/.wordpress-org
+# Files and folders to exclude from the distributable zip
+
+# AI & editor config
+/.claude
+/.codex
+/.gemini
+/.vscode
+
+# Git & CI
 /.git
 /.github
-/node_modules
-
-.distignore
-.gitignore
 .gitattributes
-composer.lock
+.gitignore
+
+# WordPress.org assets (banners, screenshots — not part of the plugin itself)
+/.wordpress-org
+
+# Docs & project meta
+/docs
+/skills
+.distignore
+AGENTS.md
+CHANGELOG.md
+CLAUDE.md
+GEMINI.md
+README.md
+
+# Dev dependencies
+/node_modules/
+/vendor/
+/scripts/
+/dist/
+/assets/src
+
+# Package managers
 composer.json
+composer.lock
+package.json
+package-lock.json
+
+# Build tools & config
+webpack.config.js
+.babelrc
+.eslintrc
+Gruntfile.js
+Gulpfile.js
+phpcs.xml
+.phpcsrules.xml
+phpunit.xml
+
+# Tests
+/tests/
+-e 
+/scripts/
