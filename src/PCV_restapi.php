@@ -61,10 +61,36 @@ class PCV_restapi {
 				),
 				// Anonymous by design: views must be countable for logged-out visitors
 				// behind full-page caching. Abuse is mitigated with per-visitor
-				// deduplication and strict post_id validation, not with a capability
-				// check or a nonce (both are meaningless for anonymous traffic).
-				'permission_callback' => '__return_true',
+				// deduplication, strict post_id validation and a same-origin check.
+				'permission_callback' => array( $this, 'check_request_origin' ),
 			)
+		);
+	}
+
+	/**
+	 * Allow view increments only from pages served by this WordPress site.
+	 *
+	 * This prevents cross-origin browser requests. Origin and Referer are client
+	 * headers, so deduplication remains necessary to limit non-browser abuse.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return true|WP_Error
+	 */
+	public function check_request_origin( WP_REST_Request $request ) {
+		$request_url = (string) $request->get_header( 'origin' );
+
+		if ( '' === $request_url ) {
+			$request_url = (string) $request->get_header( 'referer' );
+		}
+
+		if ( '' !== $request_url && $this->origin_from_url( $request_url ) === $this->origin_from_url( home_url( '/' ) ) ) {
+			return true;
+		}
+
+		return new WP_Error(
+			'bbk_postview_forbidden_origin',
+			__( 'View increments are only accepted from this website.', 'bubuku-post-view-count' ),
+			array( 'status' => 403 )
 		);
 	}
 
@@ -140,5 +166,29 @@ class PCV_restapi {
 		$user_agent = $request->get_header( 'user_agent' ) ? sanitize_text_field( $request->get_header( 'user_agent' ) ) : '';
 
 		return 'bbk_view_' . md5( $post_id . '|' . $ip . '|' . $user_agent );
+	}
+
+	/**
+	 * Extract a normalized scheme, host and port from a URL.
+	 *
+	 * @param string $url URL to normalize.
+	 * @return string
+	 */
+	private function origin_from_url( string $url ): string {
+		$parts = wp_parse_url( $url );
+
+		if ( ! is_array( $parts ) || empty( $parts['scheme'] ) || empty( $parts['host'] ) ) {
+			return '';
+		}
+
+		$scheme = strtolower( (string) $parts['scheme'] );
+		$host   = strtolower( (string) $parts['host'] );
+		$port   = isset( $parts['port'] ) ? absint( $parts['port'] ) : 0;
+
+		if ( ( 'http' === $scheme && 80 === $port ) || ( 'https' === $scheme && 443 === $port ) ) {
+			$port = 0;
+		}
+
+		return $scheme . '://' . $host . ( $port ? ':' . $port : '' );
 	}
 }

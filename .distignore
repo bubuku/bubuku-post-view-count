@@ -52,6 +52,7 @@ phpunit.xml
 
 # Tests
 /tests/
+/Tests/
 
 # Build/dev scripts (not part of the runtime plugin)
 /scripts/

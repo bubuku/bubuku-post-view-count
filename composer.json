@@ -28,7 +28,8 @@
 	},
 	"scripts": {
 		"lint": "phpcs",
-		"lint:fix": "phpcbf"
+		"lint:fix": "phpcbf",
+		"test": "php Tests/run.php"
 	},
 	"config": {
 		"allow-plugins": {

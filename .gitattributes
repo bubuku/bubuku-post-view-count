@@ -10,6 +10,8 @@
 /skills export-ignore
 /scripts export-ignore
 /dist export-ignore
+/Tests export-ignore
+/Tests/** export-ignore
 /assets/src export-ignore
 
 # Files

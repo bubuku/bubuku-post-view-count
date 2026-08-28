@@ -71,6 +71,12 @@ scaffold → wp-coding + wp-security (siempre activos)
 
 Este plugin ya usa namespace PSR-4 (`Bubuku\Plugins\PostViewCount`) vía Composer, pero las clases mantienen el prefijo plano `PCV_*` y viven directamente en `src/` sin subcarpetas (`Admin/`, `Api/`, `Core/`, `Frontend/`). Ver `docs/MIGRATION-PSR4.md` para el plan de migración a la estructura objetivo — no aplicado automáticamente por tratarse de un cambio de riesgo medio (renombrado de clases usadas en hooks).
 
+## Entorno local de pruebas
+
+- URL del sitio local: `https://test.wp.local/`
+- Usa este entorno para validar cambios del plugin antes de hacer cualquier comprobación final o commit.
+- Las pruebas automatizadas y artefactos temporales viven en la carpeta `Tests/` y se suben a GitHub, pero se excluyen del zip de WordPress mediante `.distignore`.
+
 ## Reglas globales
 
 - Carga siempre `wp-coding` y `wp-security` antes de actuar.
