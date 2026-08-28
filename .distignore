@@ -55,3 +55,7 @@ phpunit.xml
 
 # Build/dev scripts (not part of the runtime plugin)
 /scripts/
+
+# OS cruft
+.DS_Store
+Thumbs.db
