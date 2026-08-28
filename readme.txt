@@ -1,10 +1,10 @@
 === Bubuku post view count ===
-Contributors: lruizcode
+Contributors: lruizcode, bubuku
 Tags: page view count, post views, post count, posts, post view count
-Requires at least: 5.7
-Tested up to: 6.5.3
+Requires at least: 6.2
+Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.4.1
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -17,11 +17,14 @@ It only runs on Posts and after some time has passed through an Endpoint, so it 
 
 The post meta that we store the value in is "views".
 
-More information in Spanish about the plugin in the link [Show the most viewed Articles, without affecting the loading speed](https://www.bubuku.com/mostrar-articulos-mas-vistos-sin-que-afecte-velocidad-de-carga/)
+More information in Spanish about the plugin in the link [Show the most viewed Articles, without affecting the loading speed](https://www.bubuku.com/blog/mostrar-articulos-mas-vistos-sin-que-afecte-velocidad-de-carga/)
 
 == Installation ==
-Extract the zip file and just drop the contents in the wp-content/plugins/ directory of your
-WordPress installation and then activate the Plugin from Plugins page.
+1. Unzip the plugin ZIP file on your computer.
+2. Copy or move the resulting folder to the "wp-content/plugins/" directory of your WordPress installation.
+3. Log in to the WordPress admin area and navigate to the "Plugins" screen.
+4. Locate "Bubuku Post View Count" in the plugins list and click "Activate" to enable the plugin.
+5. Ensure your installation meets the requirements listed in the plugin header (WordPress and PHP versions) before using it in production.
 
 
 == Changelog ==
@@ -35,10 +38,10 @@ WordPress installation and then activate the Plugin from Plugins page.
 * Improvement: added multisite support to the uninstall routine.
 
 = 1.0.4 =
-* Compatibility: WordPress 6.2 – WordPress 6.5.3
+* Compatibility: WordPress 6.2 - WordPress 6.5.3
 
 = 1.0.3 =
-* Compatibility: WordPress 6.1 – WordPress 6.2
+* Compatibility: WordPress 6.1 - WordPress 6.2
 * Fix some PHP errors
 
 = 1.0.2 =
