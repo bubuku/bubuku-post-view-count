@@ -4,7 +4,7 @@ Tags: page view count, post views, post count, posts, post view count
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.4.1
+Stable tag: 1.1.0
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -25,6 +25,32 @@ More information in Spanish about the plugin in the link [Show the most viewed A
 3. Log in to the WordPress admin area and navigate to the "Plugins" screen.
 4. Locate "Bubuku Post View Count" in the plugins list and click "Activate" to enable the plugin.
 5. Ensure your installation meets the requirements listed in the plugin header (WordPress and PHP versions) before using it in production.
+
+== SUPPORT ==
+
+**Need help or have a suggestion?**
+Please use the [official WordPress.org Support Forum](https://wordpress.org/support/plugin/bubuku-post-view-count/) for any issues related to the plugin.
+    
+**Official Website**
+For additional information or to get in touch with the development team, please visit our [official website](https://www.bubuku.com/).
+
+**Like the plugin?**
+Please [leave a 5-star review](https://wordpress.org/support/plugin/bubuku-post-view-count/reviews/?filter=5) and help others discover Bubuku Post View Count.
+
+== ABOUT BUBUKU_CODE ==
+
+We develop custom solutions for WordPress focused on performance, accessibility, and maintainable code. Our work includes plugins, themes, and integrations designed to improve the daily workflow of marketing and content teams.
+
+== Frequently Asked Questions ==
+
+= How do I see the view count for a post? =
+The view count is stored as post meta with the key "views". You can access it programmatically using `get_post_meta( $post_id, 'views', true )`.
+
+= Does this plugin affect page load speed? =
+No, the plugin only updates the view count after some time has passed through an endpoint, ensuring it doesn't impact Core Web Vitals (CWV) or page load performance.
+
+= Is this plugin compatible with multisite installations? =
+Yes, the plugin now includes multisite support, including in the uninstall routine. 
 
 
 == Changelog ==
