@@ -3,6 +3,10 @@
 > Documento de análisis y plan de implementación por fases.
 > Estado del código analizado: rama `feature/migrate`, versión `1.0.4`.
 > **Este documento no modifica código.** Es la hoja de ruta a ejecutar.
+>
+> ⚠️ **Las fases 6 y 7 de este documento quedan reemplazadas por `docs/ANALYTICS-PLAN.md`**
+> (P3-6 tabla propia y P3-8 superficie de lectura se replantean allí sobre un modelo de
+> datos con dimensión temporal). Las fases 0–5 siguen vigentes tal cual.
 
 ---
 

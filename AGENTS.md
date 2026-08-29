@@ -44,16 +44,22 @@ Snapshot actual. Si cambia el enlace de skills, refrescar con `bash scripts/setu
 |---|---|
 | `git-conventions` | Mensajes de commit y títulos de PR |
 | `wordpress-router` | Clasificar la base de código WordPress y enrutar al workflow correcto |
+| `wp-abilities-api` | Registro y diseño de abilities/categorías/meta y exposición REST de capacidades |
+| `wp-abilities-audit` | Auditoría de superficie REST y propuesta de registro de abilities |
+| `wp-abilities-verify` | Verificación de capacidades registradas y coherencia entre anotaciones y callbacks |
 | `wp-admin` | Páginas de ajustes, menús del admin, notices y assets del dashboard |
 | `wp-build` | Build, versionado, packaging, release y CI/CD del plugin |
 | `wp-coding` | Cualquier cambio en `src/` — WPCS, formato, IIFE, i18n |
 | `wp-frontend` | Cambios en `assets/js/common.js` u otros assets frontend |
+| `wp-mcp-conex` | Integración del plugin como satélite del hub `bubuku-mcp-conex` y registro de tools |
 | `wp-performance` | Optimización de rendimiento y diagnóstico de consultas/cron/HTTP |
 | `wp-php` | Lógica PHP, hooks, post meta, consultas y clases del plugin |
 | `wp-plugin-development` | Arquitectura general de plugin, hooks, seguridad y release packaging |
+| `wp-plugin-directory-guidelines` | Revisión de cumplimiento para WordPress.org (licencias, naming, políticas del directorio) |
 | `wp-rest-api` | Endpoint REST `bbk_postview/v1`, permisos y validación |
 | `wp-scaffold` | Generar estructura inicial de plugin (referencia, no aplica a este ya scaffolded) |
 | `wp-security` | Endpoint REST público, deduplicación, sanitize/escape |
+| `wp-tools-architect` | Arquitectura consistente para tools/abilities (base abstracta, autoload, settings admin) |
 
 ### Delegación rápida por tipo de tarea
 
@@ -61,9 +67,13 @@ Snapshot actual. Si cambia el enlace de skills, refrescar con `bash scripts/setu
 |---|---|
 | Cambios en clases PHP (`src/`, `PCV_*`) | `wp-php` + `wp-coding` + `wp-plugin-development` |
 | Endpoint REST (`PCV_restapi`) / permisos / deduplicación | `wp-php` + `wp-security` + `wp-rest-api` |
+| Definir o registrar abilities (API de capacidades) | `wp-abilities-api` + `wp-rest-api` + `wp-security` |
+| Auditar/verificar abilities ya implementadas | `wp-abilities-audit` o `wp-abilities-verify` |
 | Script frontend (`assets/js/common.js`) | `wp-frontend` + `wp-security` |
 | Rendimiento / consultas a `$wpdb` / transients | `wp-performance` + `wp-php` |
+| Integrar tools MCP del plugin con el hub | `wp-mcp-conex` + `wp-tools-architect` + `wp-php` |
 | Build, empaquetado, release | `wp-build` |
+| Revisión de cumplimiento para WordPress.org | `wp-plugin-directory-guidelines` |
 | Commits / PRs | `git-conventions` |
 
 Para más skills (frontend React, CSV, etc.) ver `skills/_meta/catalog.json` del monorepo y enlazarlos bajo demanda — este plugin no los necesita hoy por su alcance reducido.
@@ -134,6 +144,7 @@ bash scripts/build.sh                # genera dist/bubuku-post-view-count-{versi
 - `docs/ARCHITECTURE.md` — clases, flujo de una vista, constantes, tests, CI, estructura de directorios.
 - `docs/CHANGELOG.md` — historial de versiones.
 - `docs/MIGRATION-PSR4.md` — plan futuro para eliminar el prefijo `PCV_*` y mover a `src/{Core,Api,Frontend}/` (si se decide).
-- `docs/IMPROVEMENT-PLAN.md` — plan de mejoras pendiente.
+- `docs/IMPROVEMENT-PLAN.md` — plan de mejoras pendiente (sus fases 6–7 quedan reemplazadas por `docs/ANALYTICS-PLAN.md`).
+- `docs/ANALYTICS-PLAN.md` — hoja de ruta por fases: tabla propia con última visita y agregado diario, página de ajustes con CPT seleccionables, y exposición de los datos como satélite de `bubuku-mcp-conex`.
 
 Sigue estas reglas **salvo que la petición explícita del usuario indique lo contrario**.

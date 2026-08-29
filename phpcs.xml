@@ -48,6 +48,13 @@
 	<exclude-pattern>/node_modules/*</exclude-pattern>
 	<exclude-pattern>/assets/build/*</exclude-pattern>
 
+	<!-- Linked skills are reference material (symlinked, not project code) and are
+		 excluded from the distributed package via .distignore. -->
+	<exclude-pattern>/skills/*</exclude-pattern>
+	<exclude-pattern>/.claude/*</exclude-pattern>
+	<exclude-pattern>/.codex/*</exclude-pattern>
+	<exclude-pattern>/.gemini/*</exclude-pattern>
+
 	<!-- Assignments in while conditions are a valid method of looping over iterables. -->
 	<rule ref="Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition">
 		<exclude-pattern>*</exclude-pattern>
