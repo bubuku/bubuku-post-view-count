@@ -35,14 +35,14 @@ class GetViewsSummary extends Abstract_Satellite_Tool {
 	 * @return string
 	 */
 	public function get_label(): string {
-		return __( 'Resumen de vistas del sitio', 'bubuku-post-view-count' );
+		return __( 'Site views summary', 'bubuku-post-view-count' );
 	}
 
 	/**
 	 * @return string
 	 */
 	public function get_description(): string {
-		return __( 'Devuelve totales del sitio: vistas acumuladas, cuántos posts tienen tráfico y cuántos no, para unos tipos de contenido dados.', 'bubuku-post-view-count' );
+		return __( 'Returns site-wide totals: accumulated views, how many posts have traffic and how many don\'t, for a given set of content types.', 'bubuku-post-view-count' );
 	}
 
 	/**
@@ -55,11 +55,11 @@ class GetViewsSummary extends Abstract_Satellite_Tool {
 				'post_types' => array(
 					'type'        => 'array',
 					'items'       => array( 'type' => 'string' ),
-					'description' => 'Tipos de contenido a incluir. Vacío = todos los habilitados en el plugin.',
+					'description' => 'Content types to include. Empty = every type enabled in the plugin.',
 				),
 				'since'      => array(
 					'type'        => 'string',
-					'description' => 'Fecha de inicio inclusive (YYYY-MM-DD, UTC) para el total de vistas. Vacío = total histórico.',
+					'description' => 'Inclusive start date (YYYY-MM-DD, UTC) for the view total. Empty = all-time total.',
 				),
 			),
 		);
@@ -96,10 +96,10 @@ class GetViewsSummary extends Abstract_Satellite_Tool {
 	public function get_help(): array {
 		return array(
 			'examples' => array(
-				'¿Cuántas vistas acumuladas tiene el blog?',
-				'¿Cuántos posts no tienen ni una visita?',
+				'How many accumulated views does the blog have?',
+				'How many posts have zero views?',
 			),
-			'criteria' => __( 'Úsala para totales agregados del sitio, no para un ranking. Para un ranking usa list-most-viewed.', 'bubuku-post-view-count' ),
+			'criteria' => __( 'Use it for site-wide aggregated totals, not for a ranking. For a ranking use list-most-viewed.', 'bubuku-post-view-count' ),
 		);
 	}
 

@@ -36,14 +36,14 @@ class ListMostViewed extends Abstract_Satellite_Tool {
 	 * @return string
 	 */
 	public function get_label(): string {
-		return __( 'Contenido más visto', 'bubuku-post-view-count' );
+		return __( 'Most viewed content', 'bubuku-post-view-count' );
 	}
 
 	/**
 	 * @return string
 	 */
 	public function get_description(): string {
-		return __( 'Devuelve los posts con más vistas, opcionalmente acotado a una ventana de fechas y a unos tipos de contenido.', 'bubuku-post-view-count' );
+		return __( 'Returns the posts with the most views, optionally narrowed to a date window and to specific content types.', 'bubuku-post-view-count' );
 	}
 
 	/**
@@ -56,22 +56,22 @@ class ListMostViewed extends Abstract_Satellite_Tool {
 				'post_types' => array(
 					'type'        => 'array',
 					'items'       => array( 'type' => 'string' ),
-					'description' => 'Tipos de contenido a incluir. Vacío = todos los habilitados en el plugin.',
+					'description' => 'Content types to include. Empty = every type enabled in the plugin.',
 				),
 				'since'      => array(
 					'type'        => 'string',
-					'description' => 'Fecha de inicio inclusive (YYYY-MM-DD, UTC). Vacío = total histórico.',
+					'description' => 'Inclusive start date (YYYY-MM-DD, UTC). Empty = all-time total.',
 				),
 				'until'      => array(
 					'type'        => 'string',
-					'description' => 'Fecha de fin inclusive (YYYY-MM-DD, UTC). Vacío = hoy.',
+					'description' => 'Inclusive end date (YYYY-MM-DD, UTC). Empty = today.',
 				),
 				'limit'      => array(
 					'type'        => 'integer',
 					'minimum'     => 1,
 					'maximum'     => 100,
 					'default'     => 10,
-					'description' => 'Número máximo de resultados. Tope duro: 100.',
+					'description' => 'Maximum number of results. Hard cap: 100.',
 				),
 				'page'       => array(
 					'type'    => 'integer',
@@ -117,11 +117,11 @@ class ListMostViewed extends Abstract_Satellite_Tool {
 	public function get_help(): array {
 		return array(
 			'examples' => array(
-				'¿Qué es lo más leído del blog en los últimos 6 meses?',
-				'Dame el top 10 de posts más vistos de siempre',
+				'What has been the most-read content on the blog in the last 6 months?',
+				'Give me the top 10 most-viewed posts of all time',
 			),
-			'criteria' => __( 'Úsala cuando pidan un ranking por número de vistas. Si en cambio piden contenido sin visitas recientes, usa list-stale-content.', 'bubuku-post-view-count' ),
-			'notes'    => __( 'Sin ventana de fechas devuelve el total histórico exacto. Con ventana, los datos solo cubren desde que se instaló el agregado diario — ver data_available_since en la respuesta.', 'bubuku-post-view-count' ),
+			'criteria' => __( 'Use it when asked for a ranking by view count. If instead they ask for content without recent views, use list-stale-content.', 'bubuku-post-view-count' ),
+			'notes'    => __( 'With no date window, returns the exact all-time total. With a window, the data only covers the period since the daily aggregate was installed — see data_available_since in the response.', 'bubuku-post-view-count' ),
 		);
 	}
 

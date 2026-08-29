@@ -35,14 +35,14 @@ class ListStaleContent extends Abstract_Satellite_Tool {
 	 * @return string
 	 */
 	public function get_label(): string {
-		return __( 'Contenido sin visitas recientes', 'bubuku-post-view-count' );
+		return __( 'Content without recent views', 'bubuku-post-view-count' );
 	}
 
 	/**
 	 * @return string
 	 */
 	public function get_description(): string {
-		return __( 'Devuelve posts publicados que nunca se han visitado, o que no se visitan desde hace tiempo. Incluye explícitamente el contenido que nunca ha tenido ni una vista.', 'bubuku-post-view-count' );
+		return __( 'Returns published posts that have never been viewed, or that have not been viewed in a while. Explicitly includes content that has never had a single view.', 'bubuku-post-view-count' );
 	}
 
 	/**
@@ -54,23 +54,23 @@ class ListStaleContent extends Abstract_Satellite_Tool {
 			'properties' => array(
 				'not_viewed_since' => array(
 					'type'        => 'string',
-					'description' => 'No visitado desde esta fecha (YYYY-MM-DD HH:MM:SS, UTC). Vacío = 6 meses atrás.',
+					'description' => 'Not viewed since this date (YYYY-MM-DD HH:MM:SS, UTC). Empty = 6 months ago.',
 				),
 				'published_before' => array(
 					'type'        => 'string',
-					'description' => 'Solo posts publicados en/antes de esta fecha (YYYY-MM-DD HH:MM:SS, UTC). Vacío = ahora.',
+					'description' => 'Only posts published on/before this date (YYYY-MM-DD HH:MM:SS, UTC). Empty = now.',
 				),
 				'post_types'       => array(
 					'type'        => 'array',
 					'items'       => array( 'type' => 'string' ),
-					'description' => 'Tipos de contenido a incluir. Vacío = todos los habilitados en el plugin.',
+					'description' => 'Content types to include. Empty = every type enabled in the plugin.',
 				),
 				'limit'            => array(
 					'type'        => 'integer',
 					'minimum'     => 1,
 					'maximum'     => 100,
 					'default'     => 10,
-					'description' => 'Número máximo de resultados. Tope duro: 100.',
+					'description' => 'Maximum number of results. Hard cap: 100.',
 				),
 			),
 		);
@@ -109,11 +109,11 @@ class ListStaleContent extends Abstract_Satellite_Tool {
 	public function get_help(): array {
 		return array(
 			'examples' => array(
-				'¿Qué páginas no se visitan desde hace 6 meses?',
-				'Dame contenido publicado que nadie lee',
+				'Which pages haven\'t been visited in the last 6 months?',
+				'Give me published content nobody reads',
 			),
-			'criteria' => __( 'Úsala cuando pidan contenido sin tráfico reciente o nunca visitado. Si en cambio piden un ranking por vistas, usa list-most-viewed.', 'bubuku-post-view-count' ),
-			'notes'    => __( 'Incluye contenido que nunca ha tenido ni una vista (last_viewed_at nulo), no solo el que dejó de visitarse.', 'bubuku-post-view-count' ),
+			'criteria' => __( 'Use it when asked for content with no recent traffic, or never viewed. If instead they ask for a ranking by views, use list-most-viewed.', 'bubuku-post-view-count' ),
+			'notes'    => __( 'Includes content that has never had a single view (null last_viewed_at), not just content that stopped being viewed.', 'bubuku-post-view-count' ),
 		);
 	}
 

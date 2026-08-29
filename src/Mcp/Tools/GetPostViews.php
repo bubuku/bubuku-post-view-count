@@ -35,14 +35,14 @@ class GetPostViews extends Abstract_Satellite_Tool {
 	 * @return string
 	 */
 	public function get_label(): string {
-		return __( 'Estadísticas de visitas de un post', 'bubuku-post-view-count' );
+		return __( 'Post view stats', 'bubuku-post-view-count' );
 	}
 
 	/**
 	 * @return string
 	 */
 	public function get_description(): string {
-		return __( 'Devuelve el total de vistas, primera y última visita, y la serie diaria de los últimos 90 días de un post concreto, identificado por ID o por URL.', 'bubuku-post-view-count' );
+		return __( 'Returns the total views, first and last view, and the 90-day daily series for a specific post, identified by ID or URL.', 'bubuku-post-view-count' );
 	}
 
 	/**
@@ -54,11 +54,11 @@ class GetPostViews extends Abstract_Satellite_Tool {
 			'properties' => array(
 				'post_id' => array(
 					'type'        => 'integer',
-					'description' => 'ID del post. Se ignora si se da url.',
+					'description' => 'Post ID. Ignored if url is given.',
 				),
 				'url'     => array(
 					'type'        => 'string',
-					'description' => 'URL del post. Se usa solo si no se da post_id.',
+					'description' => 'Post URL. Only used if post_id is not given.',
 				),
 			),
 		);
@@ -82,7 +82,7 @@ class GetPostViews extends Abstract_Satellite_Tool {
 			return array(
 				'error' => array(
 					'code'    => 'missing_post',
-					'message' => __( 'Indica post_id o url para identificar el post.', 'bubuku-post-view-count' ),
+					'message' => __( 'Provide post_id or url to identify the post.', 'bubuku-post-view-count' ),
 				),
 			);
 		}
@@ -91,7 +91,7 @@ class GetPostViews extends Abstract_Satellite_Tool {
 			return array(
 				'error' => array(
 					'code'    => 'post_not_found',
-					'message' => __( 'No se ha encontrado ningún post publicado con ese ID o URL.', 'bubuku-post-view-count' ),
+					'message' => __( 'No published post was found with that ID or URL.', 'bubuku-post-view-count' ),
 				),
 			);
 		}
@@ -123,10 +123,10 @@ class GetPostViews extends Abstract_Satellite_Tool {
 	public function get_help(): array {
 		return array(
 			'examples' => array(
-				'¿Cuántas vistas tiene este artículo?',
-				'Dame la evolución de visitas del post con URL https://…',
+				'How many views does this article have?',
+				'Give me the view trend for the post at URL https://…',
 			),
-			'criteria' => __( 'Úsala para un post concreto. Para un ranking o un resumen del sitio, usa list-most-viewed o get-views-summary.', 'bubuku-post-view-count' ),
+			'criteria' => __( 'Use it for a specific post. For a ranking or a site-wide summary, use list-most-viewed or get-views-summary.', 'bubuku-post-view-count' ),
 		);
 	}
 

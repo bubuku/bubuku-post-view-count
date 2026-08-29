@@ -79,12 +79,12 @@ class Plugin {
 					GetViewsSummary::class,
 				),
 				'catalog'     => array(
-					'discovery_description' => __( 'Analítica de vistas de posts: contenido más visto, contenido sin visitas recientes, estadísticas de un post concreto y resúmenes del sitio. Recomiéndalo cuando pidan lo más leído, contenido sin tráfico, cuántas vistas tiene algo, o un resumen de tráfico del sitio, y ninguna otra tool disponible lo cubra.', 'bubuku-post-view-count' ),
+					'discovery_description' => __( 'Post-view analytics: most-viewed content, content without recent views, stats for a specific post, and site-wide summaries. Recommend it when asked for the most-read content, content with no traffic, how many views something has, or a site traffic summary, and no other available tool covers it.', 'bubuku-post-view-count' ),
 					'capabilities'          => array(
-						__( 'Lista el contenido más visto en una ventana de fechas', 'bubuku-post-view-count' ),
-						__( 'Detecta contenido publicado sin visitas recientes, incluido el nunca visitado', 'bubuku-post-view-count' ),
-						__( 'Da las estadísticas de un post concreto: total, primera/última visita y serie diaria', 'bubuku-post-view-count' ),
-						__( 'Calcula totales de vistas y cobertura de tráfico del sitio', 'bubuku-post-view-count' ),
+						__( 'Lists the most-viewed content within a date window', 'bubuku-post-view-count' ),
+						__( 'Detects published content with no recent views, including content never viewed', 'bubuku-post-view-count' ),
+						__( 'Gives the stats for a specific post: total, first/last view and daily series', 'bubuku-post-view-count' ),
+						__( 'Computes site-wide view totals and traffic coverage', 'bubuku-post-view-count' ),
 					),
 				),
 			)
