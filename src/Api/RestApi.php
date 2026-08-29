@@ -5,7 +5,7 @@
  * @package Bubuku Post View Count
  * @author     Luis Ruiz <lruiz@bubuku.com>
  * @copyright  2022 Bubuku
- * @version    1.1.1
+ * @version    1.2.0
  */
 
 declare( strict_types=1 );
@@ -120,17 +120,28 @@ class RestApi {
 		$post_id = absint( $request->get_param( 'post_id' ) );
 
 		if ( $this->is_deduped( $post_id, $request ) ) {
-			return new WP_REST_Response(
-				array( 'count' => (int) get_post_meta( $post_id, 'views', true ) ),
-				200
-			);
+			return new WP_REST_Response( $this->response_data( $this->db->get_stats( $post_id ) ), 200 );
 		}
 
 		$this->mark_deduped( $post_id, $request );
 
-		$count = $this->db->set_post_views( $post_id );
+		$stats = $this->db->record_view( $post_id );
 
-		return new WP_REST_Response( array( 'count' => $count ), 200 );
+		return new WP_REST_Response( $this->response_data( $stats ), 200 );
+	}
+
+	/**
+	 * Shape the public REST response — keeps the historical `count` key and adds
+	 * `last_viewed_at` now that the aggregate table tracks it.
+	 *
+	 * @param array $stats Stats as returned by Db::get_stats()/record_view().
+	 * @return array{count:int,last_viewed_at:?string}
+	 */
+	private function response_data( array $stats ): array {
+		return array(
+			'count'          => $stats['views'],
+			'last_viewed_at' => $stats['last_viewed_at'],
+		);
 	}
 
 	/**

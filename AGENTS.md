@@ -4,11 +4,11 @@
 
 ## Proyecto
 
-Plugin público de WordPress (WordPress.org) que cuenta las visitas de un Post sin afectar Core Web Vitals: encola un script que llama a un endpoint REST tras la carga, y el contador se guarda en el post meta `views`.
+Plugin público de WordPress (WordPress.org) que cuenta las visitas de un Post sin afectar Core Web Vitals: encola un script que llama a un endpoint REST tras la carga, y el contador se guarda en tablas propias (con espejo en el post meta `views` para compatibilidad).
 
 | Concepto | Valor |
 |---|---|
-| **Versión actual** | `1.1.0` (Header PHP y `readme.txt` `Stable tag` sincronizados) |
+| **Versión actual** | `1.2.0` (Header PHP y `readme.txt` `Stable tag` sincronizados) |
 | **Prefijo PHP** | `bbk` (constantes, hooks, funciones globales). Las clases ya no llevan prefijo (`Plugin`, `Db`, `RestApi`, `Assets`) tras la migración PSR-4 |
 | **Namespace PHP** | `Bubuku\Plugins\PostViewCount\{Core,Api,Frontend}\` — ver `docs/MIGRATION-PSR4.md` |
 | **Estructura actual** | `src/{Core,Api,Frontend}/` por responsabilidad (migración PSR-4 completada) |
@@ -16,7 +16,7 @@ Plugin público de WordPress (WordPress.org) que cuenta las visitas de un Post s
 | **Archivo principal** | `bubuku-post-view-count.php` |
 | **REST API namespace** | `bbk_postview/v1` (endpoint público, sin autenticación — ver `wp-security`) |
 | **Autoload** | Autoloader propio (`bbk_autoload`, `spl_autoload_register`) — sin `vendor/autoload.php` en producción |
-| **Dato persistido** | Post meta `views` (entero). Sin tabla propia ni opciones |
+| **Dato persistido** | Tablas propias `{prefix}bbk_post_views` / `{prefix}bbk_post_views_daily` (fuente de verdad). Post meta `views`/`views_last` como espejo de compatibilidad |
 
 Para la arquitectura completa (clases, flujo de una vista, constantes, estructura de directorios) ver `docs/ARCHITECTURE.md`.
 
@@ -97,8 +97,8 @@ bash scripts/build.sh                # genera dist/bubuku-post-view-count-{versi
 
 ### Filosofía
 
-- Itera sobre código existente antes de escribir desde cero — el plugin es intencionalmente pequeño (4 clases); no añadas capas ni abstracciones sin necesidad concreta.
-- Nunca duplicar lógica — comprobar si ya existe en `Core\Db`, `Api\RestApi` o `Frontend\Assets`.
+- Itera sobre código existente antes de escribir desde cero — el plugin es intencionalmente pequeño (5 clases); no añadas capas ni abstracciones sin necesidad concreta.
+- Nunca duplicar lógica — comprobar si ya existe en `Core\Db`, `Core\Schema`, `Api\RestApi` o `Frontend\Assets`.
 - No hay build step de JS/CSS: `assets/js/common.js` es JS plano, se edita directamente.
 
 ### Seguridad (resumen — detalle en `wp-security`)
@@ -111,14 +111,14 @@ bash scripts/build.sh                # genera dist/bubuku-post-view-count-{versi
 
 - Aplicado el/los skills correctos para la tarea.
 - `./vendor/bin/phpcs` (o `composer run-script lint`) sin errores.
-- `php Tests/run.php` sin fallos; si se tocó `Core\Db` o `Api\RestApi`, añadido un test nuevo siguiendo el patrón de `Tests/run.php`.
+- `php Tests/run.php` sin fallos; si se tocó `Core\Db`, `Core\Schema` o `Api\RestApi`, añadido un test nuevo siguiendo el patrón de `Tests/run.php`.
 - Versión sincronizada si se pidió bump: header PHP, `readme.txt` (`Stable tag`), `docs/CHANGELOG.md`.
 
 ### Versionado del plugin
 
 - Solo el usuario decide cuándo subir la versión del plugin. El agente **nunca** sube la versión por iniciativa propia, aunque el cambio lo justifique (nueva feature, fix, etc.).
 - Si un cambio parece justificar un bump de versión, el agente debe **sugerirlo** (y proponer el tipo: patch/minor/major) y esperar confirmación explícita del usuario antes de tocar header PHP, `readme.txt` o `docs/CHANGELOG.md`.
-- Nota: el header PHP (`1.1.0`) y el `Stable tag` de `readme.txt` están sincronizados. Si en algún momento se detecta una desincronización, señalarla al usuario y no corregirla por iniciativa propia salvo que lo pida.
+- Nota: el header PHP (`1.2.0`) y el `Stable tag` de `readme.txt` están sincronizados. Si en algún momento se detecta una desincronización, señalarla al usuario y no corregirla por iniciativa propia salvo que lo pida.
 
 ### Plugin Check (WordPress.org)
 

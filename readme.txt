@@ -4,7 +4,7 @@ Tags: page view count, post views, post count, posts, post view count
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.1
+Stable tag: 1.2.0
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -44,7 +44,13 @@ We develop custom solutions for WordPress focused on performance, accessibility,
 == Frequently Asked Questions ==
 
 = How do I see the view count for a post? =
-The view count is stored as post meta with the key "views". You can access it programmatically using `get_post_meta( $post_id, 'views', true )`.
+Since 1.2.0 the source of truth is the plugin's own database table, but the total is still mirrored to post meta for backwards compatibility. You can keep using `get_post_meta( $post_id, 'views', true )`; the date of the last view is available as `get_post_meta( $post_id, 'views_last', true )`.
+
+= Does the 1.2.0 update lose my existing view counts? =
+No. On activation the plugin copies every existing `views` post meta into its new table in the background, in batches. The date of the last view isn't available for posts that were only counted before 1.2.0 — the count itself carries over intact.
+
+= Does uninstalling the plugin delete my view data? =
+Yes, by default — deleting the plugin removes its tables, options and deduplication data, in line with WordPress.org's guidelines against leaving data behind. A setting to opt out of this before uninstalling is planned for an upcoming version.
 
 = Does this plugin affect page load speed? =
 No, the plugin only updates the view count after some time has passed through an endpoint, ensuring it doesn't impact Core Web Vitals (CWV) or page load performance.
@@ -54,6 +60,19 @@ Yes, the plugin now includes multisite support, including in the uninstall routi
 
 
 == Changelog ==
+
+= 1.2.0 =
+* New: the view counter now has its own database tables (`{prefix}bbk_post_views`, `{prefix}bbk_post_views_daily`), tracking the date and time of the first and last view per post in addition to the total — the first step towards analytics features (most-viewed content, stale content) planned for upcoming versions.
+* Improvement: the counter increment is now a single atomic upsert per table (no read-then-write), removing the last possible race condition under concurrent traffic.
+* Improvement: existing `views` post meta is migrated automatically and incrementally (500 rows per batch via WP-Cron) into the new tables on upgrade — no data is lost, and the migration is safe to run more than once.
+* Kept: the `views` post meta is still written on every view as a compatibility mirror for themes and queries that already read it (e.g. `orderby=meta_value_num`); a new `views_last` post meta exposes the last-view date the same way.
+* Improvement: `uninstall.php` now removes the plugin's own tables, options and deduplication transients (in addition to post meta), including on multisite — see the FAQ for how to keep your data on reinstall.
+* Note: this is a database schema change. Rolling back to 1.1.x after upgrading is safe — the `views` post meta is never removed, so the counter keeps working from where it was.
+
+== Upgrade Notice ==
+
+= 1.2.0 =
+This version changes how views are stored (new database tables; existing counts are migrated automatically, nothing is lost). See the changelog and FAQ before upgrading a site with a lot of existing view data.
 
 = 1.1.1 =
 * Security: the view-count endpoint now also checks the request's `Origin`/`Referer` against the site's own URL, rejecting cross-origin browser requests in addition to the existing post_id validation and per-visitor deduplication.

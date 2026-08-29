@@ -6,7 +6,9 @@
 >
 > **Este documento no modifica código.** Es la hoja de ruta a ejecutar.
 >
-> Estado del código analizado: rama `feature/v.1.1.1`, versión `1.1.0` (header PHP).
+> Estado del código analizado: rama `feature/v.1.1.1`, versión `1.1.0` (header PHP) en el
+> momento de escribir este documento. **Fase 1 implementada en la versión `1.2.0`** — ver
+> nota al inicio de esa sección.
 
 ## Relación con los otros documentos
 
@@ -204,6 +206,13 @@ Diseño:
 ## 2. Fase 1 — Tabla propia, última visita y agregado diario
 
 *Cubre el requerimiento 1 y la decisión 2.* Versión sugerida **`1.2.0`** *(a confirmar)*.
+
+> ✅ **Implementada en la versión `1.2.0`.** Los archivos de esta sección se implementaron
+> con los nombres de clase actuales (post-migración PSR-4): `Core\Schema` (no
+> `PCV_schema`), `Core\Db`, `Api\RestApi`, `Core\Plugin` — ver `docs/ARCHITECTURE.md` para
+> el detalle vigente. Los tests de la sección "Tests" de abajo están todos cubiertos en
+> `Tests/run.php`, salvo la mecánica de `dbDelta()`/WP-Cron/multisitio (sin equivalente en
+> el harness sin dependencias; se valida manualmente). Las Fases 2 y 3 siguen pendientes.
 
 ### Cambios
 

@@ -16,6 +16,7 @@ namespace {
 	define( 'ABSPATH', __DIR__ . '/' );
 	define( 'MINUTE_IN_SECONDS', 60 );
 	define( 'BBK_PLUGIN_ENDPOINTS_URL', 'bbk_postview/v1' );
+	define( 'ARRAY_A', 'ARRAY_A' );
 
 	class WP_Error {
 
@@ -116,19 +117,33 @@ namespace {
 	}
 
 	function get_post_meta( int $post_id, string $key, bool $single ) {
-		unset( $key, $single );
+		unset( $single );
 
-		return TestState::$meta[ $post_id ] ?? '';
+		return TestState::$meta[ $post_id ][ $key ] ?? '';
 	}
 
-	function add_post_meta( int $post_id, string $key, int $value, bool $unique ): bool {
-		unset( $key, $unique );
+	function add_post_meta( int $post_id, string $key, $value, bool $unique ): bool {
+		unset( $unique );
 
-		if ( array_key_exists( $post_id, TestState::$meta ) ) {
+		if ( isset( TestState::$meta[ $post_id ][ $key ] ) ) {
 			return false;
 		}
 
-		TestState::$meta[ $post_id ] = $value;
+		TestState::$meta[ $post_id ][ $key ] = $value;
+
+		return true;
+	}
+
+	function update_post_meta( int $post_id, string $key, $value ): bool {
+		TestState::$meta[ $post_id ][ $key ] = $value;
+
+		return true;
+	}
+
+	function delete_post_meta_by_key( string $key ): bool {
+		foreach ( array_keys( TestState::$meta ) as $post_id ) {
+			unset( TestState::$meta[ $post_id ][ $key ] );
+		}
 
 		return true;
 	}
@@ -147,6 +162,34 @@ namespace {
 		TestState::$transients[ $key ] = $value;
 
 		return true;
+	}
+
+	function get_option( string $key, $default = false ) {
+		return TestState::$options[ $key ] ?? $default;
+	}
+
+	function update_option( string $key, $value ): bool {
+		TestState::$options[ $key ] = $value;
+
+		return true;
+	}
+
+	function delete_option( string $key ): bool {
+		unset( TestState::$options[ $key ] );
+
+		return true;
+	}
+
+	function apply_filters( string $tag, $value ) {
+		unset( $tag );
+
+		return $value;
+	}
+
+	function current_time( string $type, bool $gmt = false ) {
+		unset( $type, $gmt );
+
+		return TestState::$now;
 	}
 
 	function sanitize_text_field( string $value ): string {
@@ -176,11 +219,20 @@ namespace Bubuku\Plugins\PostViewCount {
 
 	final class TestState {
 
-		/** @var array<int, int> */
+		/** @var array<int, array<string, mixed>> */
 		public static $meta = array();
+
+		/** @var array<int, array<string, mixed>> */
+		public static $views = array();
+
+		/** @var array<string, int> */
+		public static $daily = array();
 
 		/** @var array<string, int> */
 		public static $transients = array();
+
+		/** @var array<string, mixed> */
+		public static $options = array();
 
 		/** @var array<int, bool> */
 		public static $cache_deletions = array();
@@ -188,11 +240,18 @@ namespace Bubuku\Plugins\PostViewCount {
 		/** @var array<string, mixed> */
 		public static $route = array();
 
+		/** @var string Simulated `current_time( 'mysql', true )`. */
+		public static $now = '2026-01-01 00:00:00';
+
 		public static function reset(): void {
 			self::$meta            = array();
+			self::$views           = array();
+			self::$daily           = array();
 			self::$transients      = array();
+			self::$options         = array();
 			self::$cache_deletions = array();
 			self::$route           = array();
+			self::$now             = '2026-01-01 00:00:00';
 		}
 	}
 
@@ -201,23 +260,127 @@ namespace Bubuku\Plugins\PostViewCount {
 		/** @var string */
 		public $postmeta = 'wp_postmeta';
 
-		public function prepare( string $query, int $post_id ): int {
-			unset( $query );
+		/** @var string */
+		public $options = 'wp_options';
 
-			return $post_id;
+		/** @var string */
+		public $prefix = 'wp_';
+
+		public function prepare( string $query, ...$args ): string {
+			$i = 0;
+
+			return preg_replace_callback(
+				'/%[ds]/',
+				static function ( array $matches ) use ( $args, &$i ) {
+					$value = $args[ $i++ ] ?? '';
+
+					return '%d' === $matches[0] ? (string) (int) $value : "'" . addslashes( (string) $value ) . "'";
+				},
+				$query
+			);
 		}
 
-		public function query( int $post_id ): int {
-			if ( ! array_key_exists( $post_id, TestState::$meta ) ) {
-				return 0;
+		public function esc_like( string $text ): string {
+			return addcslashes( $text, '_%\\' );
+		}
+
+		public function query( string $query ) {
+			if ( preg_match( "/INSERT INTO wp_bbk_post_views_daily \\(post_id, day, views\\) VALUES \\((\\d+), '([^']+)', 1\\)/", $query, $m ) ) {
+				$key                     = $m[1] . '|' . $m[2];
+				TestState::$daily[ $key ] = ( TestState::$daily[ $key ] ?? 0 ) + 1;
+
+				return 1;
 			}
 
-			++TestState::$meta[ $post_id ];
+			if ( preg_match( "/INSERT INTO wp_bbk_post_views \\(post_id, views, first_viewed_at, last_viewed_at\\) VALUES \\((\\d+), 1, '([^']+)', '([^']+)'\\)/", $query, $m ) ) {
+				$post_id = (int) $m[1];
+				$now     = $m[2];
 
-			return 1;
+				if ( ! isset( TestState::$views[ $post_id ] ) ) {
+					TestState::$views[ $post_id ] = array(
+						'views'           => 1,
+						'first_viewed_at' => $now,
+						'last_viewed_at'  => $now,
+					);
+				} else {
+					++TestState::$views[ $post_id ]['views'];
+					TestState::$views[ $post_id ]['last_viewed_at'] = $now;
+				}
+
+				return 1;
+			}
+
+			if ( preg_match( '/INSERT INTO wp_bbk_post_views \\(post_id, views\\) VALUES \\((\\d+), (\\d+)\\) ON DUPLICATE KEY UPDATE views = GREATEST/', $query, $m ) ) {
+				$post_id = (int) $m[1];
+				$views   = (int) $m[2];
+
+				if ( ! isset( TestState::$views[ $post_id ] ) ) {
+					TestState::$views[ $post_id ] = array(
+						'views'           => $views,
+						'first_viewed_at' => null,
+						'last_viewed_at'  => null,
+					);
+				} else {
+					TestState::$views[ $post_id ]['views'] = max( TestState::$views[ $post_id ]['views'], $views );
+				}
+
+				return 1;
+			}
+
+			if ( preg_match( '/^DROP TABLE IF EXISTS wp_bbk_post_views_daily/', $query ) ) {
+				TestState::$daily = array();
+
+				return true;
+			}
+
+			if ( preg_match( '/^DROP TABLE IF EXISTS wp_bbk_post_views\b/', $query ) ) {
+				TestState::$views = array();
+
+				return true;
+			}
+
+			return 0;
+		}
+
+		public function get_row( string $query, $output = null ) {
+			unset( $output );
+
+			if ( preg_match( '/SELECT views, first_viewed_at, last_viewed_at FROM wp_bbk_post_views WHERE post_id = (\d+)/', $query, $m ) ) {
+				return TestState::$views[ (int) $m[1] ] ?? null;
+			}
+
+			return null;
+		}
+
+		public function get_results( string $query ) {
+			if ( preg_match( "/FROM wp_postmeta WHERE meta_key = 'views'/", $query ) ) {
+				$offset = 0;
+
+				if ( preg_match( '/OFFSET (\d+)/', $query, $m ) ) {
+					$offset = (int) $m[1];
+				}
+
+				$rows = array();
+
+				foreach ( TestState::$meta as $post_id => $metas ) {
+					if ( isset( $metas['views'] ) ) {
+						$rows[ $post_id ] = (object) array(
+							'post_id'    => $post_id,
+							'meta_value' => $metas['views'],
+						);
+					}
+				}
+
+				ksort( $rows );
+
+				return array_slice( array_values( $rows ), $offset, 500 );
+			}
+
+			return array();
 		}
 	}
 
+	require_once dirname( __DIR__ ) . '/src/Core/Schema.php';
 	require_once dirname( __DIR__ ) . '/src/Core/Db.php';
 	require_once dirname( __DIR__ ) . '/src/Api/RestApi.php';
 }

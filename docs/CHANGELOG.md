@@ -3,6 +3,21 @@
 Todos los cambios relevantes de este proyecto se documentan aquí.
 Formato basado en [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.2.0] - 2026-08-29
+### Añadido
+- Fase 1 de `docs/ANALYTICS-PLAN.md`: modelo de datos propio. Nuevas tablas `{prefix}bbk_post_views` (total, primera y última visita) y `{prefix}bbk_post_views_daily` (agregado diario, base para consultas con ventana temporal en fases futuras).
+- `Core\Schema`: creación/actualización de esquema (`dbDelta()`), versionado (`bbk_schema_version`), migración por lotes desde `postmeta` vía WP-Cron (`bbk_postview_migrate_batch`, idempotente), purga programada del agregado diario (`bbk_postview_purge_daily`, retención configurable, 400 días por defecto), y soporte multisitio (`activate( $network_wide )`, `wp_initialize_site`).
+- `Core\Db::record_view()`: dos upserts atómicos (`INSERT ... ON DUPLICATE KEY UPDATE`) sin lectura previa en PHP. `Core\Db::get_stats()` para leer el estado actual desde la tabla.
+- El post meta `views` se conserva como espejo de compatibilidad (temas/consultas de terceros que ya lo leen); se añade `views_last` con la fecha de la última visita. Desactivable con el filtro `bbk_postview_mirror_meta`.
+- La respuesta del endpoint `POST /set-post-views` incluye ahora `last_viewed_at` junto al `count` ya existente.
+### Cambiado
+- `Core\Db::set_post_views()` se conserva como alias delgado de `record_view()` (compatibilidad con consumidores existentes).
+- `uninstall.php` reescrito: además de la meta, borra las tablas propias, las options (`bbk_postview_settings`, `bbk_schema_version`) y los transients de deduplicación (`bbk_view_*`), siempre en multisitio. Por defecto borra todo (recomendación de las guidelines de WordPress.org); la opción para conservar los datos llegará con la página de ajustes de la Fase 2.
+### Notas
+- Cambio de modelo de datos (riesgo alto, ver `docs/ANALYTICS-PLAN.md` §1). El post meta `views` nunca se borra durante la migración: revertir a `1.1.x` es seguro, el contador sigue funcionando desde donde estaba.
+- Ninguna de las tres capas de seguridad del endpoint (origen same-site, validación de `post_id`, deduplicación) se ha tocado.
+- Fases 2 (página de ajustes y CPTs seleccionables) y 3 (consultas + satélite MCP) quedan para versiones posteriores (`1.3.0`, `1.4.0` sugeridas en el propio plan), no incluidas en esta versión.
+
 ## [1.1.1] - 2026-08-29
 ### Seguridad
 - El endpoint `POST /set-post-views` ahora también comprueba el `Origin`/`Referer` de la petición contra la URL del propio sitio (`check_request_origin` como `permission_callback`), rechazando peticiones cross-origin desde el navegador, además de la validación de `post_id` y la deduplicación ya existentes.
