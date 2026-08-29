@@ -50,13 +50,19 @@ Since 1.2.0 the source of truth is the plugin's own database table, but the tota
 No. On activation the plugin copies every existing `views` post meta into its new table in the background, in batches. The date of the last view isn't available for posts that were only counted before 1.2.0 — the count itself carries over intact.
 
 = Does uninstalling the plugin delete my view data? =
-Yes, by default — deleting the plugin removes its tables, options and deduplication data, in line with WordPress.org's guidelines against leaving data behind. A setting to opt out of this before uninstalling is planned for an upcoming version.
+Yes, by default — deleting the plugin removes its tables, options and deduplication data, in line with WordPress.org's guidelines against leaving data behind. You can turn this off from Settings → Post View Count if you'd rather keep your data for a future reinstall.
+
+= Can I choose which content types count views, or exclude certain user roles and bots? =
+Yes, since 1.2.0. Go to Settings → Post View Count to choose which content types are counted (only Posts by default, same as before), exclude specific user roles (roles that can already edit content are excluded by default), and optionally exclude known bots and crawlers. Unchecking a content type stops counting new views for it but never deletes the views already recorded.
+
+= Can I reset the view counts without uninstalling the plugin? =
+Yes. Settings → Post View Count has a "Delete all data now" button that clears every recorded view, with a confirmation prompt before it runs.
 
 = Does this plugin affect page load speed? =
 No, the plugin only updates the view count after some time has passed through an endpoint, ensuring it doesn't impact Core Web Vitals (CWV) or page load performance.
 
 = Is this plugin compatible with multisite installations? =
-Yes, the plugin now includes multisite support, including in the uninstall routine. 
+Yes, the plugin now includes multisite support, including in the uninstall routine.
 
 
 == Changelog ==
