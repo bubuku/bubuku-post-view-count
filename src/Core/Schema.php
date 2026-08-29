@@ -210,7 +210,7 @@ class Schema {
 
 		$views_table = self::table_views();
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Batched one-off migration, no equivalent WP API.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Batched one-off migration, no equivalent WP API; each batch reads a fresh offset, so caching would be incorrect.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = 'views' ORDER BY post_id LIMIT %d OFFSET %d",
@@ -224,6 +224,7 @@ class Schema {
 		}
 
 		foreach ( $rows as $row ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- One-off migration upsert on the plugin's own table, no equivalent WP API; a running counter must never be served from cache. $views_table is an internal constant (self::table_views()), never user input.
 			$wpdb->query(
 				$wpdb->prepare(
 					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$views_table} is an internal constant (self::table_views()), never user input.
@@ -255,6 +256,7 @@ class Schema {
 		$retention_days = isset( $settings['retention_days'] ) ? (int) $settings['retention_days'] : self::DEFAULT_RETENTION_DAYS;
 		$daily_table    = self::table_daily();
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Daily cron purge on the plugin's own table, no equivalent WP API; a purge query must never be served from cache. $daily_table is an internal constant (self::table_daily()), never user input.
 		$wpdb->query(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$daily_table} is an internal constant (self::table_daily()), never user input.

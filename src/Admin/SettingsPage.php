@@ -81,6 +81,7 @@ class SettingsPage {
 			wp_die( esc_html__( 'No tienes permisos para acceder a esta página.', 'bubuku-post-view-count' ) );
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only flag to show a notice after the redirect from handle_delete_all(), which already verifies its own nonce; no data is processed here.
 		if ( isset( $_GET['bbk_postview_reset'] ) ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' .
 				esc_html__( 'Se han eliminado todas las vistas registradas.', 'bubuku-post-view-count' ) .
