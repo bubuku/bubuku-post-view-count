@@ -1,6 +1,16 @@
 # Plan de migración a PSR-4
 
-## Estado actual
+> ✅ **Implementado.** El código ya vive en `src/{Core,Api,Frontend}/` con las clases
+> renombradas (`Plugin`, `Db`, `RestApi`, `Assets`). El autoloader propio
+> (`bbk_autoload` en `bubuku-post-view-count.php`) se actualizó para resolver
+> subnamespaces (convierte `\` en `/` al construir la ruta del archivo — el plugin no
+> depende de Composer en runtime, a diferencia de lo que asumía la §4 original de este
+> documento). `Tests/bootstrap.php` y `Tests/run.php` se actualizaron para apuntar a las
+> nuevas rutas/clases; los stubs de funciones WP se movieron al namespace global para
+> que el fallback de PHP los resuelva desde cualquier subnamespace. El resto de este
+> documento se conserva como referencia histórica del mapeo aplicado.
+
+## Estado actual (antes de la migración)
 
 - Autoload PSR-4 vía Composer ya configurado: `Bubuku\Plugins\PostViewCount\` → `src/`.
 - Namespace correcto en los 4 archivos de `src/`, pero los nombres de clase mantienen el prefijo plano heredado del estilo pre-namespace (`PCV_*`).

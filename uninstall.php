@@ -9,11 +9,11 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
-require_once __DIR__ . '/src/PCV_db.php';
+require_once __DIR__ . '/src/Core/Db.php';
 
-use Bubuku\Plugins\PostViewCount\PCV_db;
+use Bubuku\Plugins\PostViewCount\Core\Db;
 
-$bbk_plugin_db = new PCV_db();
+$bbk_plugin_db = new Db();
 
 if ( is_multisite() ) {
 	$bbk_site_ids = get_sites( array( 'fields' => 'ids' ) );

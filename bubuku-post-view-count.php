@@ -54,7 +54,8 @@ function bbk_autoload( $class_name ) {
 		return;
 	}
 
-	$file = BBK_PLUGIN_PATH . '/src/' . substr( $class_name, strlen( $prefix ) ) . '.php';
+	$relative_class = str_replace( '\\', '/', substr( $class_name, strlen( $prefix ) ) );
+	$file           = BBK_PLUGIN_PATH . '/src/' . $relative_class . '.php';
 
 	if ( file_exists( $file ) ) {
 		require $file;
@@ -66,11 +67,11 @@ spl_autoload_register( 'bbk_autoload' );
  * Bootstrap the plugin.
  */
 ( static function () {
-	if ( ! class_exists( 'Bubuku\Plugins\PostViewCount\PCV_plugin' ) ) {
+	if ( ! class_exists( 'Bubuku\Plugins\PostViewCount\Core\Plugin' ) ) {
 		return;
 	}
 
-	$plugin = new Bubuku\Plugins\PostViewCount\PCV_plugin();
+	$plugin = new Bubuku\Plugins\PostViewCount\Core\Plugin();
 
 	register_activation_hook( __FILE__, array( $plugin, 'activate' ) );
 	register_deactivation_hook( __FILE__, array( $plugin, 'deactivate' ) );

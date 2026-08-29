@@ -8,10 +8,10 @@ Plugin público de WordPress (WordPress.org) que cuenta las visitas de un Post s
 
 | Concepto | Valor |
 |---|---|
-| **Versión actual** | `1.1.0` (Header PHP, fuente de verdad). `readme.txt` trae `Stable tag: 1.4.1` desincronizado — corregir a `1.1.0` solo si el usuario lo pide explícitamente |
-| **Prefijo PHP** | `PCV_` (clases) / `bbk` (constantes, hooks, funciones globales) |
-| **Namespace PHP** | `Bubuku\Plugins\PostViewCount\` (ya correcto — objetivo pendiente: quitar prefijo `PCV_`, ver `docs/MIGRATION-PSR4.md`) |
-| **Estructura actual** | `src/PCV_*.php` plano, sin subcarpetas (`Core/`, `Api/`, `Frontend/`) |
+| **Versión actual** | `1.1.0` (Header PHP y `readme.txt` `Stable tag` sincronizados) |
+| **Prefijo PHP** | `bbk` (constantes, hooks, funciones globales). Las clases ya no llevan prefijo (`Plugin`, `Db`, `RestApi`, `Assets`) tras la migración PSR-4 |
+| **Namespace PHP** | `Bubuku\Plugins\PostViewCount\{Core,Api,Frontend}\` — ver `docs/MIGRATION-PSR4.md` |
+| **Estructura actual** | `src/{Core,Api,Frontend}/` por responsabilidad (migración PSR-4 completada) |
 | **Text domain** | `bubuku-post-view-count` |
 | **Archivo principal** | `bubuku-post-view-count.php` |
 | **REST API namespace** | `bbk_postview/v1` (endpoint público, sin autenticación — ver `wp-security`) |
@@ -65,8 +65,8 @@ Snapshot actual. Si cambia el enlace de skills, refrescar con `bash scripts/setu
 
 | Tarea | Skills a cargar |
 |---|---|
-| Cambios en clases PHP (`src/`, `PCV_*`) | `wp-php` + `wp-coding` + `wp-plugin-development` |
-| Endpoint REST (`PCV_restapi`) / permisos / deduplicación | `wp-php` + `wp-security` + `wp-rest-api` |
+| Cambios en clases PHP (`src/Core`, `src/Api`, `src/Frontend`) | `wp-php` + `wp-coding` + `wp-plugin-development` |
+| Endpoint REST (`Api\RestApi`) / permisos / deduplicación | `wp-php` + `wp-security` + `wp-rest-api` |
 | Definir o registrar abilities (API de capacidades) | `wp-abilities-api` + `wp-rest-api` + `wp-security` |
 | Auditar/verificar abilities ya implementadas | `wp-abilities-audit` o `wp-abilities-verify` |
 | Script frontend (`assets/js/common.js`) | `wp-frontend` + `wp-security` |
@@ -98,27 +98,27 @@ bash scripts/build.sh                # genera dist/bubuku-post-view-count-{versi
 ### Filosofía
 
 - Itera sobre código existente antes de escribir desde cero — el plugin es intencionalmente pequeño (4 clases); no añadas capas ni abstracciones sin necesidad concreta.
-- Nunca duplicar lógica — comprobar si ya existe en `PCV_db`, `PCV_restapi` o `PCV_assets`.
+- Nunca duplicar lógica — comprobar si ya existe en `Core\Db`, `Api\RestApi` o `Frontend\Assets`.
 - No hay build step de JS/CSS: `assets/js/common.js` es JS plano, se edita directamente.
 
 ### Seguridad (resumen — detalle en `wp-security`)
 
 - Guarda mínima: `defined('ABSPATH') || exit;` en cada PHP.
 - `bbk_postview/v1` es un endpoint público sin nonce por diseño (debe funcionar detrás de full-page caching con visitantes deslogueados). La seguridad se apoya en: `permission_callback` de origen same-site (`check_request_origin`), validación estricta de `post_id` (`validate_post_id`) y deduplicación por transient (`DEDUPE_TTL`). No añadir autenticación que rompa este contrato sin discutirlo antes.
-- Cualquier cambio en `PCV_restapi` debe mantener o reforzar estas tres capas, no debilitarlas.
+- Cualquier cambio en `Api\RestApi` debe mantener o reforzar estas tres capas, no debilitarlas.
 
 ### Definition of Done
 
 - Aplicado el/los skills correctos para la tarea.
 - `./vendor/bin/phpcs` (o `composer run-script lint`) sin errores.
-- `php Tests/run.php` sin fallos; si se tocó `PCV_db` o `PCV_restapi`, añadido un test nuevo siguiendo el patrón de `Tests/run.php`.
+- `php Tests/run.php` sin fallos; si se tocó `Core\Db` o `Api\RestApi`, añadido un test nuevo siguiendo el patrón de `Tests/run.php`.
 - Versión sincronizada si se pidió bump: header PHP, `readme.txt` (`Stable tag`), `docs/CHANGELOG.md`.
 
 ### Versionado del plugin
 
 - Solo el usuario decide cuándo subir la versión del plugin. El agente **nunca** sube la versión por iniciativa propia, aunque el cambio lo justifique (nueva feature, fix, etc.).
 - Si un cambio parece justificar un bump de versión, el agente debe **sugerirlo** (y proponer el tipo: patch/minor/major) y esperar confirmación explícita del usuario antes de tocar header PHP, `readme.txt` o `docs/CHANGELOG.md`.
-- Nota: el header PHP (`1.1.0`, fuente de verdad, confirmada por el usuario) y el `Stable tag` de `readme.txt` (`1.4.1`) están desincronizados — señalarlo al usuario si surge la ocasión, no corregirlo por iniciativa propia.
+- Nota: el header PHP (`1.1.0`) y el `Stable tag` de `readme.txt` están sincronizados. Si en algún momento se detecta una desincronización, señalarla al usuario y no corregirla por iniciativa propia salvo que lo pida.
 
 ### Plugin Check (WordPress.org)
 
@@ -143,7 +143,7 @@ bash scripts/build.sh                # genera dist/bubuku-post-view-count-{versi
 
 - `docs/ARCHITECTURE.md` — clases, flujo de una vista, constantes, tests, CI, estructura de directorios.
 - `docs/CHANGELOG.md` — historial de versiones.
-- `docs/MIGRATION-PSR4.md` — plan futuro para eliminar el prefijo `PCV_*` y mover a `src/{Core,Api,Frontend}/` (si se decide).
+- `docs/MIGRATION-PSR4.md` — migración PSR-4 (histórico): eliminación del prefijo `PCV_*` y paso a `src/{Core,Api,Frontend}/` (ya implementada).
 - `docs/IMPROVEMENT-PLAN.md` — plan de mejoras pendiente (sus fases 6–7 quedan reemplazadas por `docs/ANALYTICS-PLAN.md`).
 - `docs/ANALYTICS-PLAN.md` — hoja de ruta por fases: tabla propia con última visita y agregado diario, página de ajustes con CPT seleccionables, y exposición de los datos como satélite de `bubuku-mcp-conex`.
 

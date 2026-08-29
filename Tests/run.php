@@ -9,8 +9,8 @@
 
 declare( strict_types=1 );
 
-use Bubuku\Plugins\PostViewCount\PCV_db;
-use Bubuku\Plugins\PostViewCount\PCV_restapi;
+use Bubuku\Plugins\PostViewCount\Api\RestApi;
+use Bubuku\Plugins\PostViewCount\Core\Db;
 use Bubuku\Plugins\PostViewCount\TestState;
 use Bubuku\Plugins\PostViewCount\TestWpdb;
 
@@ -52,7 +52,7 @@ $tests = array(
 		TestState::reset();
 		TestState::$meta[42] = 7;
 
-		$count = ( new PCV_db() )->set_post_views( 42 );
+		$count = ( new Db() )->set_post_views( 42 );
 
 		bbk_test_same( 8, $count, 'The returned count was not incremented.' );
 		bbk_test_same( 8, TestState::$meta[42], 'The stored count was not incremented.' );
@@ -61,38 +61,38 @@ $tests = array(
 	'creates the first view when no counter exists' => static function (): void {
 		TestState::reset();
 
-		$count = ( new PCV_db() )->set_post_views( 7 );
+		$count = ( new Db() )->set_post_views( 7 );
 
 		bbk_test_same( 1, $count, 'The first view should create a count of one.' );
 		bbk_test_same( 1, TestState::$meta[7], 'The first view was not stored.' );
 	},
 	'accepts requests from the site origin'         => static function (): void {
-		$api     = new PCV_restapi();
+		$api     = new RestApi();
 		$request = new WP_REST_Request( array(), array( 'Origin' => 'https://test.wp.local' ) );
 
 		bbk_test_same( true, $api->check_request_origin( $request ), 'The site origin should be accepted.' );
 	},
 	'accepts a same-origin referer when Origin is unavailable' => static function (): void {
-		$api     = new PCV_restapi();
+		$api     = new RestApi();
 		$request = new WP_REST_Request( array(), array( 'Referer' => 'https://test.wp.local/example/' ) );
 
 		bbk_test_same( true, $api->check_request_origin( $request ), 'A same-origin referer should be accepted.' );
 	},
 	'rejects requests from another origin'          => static function (): void {
-		$api     = new PCV_restapi();
+		$api     = new RestApi();
 		$request = new WP_REST_Request( array(), array( 'Origin' => 'https://attacker.example' ) );
 
 		bbk_test_error_status( $api->check_request_origin( $request ), 403 );
 	},
 	'rejects requests without origin evidence'      => static function (): void {
-		$api = new PCV_restapi();
+		$api = new RestApi();
 
 		bbk_test_error_status( $api->check_request_origin( new WP_REST_Request() ), 403 );
 	},
 	'increments once and deduplicates a repeated REST view' => static function (): void {
 		TestState::reset();
 		$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
-		$api                     = new PCV_restapi();
+		$api                     = new RestApi();
 		$request                 = new WP_REST_Request(
 			array( 'post_id' => 99 ),
 			array(

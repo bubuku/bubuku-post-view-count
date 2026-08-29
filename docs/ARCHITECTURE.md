@@ -2,41 +2,39 @@
 
 Detalle arquitectónico del plugin. Este documento complementa `AGENTS.md` con la información que un agente o desarrollador necesita para razonar sobre el código actual.
 
-## Estado actual: PSR-4 con nombres de clase legacy
+## Estado actual: PSR-4 por responsabilidad
 
-El plugin **ya usa autoload PSR-4** vía un autoloader propio (sin Composer en runtime — ver más abajo). Las clases viven en `src/PCV_*.php`, con namespace `Bubuku\Plugins\PostViewCount` correcto, pero mantienen el prefijo plano `PCV_` heredado del estilo pre-namespace en el nombre de la clase.
-
-El objetivo a largo plazo es eliminar el prefijo `PCV_` y organizar `src/` en subcarpetas por responsabilidad (`Core/`, `Api/`, `Frontend/`) — ver `docs/MIGRATION-PSR4.md` para el mapeo completo clase a clase. No aplicado automáticamente por tratarse de un cambio de riesgo medio (renombrado de clases usadas en hooks/callbacks).
+El plugin usa autoload PSR-4 vía un autoloader propio (sin Composer en runtime — ver más abajo). Las clases viven en `src/{Core,Api,Frontend}/`, con namespace `Bubuku\Plugins\PostViewCount\{Core,Api,Frontend}` y nombres de clase sin prefijo (`Plugin`, `Db`, `RestApi`, `Assets`) — ver `docs/MIGRATION-PSR4.md` para el mapeo histórico aplicado.
 
 Es un plugin deliberadamente pequeño (4 clases): no tiene capa de tools/abilities, ni WP-Cron, ni tabla propia en BD — solo un post meta (`views`) y un endpoint REST.
 
 ## Autoload — sin vendor/ en producción
 
-`bubuku-post-view-count.php` registra un autoloader manual (`bbk_autoload`, vía `spl_autoload_register`) que resuelve `Bubuku\Plugins\PostViewCount\{Clase}` → `src/{Clase}.php`. Esto evita distribuir `vendor/autoload.php` en el zip de producción, ya que el plugin no tiene dependencias runtime.
+`bubuku-post-view-count.php` registra un autoloader manual (`bbk_autoload`, vía `spl_autoload_register`) que resuelve `Bubuku\Plugins\PostViewCount\{Sub\Namespace}\{Clase}` → `src/{Sub/Namespace}/{Clase}.php` (convierte `\` en `/`). Esto evita distribuir `vendor/autoload.php` en el zip de producción, ya que el plugin no tiene dependencias runtime.
 
 Composer (`composer.json`) se usa **solo como tooling de desarrollo**: PHPCS, PHPCompatibility y el autoload PSR-4 declarado (`Bubuku\Plugins\PostViewCount\` → `src/`) que Composer usa igualmente para los tests locales vía `vendor/autoload.php` cuando está instalado.
 
 ## PHP — clases en `src/`
 
-`PCV_plugin` es el punto de entrada, instanciado en el bootstrap de `bubuku-post-view-count.php`. En `plugins_loaded` arranca los dos subsistemas del plugin.
+`Core\Plugin` es el punto de entrada, instanciado en el bootstrap de `bubuku-post-view-count.php`. En `plugins_loaded` arranca los dos subsistemas del plugin.
 
 | Clase | Archivo | Responsabilidad |
 |---|---|---|
-| `PCV_plugin` | `PCV_plugin.php` | Punto de entrada — registra `plugins_loaded`, activación/desactivación, arranca `PCV_assets` y `PCV_restapi` |
-| `PCV_assets` | `PCV_assets.php` | Encola `assets/js/common.js` solo en `single` de tipo `post`, para visitantes sin `edit_posts`; localiza `bbk_post_view` con la URL REST y el `post_id` |
-| `PCV_restapi` | `PCV_restapi.php` | Ruta REST `POST /bbk_postview/v1/set-post-views` — validación de `post_id`, control de origen same-site y deduplicación por transient |
-| `PCV_db` | `PCV_db.php` | Acceso a datos — incremento atómico del post meta `views` vía `$wpdb->query()` con fallback a `add_post_meta()`, y borrado global del meta al desinstalar |
+| `Core\Plugin` | `src/Core/Plugin.php` | Punto de entrada — registra `plugins_loaded`, activación/desactivación, arranca `Frontend\Assets` y `Api\RestApi` |
+| `Frontend\Assets` | `src/Frontend/Assets.php` | Encola `assets/js/common.js` solo en `single` de tipo `post`, para visitantes sin `edit_posts`; localiza `bbk_post_view` con la URL REST y el `post_id` |
+| `Api\RestApi` | `src/Api/RestApi.php` | Ruta REST `POST /bbk_postview/v1/set-post-views` — validación de `post_id`, control de origen same-site y deduplicación por transient |
+| `Core\Db` | `src/Core/Db.php` | Acceso a datos — incremento atómico del post meta `views` vía `$wpdb->query()` con fallback a `add_post_meta()`, y borrado global del meta al desinstalar |
 
 No hay carpeta `includes/` ni capa de tools — toda la lógica cabe en `src/`.
 
 ## Flujo de una vista
 
-1. `PCV_assets::enqueue_front_assets()` decide si encolar el script (solo en `single` de `post`, visitante no editor) y localiza `post_id` + URL del endpoint.
+1. `Frontend\Assets::enqueue_front_assets()` decide si encolar el script (solo en `single` de `post`, visitante no editor) y localiza `post_id` + URL del endpoint.
 2. `assets/js/common.js` hace `fetch` a `bbk_postview/v1/set-post-views` con el `post_id`, tras un pequeño delay (evita contar rebotes inmediatos).
-3. `PCV_restapi::register_routes()` valida `post_id` (`validate_post_id` — debe ser un `post` publicado y visible) y comprueba el `permission_callback` (`check_request_origin`).
+3. `Api\RestApi::register_routes()` valida `post_id` (`validate_post_id` — debe ser un `post` publicado y visible) y comprueba el `permission_callback` (`check_request_origin`).
 4. `check_request_origin()` compara el origin/host normalizado de la petición con `home_url()` — solo acepta peticiones same-site; es intencionalmente anónimo (sin nonce) para funcionar detrás de full-page caching con visitantes deslogueados.
 5. `set_post_views()` comprueba deduplicación (`is_deduped` — transient `bbk_view_{md5(post_id|ip|user_agent)}`, TTL `DEDUPE_TTL` = 30 minutos). Si ya está deduplicado, devuelve el contador actual sin incrementar.
-6. Si no está deduplicado, marca el transient (`mark_deduped`) y delega en `PCV_db::set_post_views()`, que hace un `UPDATE` atómico de `wp_postmeta.meta_value` (o crea el meta con `add_post_meta()` si no existía), invalida la cache de objeto (`wp_cache_delete`) y devuelve el nuevo total.
+6. Si no está deduplicado, marca el transient (`mark_deduped`) y delega en `Core\Db::set_post_views()`, que hace un `UPDATE` atómico de `wp_postmeta.meta_value` (o crea el meta con `add_post_meta()` si no existía), invalida la cache de objeto (`wp_cache_delete`) y devuelve el nuevo total.
 
 ## Constantes del plugin
 
@@ -58,9 +56,9 @@ El plugin no crea tablas ni opciones. Todo el estado vive en un único post meta
 
 | Meta key | Estructura | Dónde se gestiona |
 |---|---|---|
-| `views` | Entero, contador acumulado por post | `PCV_db::set_post_views()` (incremento), `PCV_db::remove_all_post_meta()` (borrado global vía `delete_post_meta_by_key()`, llamado desde `uninstall.php`) |
+| `views` | Entero, contador acumulado por post | `Core\Db::set_post_views()` (incremento), `Core\Db::remove_all_post_meta()` (borrado global vía `delete_post_meta_by_key()`, llamado desde `uninstall.php`) |
 
-Deduplicación de visitas: transients `bbk_view_{md5(post_id|ip|user_agent)}` con TTL de 30 minutos (`PCV_restapi::DEDUPE_TTL`), no post meta ni tabla.
+Deduplicación de visitas: transients `bbk_view_{md5(post_id|ip|user_agent)}` con TTL de 30 minutos (`Api\RestApi::DEDUPE_TTL`), no post meta ni tabla.
 
 ## JavaScript — `assets/js/`
 
@@ -68,13 +66,13 @@ No hay build step ni `assets/src/` — `assets/js/common.js` es JS plano servido
 
 ## Tests
 
-`Tests/` contiene tests automatizados sin dependencias externas (sin PHPUnit) que simulan un subconjunto mínimo de WordPress (`Tests/bootstrap.php` define `TestWpdb`, `TestState`, stubs de funciones WP usadas por `PCV_db` y `PCV_restapi`).
+`Tests/` contiene tests automatizados sin dependencias externas (sin PHPUnit) que simulan un subconjunto mínimo de WordPress (`Tests/bootstrap.php` define `TestWpdb`, `TestState`, y stubs de funciones WP en el namespace global —para que el fallback de PHP los resuelva sin importar el subnamespace del código que los llama— usados por `Core\Db` y `Api\RestApi`).
 
 ```bash
 php Tests/run.php          # o: composer run-script test
 ```
 
-Cubren: incremento atómico de `PCV_db`, creación del primer contador, validación de origen same-site del endpoint REST, y deduplicación de vistas repetidas. Al añadir lógica nueva a `PCV_db` o `PCV_restapi`, extender `Tests/run.php` con el mismo patrón (`bbk_test_same`, `bbk_test_error_status`) antes de dar el cambio por terminado.
+Cubren: incremento atómico de `Core\Db`, creación del primer contador, validación de origen same-site del endpoint REST, y deduplicación de vistas repetidas. Al añadir lógica nueva a `Core\Db` o `Api\RestApi`, extender `Tests/run.php` con el mismo patrón (`bbk_test_same`, `bbk_test_error_status`) antes de dar el cambio por terminado.
 
 ## CI
 
@@ -105,11 +103,17 @@ bubuku-post-view-count/
 ├─ .claude/skills   ➜  ../skills
 ├─ .codex/skills    ➜  ../skills
 ├─ .gemini/skills   ➜  ../skills
-├─ src/                          Clases PHP (PCV_*, PSR-4, sin subcarpetas)
-│  ├─ PCV_plugin.php
-│  ├─ PCV_assets.php
-│  ├─ PCV_restapi.php
-│  ├─ PCV_db.php
+├─ src/                          Clases PHP (PSR-4, por responsabilidad)
+│  ├─ Core/
+│  │  ├─ Plugin.php
+│  │  ├─ Db.php
+│  │  └─ index.php
+│  ├─ Api/
+│  │  ├─ RestApi.php
+│  │  └─ index.php
+│  ├─ Frontend/
+│  │  ├─ Assets.php
+│  │  └─ index.php
 │  └─ index.php
 ├─ assets/
 │  └─ js/
@@ -122,8 +126,9 @@ bubuku-post-view-count/
 ├─ docs/
 │  ├─ ARCHITECTURE.md            (este archivo)
 │  ├─ CHANGELOG.md
-│  ├─ MIGRATION-PSR4.md          (plan futuro — eliminar prefijo PCV_)
-│  └─ IMPROVEMENT-PLAN.md
+│  ├─ MIGRATION-PSR4.md          (implementado — histórico del mapeo aplicado)
+│  ├─ IMPROVEMENT-PLAN.md
+│  └─ ANALYTICS-PLAN.md
 ├─ scripts/
 │  ├─ build.sh
 │  └─ setup-skills.sh
@@ -143,6 +148,6 @@ bubuku-post-view-count/
 └─ bubuku-post-view-count.php    Punto de entrada, constantes, autoloader, bootstrap
 ```
 
-## Migración a PSR-4 sin prefijo (futuro)
+## Migración a PSR-4 sin prefijo
 
-Estado actual: `src/PCV_*.php` con namespace correcto pero nombre de clase con prefijo plano. Estado objetivo: `src/{Core,Api,Frontend}/` con clases sin prefijo (`Plugin`, `Db`, `RestApi`, `Assets`). Ver `docs/MIGRATION-PSR4.md` para el mapeo completo, el orden de migración recomendado y los riesgos identificados.
+Implementada: `src/{Core,Api,Frontend}/` con clases sin prefijo (`Plugin`, `Db`, `RestApi`, `Assets`). Ver `docs/MIGRATION-PSR4.md` para el mapeo aplicado y las decisiones tomadas.

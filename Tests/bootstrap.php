@@ -11,6 +11,8 @@ declare( strict_types=1 );
 
 namespace {
 
+	use Bubuku\Plugins\PostViewCount\TestState;
+
 	define( 'ABSPATH', __DIR__ . '/' );
 	define( 'MINUTE_IN_SECONDS', 60 );
 	define( 'BBK_PLUGIN_ENDPOINTS_URL', 'bbk_postview/v1' );
@@ -88,53 +90,11 @@ namespace {
 			return $this->status;
 		}
 	}
-}
 
-namespace Bubuku\Plugins\PostViewCount {
-
-	final class TestState {
-
-		/** @var array<int, int> */
-		public static $meta = array();
-
-		/** @var array<string, int> */
-		public static $transients = array();
-
-		/** @var array<int, bool> */
-		public static $cache_deletions = array();
-
-		/** @var array<string, mixed> */
-		public static $route = array();
-
-		public static function reset(): void {
-			self::$meta            = array();
-			self::$transients      = array();
-			self::$cache_deletions = array();
-			self::$route           = array();
-		}
-	}
-
-	final class TestWpdb {
-
-		/** @var string */
-		public $postmeta = 'wp_postmeta';
-
-		public function prepare( string $query, int $post_id ): int {
-			unset( $query );
-
-			return $post_id;
-		}
-
-		public function query( int $post_id ): int {
-			if ( ! array_key_exists( $post_id, TestState::$meta ) ) {
-				return 0;
-			}
-
-			++TestState::$meta[ $post_id ];
-
-			return 1;
-		}
-	}
+	// These are defined in the global namespace (rather than alongside TestState
+	// below) so PHP's namespace fallback for unqualified function calls resolves
+	// them regardless of which sub-namespace (Core, Api, Frontend) calls them —
+	// exactly like real WordPress functions, which are always global.
 
 	function add_action(): void {
 	}
@@ -210,7 +170,54 @@ namespace Bubuku\Plugins\PostViewCount {
 
 		return $text;
 	}
+}
 
-	require_once dirname( __DIR__ ) . '/src/PCV_db.php';
-	require_once dirname( __DIR__ ) . '/src/PCV_restapi.php';
+namespace Bubuku\Plugins\PostViewCount {
+
+	final class TestState {
+
+		/** @var array<int, int> */
+		public static $meta = array();
+
+		/** @var array<string, int> */
+		public static $transients = array();
+
+		/** @var array<int, bool> */
+		public static $cache_deletions = array();
+
+		/** @var array<string, mixed> */
+		public static $route = array();
+
+		public static function reset(): void {
+			self::$meta            = array();
+			self::$transients      = array();
+			self::$cache_deletions = array();
+			self::$route           = array();
+		}
+	}
+
+	final class TestWpdb {
+
+		/** @var string */
+		public $postmeta = 'wp_postmeta';
+
+		public function prepare( string $query, int $post_id ): int {
+			unset( $query );
+
+			return $post_id;
+		}
+
+		public function query( int $post_id ): int {
+			if ( ! array_key_exists( $post_id, TestState::$meta ) ) {
+				return 0;
+			}
+
+			++TestState::$meta[ $post_id ];
+
+			return 1;
+		}
+	}
+
+	require_once dirname( __DIR__ ) . '/src/Core/Db.php';
+	require_once dirname( __DIR__ ) . '/src/Api/RestApi.php';
 }
