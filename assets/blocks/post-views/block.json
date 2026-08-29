@@ -1,0 +1,21 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "bubuku/post-views",
+	"title": "Bubuku · Vistas del post",
+	"category": "widgets",
+	"icon": "chart-line",
+	"description": "Muestra el número de vistas registradas para el post actual.",
+	"textdomain": "bubuku-post-view-count",
+	"attributes": {
+		"showLastViewed": {
+			"type": "boolean",
+			"default": false
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "file:./index.js",
+	"render": "file:./render.php"
+}

@@ -541,13 +541,50 @@ Gracias a la decisión 2 **no hace falta esquema nuevo**:
   > las cuatro tools de la Fase 3 — delega en `Core\Query::trend()`. Registrada y probada contra
   > el `BubukuConex\Registry` real en `test.wp.local`.
 
-> **Nota de alcance**: la gráfica en el admin, la comparativa periodo/periodo y el shortcode +
-> bloque de Gutenberg **no están implementados**. Se decidió deliberadamente empezar solo por el
-> backend (endpoint REST + tool MCP), que no abre ninguna decisión de arquitectura nueva, y dejar
-> la UI para una iteración aparte — en particular, un bloque de Gutenberg típico necesita build
-> step (`@wordpress/scripts`), lo que choca con la regla actual de `AGENTS.md` de que este plugin
-> no tiene build step de JS/CSS a propósito; esa tensión hay que resolverla explícitamente antes
-> de abordar esa parte, no asumirla.
+> **Nota de alcance (histórica)**: cuando se escribió esta sección, la gráfica en el admin, la
+> comparativa periodo/periodo y el shortcode + bloque de Gutenberg no estaban implementados,
+> deliberadamente: se empezó solo por el backend (endpoint REST + tool MCP), dejando la UI para
+> una iteración aparte porque un bloque de Gutenberg típico necesita build step
+> (`@wordpress/scripts`), lo que choca con la regla de `AGENTS.md` de que este plugin no tiene
+> build step de JS/CSS a propósito. Esa tensión se resolvió tal como se anticipaba aquí — ver la
+> nota `✅ Implementada` justo debajo.
+
+> ✅ **UI implementada** (versión sin publicar, ver `docs/CHANGELOG.md` → `[Unreleased]`):
+>
+> - **Gráfica de evolución + comparativa**: nueva sección en `Admin\SettingsPage`, con un
+>   `<canvas>` pintado a mano (Canvas 2D, sin librería de gráficos ni CDN) y un selector de
+>   granularidad día/semana/mes, alimentados por `GET /bbk_postview/v1/trends` (ya existente,
+>   sin cambios en `Api\TrendsApi` ni en `Core\Query`). La comparativa de periodo actual vs.
+>   anterior (últimos 30 días vs. los 30 anteriores) se calcula **en el cliente**: una única
+>   llamada al endpoint con `granularity=day` sobre la ventana de 60 días, sumando los buckets
+>   a cada lado de la fecha de corte — no hace falta un endpoint nuevo. Nuevos assets
+>   `assets/js/admin-stats.js` y `assets/css/admin-stats.css`, encolados solo en esa página
+>   admin comprobando el `$hook_suffix`.
+> - **Renderizado compartido `Frontend\ViewsDisplay`**: un único método (`render()`) que pinta
+>   "N vistas" (y opcionalmente la fecha de última visita, en la zona horaria del sitio vía
+>   `wp_date()`), usado tanto por el shortcode como por el bloque — ninguno de los dos repite
+>   la lógica de formato.
+> - **Shortcode `[bbk_post_views]`** (`Frontend\Shortcode`), atributos `post_id` (por defecto el
+>   post actual) y `show_last_viewed`.
+> - **Bloque de Gutenberg `bubuku/post-views`** (`Frontend\Block`, registrado en `init`, y
+>   `assets/blocks/post-views/`): decisión tomada con el usuario de no introducir
+>   `@wordpress/scripts`. En su lugar, `index.js` está escrito a mano (sin JSX, `wp.element.createElement`)
+>   y usa el componente core `ServerSideRender` para previsualizar en el editor el mismo
+>   `render.php` que se sirve en el frontend (ambos delegan en `ViewsDisplay`). Las dependencias
+>   del script (`wp-blocks`, `wp-element`, `wp-block-editor`, `wp-components`,
+>   `wp-server-side-render`, `wp-i18n`) se declaran a mano en `index.asset.php` — el equivalente
+>   manual del manifiesto que generaría un build real, que WordPress ya sabe leer sin más
+>   configuración cuando `block.json` referencia `"file:./index.js"`.
+> - Tests nuevos en `Tests/run.php` cubren `ViewsDisplay::render()` (conteo, fecha de última
+>   visita, y cadena vacía para un tipo de contenido deshabilitado). El registro del shortcode,
+>   del bloque y el pintado real de la gráfica no son testeables sin WordPress/navegador real
+>   (mismo patrón que `dbDelta()`/`WP_CLI`/`PostListColumns` en fases previas) — validados
+>   manualmente en `test.wp.local`.
+>
+> **Pendiente, fuera de esta pasada**: los listados "en alza"/"en caída" (necesitan un método
+> nuevo en `Core\Query` y decidir el criterio de variación — absoluta vs. porcentual, umbral
+> mínimo de vistas para no generar ruido con posts que pasan de 0 a 1 vista). Se deja como nota
+> explícita, no como omisión silenciosa.
 
 ### F5 — Dimensiones de sesión (pantalla y procedencia)
 

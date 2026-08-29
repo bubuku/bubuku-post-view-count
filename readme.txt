@@ -64,6 +64,12 @@ No, the plugin only updates the view count after some time has passed through an
 = Is this plugin compatible with multisite installations? =
 Yes, the plugin now includes multisite support, including in the uninstall routine.
 
+= Can I show the view count inside a post or page? =
+Yes. Use the `[bbk_post_views]` shortcode, or add the "Bubuku · Vistas del post" block in the block editor. Both show the current post's view count; add `show_last_viewed="1"` to the shortcode (or toggle "Mostrar la fecha de la última visita" on the block) to also show the date of the last view. A content type that isn't counting views, per your settings, shows nothing.
+
+= Can I see how views have evolved over time? =
+Yes. Settings → Post View Count includes a chart of views over time (day/week/month) and a comparison of the current 30-day period against the previous one, both drawn from the same data used by the REST/MCP trend endpoints.
+
 
 == Changelog ==
 

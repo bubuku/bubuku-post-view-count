@@ -15,6 +15,7 @@ use Bubuku\Plugins\PostViewCount\Api\TrendsApi;
 use Bubuku\Plugins\PostViewCount\Core\Db;
 use Bubuku\Plugins\PostViewCount\Core\Query;
 use Bubuku\Plugins\PostViewCount\Core\Schema;
+use Bubuku\Plugins\PostViewCount\Frontend\ViewsDisplay;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetContentTrends;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetPostViews;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetViewsSummary;
@@ -376,6 +377,31 @@ $tests = array(
 		$response = ( new TrendsApi() )->get_trends( $request );
 
 		bbk_test_same( array( 'trend' => array() ), $response->get_data(), 'With no daily rows recorded, the trend must be an empty series.' );
+	},
+	'ViewsDisplay::render() shows the view count, and the last-viewed date when asked' => static function (): void {
+		TestState::reset();
+		TestState::$options['date_format'] = 'Y-m-d';
+		TestState::$options['time_format'] = 'H:i';
+		TestState::$now                    = '2026-01-01 10:30:00';
+		( new Db() )->record_view( 42 );
+		( new Db() )->record_view( 42 );
+
+		bbk_test_same(
+			'<span class="bbk-post-views">2 views</span>',
+			ViewsDisplay::render( 42 ),
+			'ViewsDisplay::render() must show the recorded view count.'
+		);
+		bbk_test_same(
+			'<span class="bbk-post-views">2 views &middot; last view: 2026-01-01 10:30</span>',
+			ViewsDisplay::render( 42, array( 'show_last_viewed' => true ) ),
+			'ViewsDisplay::render() must append the last-viewed date when asked.'
+		);
+	},
+	'ViewsDisplay::render() returns an empty string for a post type that is not enabled' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'page' ) ) );
+
+		bbk_test_same( '', ViewsDisplay::render( 42 ), 'A disabled post type must never be rendered.' );
 	},
 );
 

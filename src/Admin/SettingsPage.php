@@ -28,10 +28,19 @@ class SettingsPage {
 	const SECTION_ID   = 'bbk_postview_main';
 	const RESET_ACTION = 'bbk_postview_reset_data';
 
+	/**
+	 * Hook suffix returned by add_options_page(), used to scope the stats
+	 * script/style to this admin page only.
+	 *
+	 * @var string
+	 */
+	private $hook_suffix = '';
+
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_post_' . self::RESET_ACTION, array( $this, 'handle_reset_data' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_stats_assets' ) );
 	}
 
 	/**
@@ -40,12 +49,55 @@ class SettingsPage {
 	 * @return void
 	 */
 	public function register_menu() {
-		add_options_page(
+		$this->hook_suffix = (string) add_options_page(
 			__( 'Post View Count', 'bubuku-post-view-count' ),
 			__( 'Post View Count', 'bubuku-post-view-count' ),
 			'manage_options',
 			self::PAGE_SLUG,
 			array( $this, 'render' )
+		);
+	}
+
+	/**
+	 * Enqueues the evolution chart script/style, only on this settings page.
+	 *
+	 * @param string $hook_suffix Current admin page hook suffix.
+	 * @return void
+	 */
+	public function enqueue_stats_assets( string $hook_suffix ) {
+		if ( $hook_suffix !== $this->hook_suffix ) {
+			return;
+		}
+
+		wp_enqueue_style(
+			'bbk-postview-admin-stats',
+			BBK_PLUGIN_ASSETS_URL . '/css/admin-stats.css',
+			array(),
+			BBK_PLUGIN_VERSION
+		);
+
+		wp_enqueue_script(
+			'bbk-postview-admin-stats',
+			BBK_PLUGIN_ASSETS_URL . '/js/admin-stats.js',
+			array(),
+			BBK_PLUGIN_VERSION,
+			true
+		);
+
+		wp_localize_script(
+			'bbk-postview-admin-stats',
+			'bbk_postview_stats',
+			array(
+				'api_trends' => rest_url( BBK_PLUGIN_ENDPOINTS_URL . '/trends' ),
+				'nonce'      => wp_create_nonce( 'wp_rest' ),
+				'i18n'       => array(
+					'noData'     => __( 'Todavía no hay datos suficientes para dibujar la gráfica.', 'bubuku-post-view-count' ),
+					'thisPeriod' => __( 'Este periodo', 'bubuku-post-view-count' ),
+					/* translators: %s: percentage change vs the previous period, e.g. "+12%". */
+					'vsPrevious' => __( '%s vs. periodo anterior', 'bubuku-post-view-count' ),
+					'views'      => __( 'vistas', 'bubuku-post-view-count' ),
+				),
+			)
 		);
 	}
 
@@ -90,6 +142,24 @@ class SettingsPage {
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Bubuku Post View Count', 'bubuku-post-view-count' ); ?></h1>
+
+			<h2><?php esc_html_e( 'Evolución de vistas', 'bubuku-post-view-count' ); ?></h2>
+			<div id="bbk-postview-stats" class="bbk-postview-stats">
+				<p>
+					<label for="bbk-postview-granularity">
+						<?php esc_html_e( 'Agrupar por', 'bubuku-post-view-count' ); ?>
+					</label>
+					<select id="bbk-postview-granularity">
+						<option value="day"><?php esc_html_e( 'Día', 'bubuku-post-view-count' ); ?></option>
+						<option value="week"><?php esc_html_e( 'Semana', 'bubuku-post-view-count' ); ?></option>
+						<option value="month"><?php esc_html_e( 'Mes', 'bubuku-post-view-count' ); ?></option>
+					</select>
+				</p>
+				<p id="bbk-postview-comparison" class="description"></p>
+				<canvas id="bbk-postview-chart" width="900" height="260"></canvas>
+			</div>
+
+			<hr />
 
 			<form method="post" action="options.php">
 				<?php

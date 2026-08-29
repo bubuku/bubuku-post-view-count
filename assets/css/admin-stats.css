@@ -1,0 +1,24 @@
+.bbk-postview-stats {
+	max-width: 900px;
+	margin-bottom: 1.5em;
+}
+
+.bbk-postview-stats canvas {
+	display: block;
+	width: 100%;
+	height: auto;
+	background: #fff;
+	border: 1px solid #dcdcde;
+}
+
+#bbk-postview-comparison {
+	font-size: 14px;
+}
+
+#bbk-postview-comparison.is-up {
+	color: #007017;
+}
+
+#bbk-postview-comparison.is-down {
+	color: #b32d2e;
+}

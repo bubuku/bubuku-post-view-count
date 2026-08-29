@@ -243,6 +243,24 @@ namespace {
 		return $text;
 	}
 
+	function esc_html__( string $text, string $domain ): string {
+		unset( $domain );
+
+		return $text;
+	}
+
+	function esc_html( string $text ): string {
+		return htmlspecialchars( $text, ENT_QUOTES );
+	}
+
+	function number_format_i18n( $number, int $decimals = 0 ): string {
+		return number_format( (float) $number, $decimals );
+	}
+
+	function wp_date( string $format, int $timestamp ): string {
+		return gmdate( $format, $timestamp );
+	}
+
 	function sanitize_key( string $key ): string {
 		return strtolower( preg_replace( '/[^a-z0-9_\-]/', '', $key ) );
 	}
@@ -493,6 +511,7 @@ namespace Bubuku\Plugins\PostViewCount {
 	require_once dirname( __DIR__ ) . '/src/Api/RestApi.php';
 	require_once dirname( __DIR__ ) . '/src/Api/TrendsApi.php';
 	require_once dirname( __DIR__ ) . '/src/Core/Query.php';
+	require_once dirname( __DIR__ ) . '/src/Frontend/ViewsDisplay.php';
 }
 
 namespace BubukuConex {

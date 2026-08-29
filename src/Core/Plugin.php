@@ -17,6 +17,8 @@ use Bubuku\Plugins\PostViewCount\Admin\SettingsPage;
 use Bubuku\Plugins\PostViewCount\Api\RestApi;
 use Bubuku\Plugins\PostViewCount\Api\TrendsApi;
 use Bubuku\Plugins\PostViewCount\Frontend\Assets;
+use Bubuku\Plugins\PostViewCount\Frontend\Block;
+use Bubuku\Plugins\PostViewCount\Frontend\Shortcode;
 use Bubuku\Plugins\PostViewCount\Mcp\SatelliteConnector;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetContentTrends;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetPostViews;
@@ -48,6 +50,8 @@ class Plugin {
 		new Assets();
 		new RestApi();
 		new TrendsApi();
+		new Shortcode();
+		new Block();
 
 		if ( is_admin() ) {
 			new SettingsPage();

@@ -37,6 +37,9 @@ Composer (`composer.json`) se usa **solo como tooling de desarrollo**: PHPCS, PH
 | `Mcp\Tools\GetPostViews` | `src/Mcp/Tools/GetPostViews.php` | Tool `bubuku-views/get-post-views` — resuelve `post_id` o `url` (`url_to_postid()`), delega en `Core\Query::post_stats()` |
 | `Mcp\Tools\GetViewsSummary` | `src/Mcp/Tools/GetViewsSummary.php` | Tool `bubuku-views/get-views-summary` — delega en `Core\Query::summary()` |
 | `Mcp\Tools\GetContentTrends` | `src/Mcp/Tools/GetContentTrends.php` | Tool `bubuku-views/get-content-trends` — delega en `Core\Query::trend()` |
+| `Frontend\ViewsDisplay` | `src/Frontend/ViewsDisplay.php` | Renderizado "N vistas" (+ fecha de última visita opcional) compartido por el shortcode y el bloque — sin hooks propios, un único método estático. Cadena vacía si el CPT no está habilitado o el post no es público |
+| `Frontend\Shortcode` | `src/Frontend/Shortcode.php` | Registra `[bbk_post_views]` (`post_id`, `show_last_viewed`); delega en `Frontend\ViewsDisplay` |
+| `Frontend\Block` | `src/Frontend/Block.php` | Registra el bloque `bubuku/post-views` desde `assets/blocks/post-views/` en `init`; el `render_callback` (en `render.php`) delega en `Frontend\ViewsDisplay` |
 
 Las cuatro tools extienden `BubukuConex\Abstract_Satellite_Tool` (clase del hub), así que solo pueden cargarse con el hub presente — el autoloader propio del plugin (`bbk_autoload`) ya es perezoso por diseño (`spl_autoload_register`), así que basta con instanciarlas solo dentro de `SatelliteConnector::register_tools()` para cumplir esa regla del contrato, sin mecanismo adicional.
 
@@ -89,7 +92,23 @@ Deduplicación de visitas: transients `bbk_view_{md5(post_id|ip|user_agent)}` co
 
 ## JavaScript — `assets/js/`
 
-No hay build step ni `assets/src/` — `assets/js/common.js` es JS plano servido directamente, sin proceso de compilación. Se encola con `strategy => defer` e `in_footer => true`.
+No hay build step ni `assets/src/` — todo el JS del plugin es plano, servido directamente, sin proceso de compilación:
+
+- `assets/js/common.js` — el script de conteo frontend, encolado con `strategy => defer` e `in_footer => true`.
+- `assets/js/admin-stats.js` + `assets/css/admin-stats.css` — gráfica de evolución y comparativa de periodo en Ajustes → Post View Count (`docs/ANALYTICS-PLAN.md` F4 UI). `fetch()` contra `GET /bbk_postview/v1/trends` con el nonce de `wp_rest`; el gráfico se pinta a mano con la Canvas 2D API, sin librería externa. Encolados solo en esa página admin.
+- `assets/blocks/post-views/index.js` — editor script del bloque `bubuku/post-views` (ver más abajo).
+
+## Bloque de Gutenberg — `assets/blocks/post-views/`
+
+Bloque `bubuku/post-views`, deliberadamente **sin build step** (decisión tomada junto con el
+usuario al implementar la UI de F4 — ver `docs/ANALYTICS-PLAN.md`):
+
+| Archivo | Rol |
+|---|---|
+| `block.json` | Metadatos estáticos; `editorScript: "file:./index.js"`, `render: "file:./render.php"` |
+| `index.js` | JS plano (sin JSX): `wp.blocks.registerBlockType` + `wp.element.createElement`; usa el componente core `ServerSideRender` para previsualizar en el editor el mismo render que ve el frontend |
+| `index.asset.php` | Manifiesto de dependencias escrito a mano (`wp-blocks`, `wp-element`, `wp-block-editor`, `wp-components`, `wp-server-side-render`, `wp-i18n`) — el equivalente manual de lo que generaría `@wordpress/scripts`; WordPress ya sabe leerlo junto a un `editorScript` de tipo `file:` sin configuración adicional |
+| `render.php` | `render_callback` del bloque — delega en `Frontend\ViewsDisplay::render()`, igual que el shortcode |
 
 ## Tests
 
@@ -143,6 +162,9 @@ bubuku-post-view-count/
 │  │  └─ index.php
 │  ├─ Frontend/
 │  │  ├─ Assets.php
+│  │  ├─ ViewsDisplay.php
+│  │  ├─ Shortcode.php
+│  │  ├─ Block.php
 │  │  └─ index.php
 │  ├─ Admin/
 │  │  ├─ Settings.php
@@ -164,8 +186,17 @@ bubuku-post-view-count/
 │  │  └─ index.php
 │  └─ index.php
 ├─ assets/
-│  └─ js/
-│     └─ common.js               Sin build step — JS plano
+│  ├─ js/
+│  │  ├─ common.js               Sin build step — JS plano
+│  │  └─ admin-stats.js          Gráfica/comparativa de F4 — JS plano
+│  ├─ css/
+│  │  └─ admin-stats.css
+│  └─ blocks/
+│     └─ post-views/             Bloque bubuku/post-views — sin build step
+│        ├─ block.json
+│        ├─ index.js
+│        ├─ index.asset.php      Manifiesto de dependencias escrito a mano
+│        └─ render.php
 ├─ Tests/                        Tests dependency-free (sin PHPUnit)
 │  ├─ bootstrap.php               Stubs mínimos de WordPress
 │  ├─ run.php
