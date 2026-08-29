@@ -23,6 +23,14 @@ class Schema {
 
 	const OPTION_SCHEMA_VERSION = 'bbk_schema_version';
 
+	/**
+	 * Option storing the UTC datetime the daily aggregate table started collecting data.
+	 * The migration from postmeta (§1.6) never backfills daily history, so any query with
+	 * a time window needs this to tell callers — MCP tools in particular — how far back
+	 * the data actually goes.
+	 */
+	const OPTION_DAILY_SINCE = 'bbk_postview_daily_since';
+
 	const PURGE_CRON_HOOK = 'bbk_postview_purge_daily';
 
 	const MIGRATION_CRON_HOOK = 'bbk_postview_migrate_batch';
@@ -138,7 +146,20 @@ class Schema {
 		if ( $is_new_install ) {
 			$this->schedule_migration();
 			update_option( self::OPTION_SCHEMA_VERSION, self::VERSION );
+			add_option( self::OPTION_DAILY_SINCE, current_time( 'mysql', true ) );
 		}
+	}
+
+	/**
+	 * UTC datetime the daily aggregate started collecting data, or null if this site
+	 * somehow never recorded it (should not happen from 1.2.1 onward).
+	 *
+	 * @return string|null
+	 */
+	public static function daily_data_since(): ?string {
+		$value = get_option( self::OPTION_DAILY_SINCE, '' );
+
+		return '' === $value ? null : (string) $value;
 	}
 
 	/**

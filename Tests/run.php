@@ -14,6 +14,10 @@ use Bubuku\Plugins\PostViewCount\Api\RestApi;
 use Bubuku\Plugins\PostViewCount\Core\Db;
 use Bubuku\Plugins\PostViewCount\Core\Query;
 use Bubuku\Plugins\PostViewCount\Core\Schema;
+use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetPostViews;
+use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetViewsSummary;
+use Bubuku\Plugins\PostViewCount\Mcp\Tools\ListMostViewed;
+use Bubuku\Plugins\PostViewCount\Mcp\Tools\ListStaleContent;
 use Bubuku\Plugins\PostViewCount\TestState;
 use Bubuku\Plugins\PostViewCount\TestWpdb;
 
@@ -287,6 +291,59 @@ $tests = array(
 		bbk_test_same( 1, $stats['views'], 'post_stats() must reflect the recorded view count.' );
 		bbk_test_same( '2026-01-01 10:00:00', $stats['first_viewed_at'], 'post_stats() must reflect first_viewed_at.' );
 		bbk_test_same( '2026-01-01 10:00:00', $stats['last_viewed_at'], 'post_stats() must reflect last_viewed_at.' );
+	},
+	'ListMostViewed tool delegates to Query::most_viewed() and reports data_available_since' => static function (): void {
+		TestState::reset();
+		TestState::$options[ Schema::OPTION_DAILY_SINCE ] = '2026-01-01 00:00:00';
+
+		$result = ( new ListMostViewed() )->execute_callback( array( 'limit' => 5 ) );
+
+		bbk_test_same( true, isset( $result['results'] ) && is_array( $result['results'] ), 'The tool must return a "results" array.' );
+		bbk_test_same( '2026-01-01 00:00:00', $result['meta']['data_available_since'], 'The tool must report data_available_since from Schema::daily_data_since().' );
+	},
+	'ListStaleContent tool delegates to Query::stale()'  => static function (): void {
+		TestState::reset();
+
+		$result = ( new ListStaleContent() )->execute_callback( array( 'post_types' => array( 'page' ) ) );
+
+		bbk_test_same( array(), $result['results'], 'A disabled post type must return no rows, same as Query::stale().' );
+	},
+	'GetPostViews tool returns an error when neither post_id nor url is given' => static function (): void {
+		TestState::reset();
+
+		$result = ( new GetPostViews() )->execute_callback( array() );
+
+		bbk_test_same( 'missing_post', $result['error']['code'], 'A call with neither post_id nor url must return the missing_post error.' );
+	},
+	'GetPostViews tool resolves post_id directly and returns post_stats()' => static function (): void {
+		TestState::reset();
+		TestState::$now             = '2026-01-01 10:00:00';
+		TestState::$post_titles[42] = 'Example Post';
+		( new Db() )->record_view( 42 );
+
+		$result = ( new GetPostViews() )->execute_callback( array( 'post_id' => 42 ) );
+
+		bbk_test_same( 42, $result['id'], 'GetPostViews must return the requested post ID.' );
+		bbk_test_same( 1, $result['views'], 'GetPostViews must reflect the recorded view count.' );
+	},
+	'GetPostViews tool resolves the post via url when post_id is not given' => static function (): void {
+		TestState::reset();
+		TestState::$now                                                      = '2026-01-01 10:00:00';
+		TestState::$post_titles[42]                                          = 'Example Post';
+		TestState::$url_to_post_id['https://test.wp.local/?p=42']            = 42;
+		( new Db() )->record_view( 42 );
+
+		$result = ( new GetPostViews() )->execute_callback( array( 'url' => 'https://test.wp.local/?p=42' ) );
+
+		bbk_test_same( 42, $result['id'], 'GetPostViews must resolve the post via url_to_postid() when post_id is absent.' );
+	},
+	'GetViewsSummary tool delegates to Query::summary() and adds computed_at' => static function (): void {
+		TestState::reset();
+
+		$result = ( new GetViewsSummary() )->execute_callback( array() );
+
+		bbk_test_same( 0, $result['total_views'], 'With no data recorded, total_views must be 0.' );
+		bbk_test_same( true, isset( $result['computed_at'] ), 'The tool must add a computed_at timestamp.' );
 	},
 );
 

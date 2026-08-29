@@ -181,6 +181,20 @@ namespace {
 		return true;
 	}
 
+	function add_option( string $key, $value ): bool {
+		if ( isset( TestState::$options[ $key ] ) ) {
+			return false;
+		}
+
+		TestState::$options[ $key ] = $value;
+
+		return true;
+	}
+
+	function url_to_postid( string $url ) {
+		return TestState::$url_to_post_id[ $url ] ?? 0;
+	}
+
 	function delete_option( string $key ): bool {
 		unset( TestState::$options[ $key ] );
 
@@ -306,6 +320,9 @@ namespace Bubuku\Plugins\PostViewCount {
 		/** @var array<string, array<string, mixed>> Simulated object cache, keyed by group then key. */
 		public static $cache = array();
 
+		/** @var array<string, int> Simulated url_to_postid() lookups. */
+		public static $url_to_post_id = array();
+
 		/** @var string Simulated `current_time( 'mysql', true )`. */
 		public static $now = '2026-01-01 00:00:00';
 
@@ -319,6 +336,7 @@ namespace Bubuku\Plugins\PostViewCount {
 			self::$route           = array();
 			self::$post_titles     = array();
 			self::$cache           = array();
+			self::$url_to_post_id  = array();
 			self::$now             = '2026-01-01 00:00:00';
 		}
 	}
@@ -462,4 +480,46 @@ namespace Bubuku\Plugins\PostViewCount {
 	require_once dirname( __DIR__ ) . '/src/Admin/Settings.php';
 	require_once dirname( __DIR__ ) . '/src/Api/RestApi.php';
 	require_once dirname( __DIR__ ) . '/src/Core/Query.php';
+}
+
+namespace BubukuConex {
+
+	// Minimal stand-in for the hub's base class (github.com/bubuku/bubuku-mcp-conex),
+	// present only so the satellite tools can be instantiated and exercised in isolation
+	// — the real class is never available in this dependency-free harness. Kept to the
+	// subset of methods this plugin's tools actually override.
+	abstract class Abstract_Satellite_Tool {
+
+		abstract public function get_name(): string;
+
+		abstract public function get_label(): string;
+
+		abstract public function get_description(): string;
+
+		abstract public function get_input_schema(): array;
+
+		abstract public function get_required_capability(): string;
+
+		/**
+		 * @param array<string, mixed> $args
+		 * @return mixed
+		 */
+		abstract public function execute_callback( array $args = array() );
+
+		abstract public function get_help(): array;
+
+		/**
+		 * @param array<string, mixed> $args
+		 * @param mixed                $result
+		 */
+		abstract public function get_log_summary( array $args, $result ): string;
+	}
+}
+
+namespace {
+
+	require_once dirname( __DIR__ ) . '/src/Mcp/Tools/ListMostViewed.php';
+	require_once dirname( __DIR__ ) . '/src/Mcp/Tools/ListStaleContent.php';
+	require_once dirname( __DIR__ ) . '/src/Mcp/Tools/GetPostViews.php';
+	require_once dirname( __DIR__ ) . '/src/Mcp/Tools/GetViewsSummary.php';
 }

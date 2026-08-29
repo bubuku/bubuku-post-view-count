@@ -40,6 +40,7 @@ function bbk_uninstall_current_site() {
 
 	delete_option( 'bbk_postview_settings' );
 	delete_option( Schema::OPTION_SCHEMA_VERSION );
+	delete_option( Schema::OPTION_DAILY_SINCE );
 
 	global $wpdb;
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Uninstall-only cleanup of leftover transient options; no object cache is available during uninstall.

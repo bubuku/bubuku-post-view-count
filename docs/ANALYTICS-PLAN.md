@@ -379,6 +379,21 @@ es contenido sin visitas recientes — debe aparecer, no filtrarse por el `WHERE
 
 ### 4.2 Conector satélite
 
+> ✅ **Implementada en la versión `1.2.1`** como `Mcp\SatelliteConnector`. Cableada en
+> `Core\Plugin::init_mcp_satellite()`, hookeada a `init` (no directamente en el `init()` del
+> plugin, que corre en `plugins_loaded`): la config llama `__()` de forma síncrona al
+> construirse, y WordPress solo permite cargar el text domain desde `init` en adelante —
+> hacerlo antes producía el aviso `_load_textdomain_just_in_time`. Es seguro: el hub
+> recolecta las tools de forma perezosa (`Registry::collect()`, llamado desde
+> `Mcp\Server` en la primera petición MCP real), muy por detrás de `init`, así que
+> registrar los hooks del contrato ahí nunca arriesga perderse esa recolección — verificado
+> leyendo `bubuku-mcp-conex/src/Registry.php` y `src/Mcp/Server.php` en el hub real. Validado
+> contra el `BubukuConex\Registry` real en `test.wp.local`: las 4 tools se registran sin
+> rechazos, el satélite se declara `compatible: true` y la entrada de catálogo se sirve
+> correctamente. Divergencias respecto al contrato genérico del skill `wp-mcp-conex`
+> aplicadas tal como decía este documento (ver tabla más abajo): sin `Requires Plugins`, sin
+> admin notice cuando falta el hub.
+
 Copiar `skills/bubuku/wp-mcp-conex/assets/class-satellite-connector.php`, cambiar namespace
 y configuración. El contrato del hub está implementado y estable
 (`bubuku-mcp-conex` v0.2.0, `BUBUKU_CONEX_CONTRACT_VERSION = 1`).
@@ -423,6 +438,19 @@ ausente" de un fatal error.
 mantener dos paquetes distintos no compensa.
 
 ### 4.3 Las tools
+
+> ✅ **Implementadas en la versión `1.2.1`** en `src/Mcp/Tools/` (`ListMostViewed`,
+> `ListStaleContent`, `GetPostViews`, `GetViewsSummary`), con los nombres y argumentos de
+> la tabla de abajo tal cual. Cada una delega toda la lógica en el método correspondiente
+> de `Core\Query` (§4.1) — ninguna repite SQL. `get_post_views` acepta `post_id` **o** `url`
+> (resuelta con `url_to_postid()`) y devuelve `{'error': {...}}` si no se da ninguno de los
+> dos, o si el post no existe/no es público. `data_available_since` (nota obligatoria de más
+> abajo) se expone en `list-most-viewed` vía el nuevo `Core\Schema::daily_data_since()`,
+> respaldado por la option `Schema::OPTION_DAILY_SINCE`, escrita una sola vez en la
+> primera instalación del esquema. Tests en `Tests/run.php` cubren la delegación de cada
+> tool y el caso de error de `get-post-views`; el registro real contra el hub (sin
+> rechazos, satélite `compatible: true`, catálogo servido) se validó manualmente en
+> `test.wp.local`. WP-CLI (§4.4) no implementado — extra opcional, no bloqueante.
 
 Cada una extiende `BubukuConex\Abstract_Satellite_Tool` e implementa los seis métodos
 abstractos. `permission_callback()` y `execute_ability()` son `final` en el hub: la tool
