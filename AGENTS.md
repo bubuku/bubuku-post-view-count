@@ -146,5 +146,6 @@ bash scripts/build.sh                # genera dist/bubuku-post-view-count-{versi
 - `docs/MIGRATION-PSR4.md` — migración PSR-4 (histórico): eliminación del prefijo `PCV_*` y paso a `src/{Core,Api,Frontend}/` (ya implementada).
 - `docs/IMPROVEMENT-PLAN.md` — plan de mejoras pendiente (sus fases 6–7 quedan reemplazadas por `docs/ANALYTICS-PLAN.md`).
 - `docs/ANALYTICS-PLAN.md` — hoja de ruta por fases: tabla propia con última visita y agregado diario, página de ajustes con CPT seleccionables, y exposición de los datos como satélite de `bubuku-mcp-conex`.
+- `docs/MIGRAR-DATOS.md` — guía genérica (no específica de este plugin) del patrón de migración automática de datos al actualizar, extraída de `Core\Schema`. Reutilizable en cualquier otro plugin Bubuku que cambie su modelo de almacenamiento.
 
 Sigue estas reglas **salvo que la petición explícita del usuario indique lo contrario**.
