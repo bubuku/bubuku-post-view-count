@@ -234,6 +234,29 @@ namespace {
 		);
 	}
 
+	function get_the_title( int $post_id ): string {
+		return TestState::$post_titles[ $post_id ] ?? ( 'Post ' . $post_id );
+	}
+
+	function get_permalink( int $post_id ): string {
+		return 'https://test.wp.local/?p=' . $post_id;
+	}
+
+	function wp_json_encode( $value ) {
+		return json_encode( $value );
+	}
+
+	function wp_cache_get( string $key, string $group ) {
+		return TestState::$cache[ $group ][ $key ] ?? false;
+	}
+
+	function wp_cache_set( string $key, $value, string $group, int $ttl = 0 ): bool {
+		unset( $ttl );
+		TestState::$cache[ $group ][ $key ] = $value;
+
+		return true;
+	}
+
 	function get_editable_roles(): array {
 		return array(
 			'administrator' => array(
@@ -277,6 +300,12 @@ namespace Bubuku\Plugins\PostViewCount {
 		/** @var array<string, mixed> */
 		public static $route = array();
 
+		/** @var array<int, string> */
+		public static $post_titles = array();
+
+		/** @var array<string, array<string, mixed>> Simulated object cache, keyed by group then key. */
+		public static $cache = array();
+
 		/** @var string Simulated `current_time( 'mysql', true )`. */
 		public static $now = '2026-01-01 00:00:00';
 
@@ -288,6 +317,8 @@ namespace Bubuku\Plugins\PostViewCount {
 			self::$options         = array();
 			self::$cache_deletions = array();
 			self::$route           = array();
+			self::$post_titles     = array();
+			self::$cache           = array();
 			self::$now             = '2026-01-01 00:00:00';
 		}
 	}
@@ -296,6 +327,9 @@ namespace Bubuku\Plugins\PostViewCount {
 
 		/** @var string */
 		public $postmeta = 'wp_postmeta';
+
+		/** @var string */
+		public $posts = 'wp_posts';
 
 		/** @var string */
 		public $options = 'wp_options';
@@ -389,6 +423,12 @@ namespace Bubuku\Plugins\PostViewCount {
 			return null;
 		}
 
+		public function get_var( string $query ) {
+			unset( $query );
+
+			return 0;
+		}
+
 		public function get_results( string $query ) {
 			if ( preg_match( "/FROM wp_postmeta WHERE meta_key = 'views'/", $query ) ) {
 				$offset = 0;
@@ -421,4 +461,5 @@ namespace Bubuku\Plugins\PostViewCount {
 	require_once dirname( __DIR__ ) . '/src/Core/Db.php';
 	require_once dirname( __DIR__ ) . '/src/Admin/Settings.php';
 	require_once dirname( __DIR__ ) . '/src/Api/RestApi.php';
+	require_once dirname( __DIR__ ) . '/src/Core/Query.php';
 }

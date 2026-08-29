@@ -3,6 +3,12 @@
 Todos los cambios relevantes de este proyecto se documentan aquí.
 Formato basado en [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.2.1] - 2026-08-29
+### Añadido
+- Fase 3 de `docs/ANALYTICS-PLAN.md` (§4.1, parcial): `Core\Query`, capa de consultas de solo lectura sobre las tablas propias — `most_viewed()`, `stale()`, `post_stats()`, `trend()`, `summary()`. Sin dependencia de MCP; reutilizable por la página de ajustes, WP-CLI o una futura tool. `post_types` siempre intersectado con los tipos habilitados, `limit` con tope duro de 100, cache corta de objeto (5 min) en `most_viewed()`. El conector satélite MCP y las tools siguen pendientes.
+### Arreglado
+- Warnings de Plugin Check en el zip de `dist/`: nonce verification en la lectura del flag `bbk_postview_reset` de `Admin\SettingsPage` (falso positivo, es solo lectura para mostrar un notice), y direct-DB-call / no-caching / unescaped-parameter en las consultas propias de `Core\Db`, `Core\Schema` y `uninstall.php` sobre las tablas propias del plugin — documentadas con `phpcs:ignore` justificado, sin cambios de comportamiento.
+
 ## [1.2.0] - 2026-08-29
 ### Añadido
 - Fase 1 de `docs/ANALYTICS-PLAN.md`: modelo de datos propio. Nuevas tablas `{prefix}bbk_post_views` (total, primera y última visita) y `{prefix}bbk_post_views_daily` (agregado diario, base para consultas con ventana temporal en fases futuras).

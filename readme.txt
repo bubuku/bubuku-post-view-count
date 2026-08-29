@@ -4,7 +4,7 @@ Tags: page view count, post views, post count, posts, post view count
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -66,6 +66,8 @@ Yes, the plugin now includes multisite support, including in the uninstall routi
 
 
 == Changelog ==
+
+= 1.2.1 =
 
 = 1.2.0 =
 * The view counter now has its own database tables (`{prefix}bbk_post_views`, `{prefix}bbk_post_views_daily`), tracking the date and time of the first and last view per post in addition to the total — the first step towards analytics features (most-viewed content, stale content) planned for upcoming versions.

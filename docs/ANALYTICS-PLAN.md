@@ -347,6 +347,18 @@ no toca ninguna clase existente.
 
 ### 4.1 `PCV_query` — consultas puras
 
+> ✅ **Implementada en la versión `1.2.1`** como `Core\Query` (post-migración PSR-4, no
+> `PCV_query`). Los cinco métodos de la tabla de abajo están implementados tal cual, con
+> `post_types` siempre intersectado con `Settings::enabled_post_types()`, `LIMIT` con tope
+> duro de 100, `$wpdb->prepare()` en cada consulta y cache corta de objeto (5 min) en
+> `most_viewed()`. `stale()` trata explícitamente `last_viewed_at IS NULL` (posts nunca
+> vistos) vía `LEFT JOIN`, como exige esta sección. Tests nuevos en `Tests/run.php` cubren
+> que un post type no habilitado nunca llega a consultarse; las consultas con `JOIN` a
+> `wp_posts` (filtrado real por tipo, `trend()`) no tienen tabla simulada en el harness sin
+> dependencias y se validan manualmente en `test.wp.local`, mismo patrón que `dbDelta()`/
+> WP-Cron en la Fase 1. El resto de la Fase 3 (conector satélite MCP, tools, WP-CLI) sigue
+> pendiente.
+
 Clase sin ninguna dependencia de MCP, reutilizable por las tools, por WP-CLI, por el admin
 y por un futuro endpoint REST de lectura. **Toda la lógica SQL vive aquí y solo aquí.**
 

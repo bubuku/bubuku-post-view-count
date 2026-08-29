@@ -12,6 +12,7 @@ declare( strict_types=1 );
 use Bubuku\Plugins\PostViewCount\Admin\Settings;
 use Bubuku\Plugins\PostViewCount\Api\RestApi;
 use Bubuku\Plugins\PostViewCount\Core\Db;
+use Bubuku\Plugins\PostViewCount\Core\Query;
 use Bubuku\Plugins\PostViewCount\Core\Schema;
 use Bubuku\Plugins\PostViewCount\TestState;
 use Bubuku\Plugins\PostViewCount\TestWpdb;
@@ -245,6 +246,47 @@ $tests = array(
 			'A bot request must not be recorded.'
 		);
 		bbk_test_same( false, isset( TestState::$views[77] ), 'A bot request must not create a views row.' );
+	},
+	'Query::most_viewed() returns an empty array for a post type that is not enabled' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+
+		bbk_test_same( array(), Query::most_viewed( array( 'page' ) ), 'A disabled post type must never be queried, and must return no rows.' );
+	},
+	'Query::stale() returns an empty array for a post type that is not enabled' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+
+		bbk_test_same( array(), Query::stale( null, null, array( 'page' ) ), 'A disabled post type must never be queried, and must return no rows.' );
+	},
+	'Query::summary() returns a zeroed structure for a post type that is not enabled' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+
+		bbk_test_same(
+			array(
+				'total_views'           => 0,
+				'posts_with_traffic'    => 0,
+				'posts_without_traffic' => 0,
+			),
+			Query::summary( array( 'page' ) ),
+			'A disabled post type must never be queried, and must return zeros.'
+		);
+	},
+	'Query::post_stats() reflects the recorded views, title and URL for a post' => static function (): void {
+		TestState::reset();
+		TestState::$now                = '2026-01-01 10:00:00';
+		TestState::$post_titles[42]    = 'Example Post';
+		( new Db() )->record_view( 42 );
+
+		$stats = Query::post_stats( 42 );
+
+		bbk_test_same( 42, $stats['id'], 'post_stats() must return the requested post ID.' );
+		bbk_test_same( 'Example Post', $stats['title'], 'post_stats() must return the post title.' );
+		bbk_test_same( 'https://test.wp.local/?p=42', $stats['url'], 'post_stats() must return the post permalink.' );
+		bbk_test_same( 1, $stats['views'], 'post_stats() must reflect the recorded view count.' );
+		bbk_test_same( '2026-01-01 10:00:00', $stats['first_viewed_at'], 'post_stats() must reflect first_viewed_at.' );
+		bbk_test_same( '2026-01-01 10:00:00', $stats['last_viewed_at'], 'post_stats() must reflect last_viewed_at.' );
 	},
 );
 
