@@ -3,23 +3,30 @@
 Todos los cambios relevantes de este proyecto se documentan aquí.
 Formato basado en [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.1.1] - 2026-08-29
+### Seguridad
+- El endpoint `POST /set-post-views` ahora también comprueba el `Origin`/`Referer` de la petición contra la URL del propio sitio (`check_request_origin` como `permission_callback`), rechazando peticiones cross-origin desde el navegador, además de la validación de `post_id` y la deduplicación ya existentes.
+### Cambiado
+- Se eliminó la carga de traducciones (`load_plugin_textdomain()`): WordPress.org las sirve automáticamente desde 4.6 para plugins públicos, y la implementación previa cargaba desde una ruta incorrecta (nunca funcionó).
+- Migración PSR-4 completa (`docs/MIGRATION-PSR4.md`): clases movidas a `src/{Core,Api,Frontend}/` y renombradas sin prefijo (`Plugin`, `Db`, `RestApi`, `Assets`). El autoloader propio (`bbk_autoload`) ahora resuelve subnamespaces. Sin cambio funcional para el visitante del sitio.
+- Añadidos tests automatizados sin dependencias externas (`Tests/run.php`, sin PHPUnit) que cubren el incremento atómico, la validación de origen y la deduplicación; integrados en CI (`validate.yml`).
+- `phpcs.xml` excluye los skills enlazados (`.claude/`, `.codex/`, `.gemini/`, `skills/`) para que `composer run-script lint` no falle por código de referencia ajeno al plugin.
+- `Requires at least` subido a 6.2 en la cabecera del plugin, para que coincida con `readme.txt`.
+
 ## [1.1.0] - 2026-08-28
 ### Corregido
 - El zip de producción no incluía `vendor/`, provocando un fatal error al activar el plugin (autoloader ausente). Solución definitiva: el plugin ya no depende de Composer en runtime — usa un autoloader PSR-4 propio (`spl_autoload_register`) de ~15 líneas, por lo que `vendor/` (dependencias de desarrollo: PHPCS, WPCS) nunca se empaqueta ni hace falta en producción.
 - Condición de carrera en el contador de vistas: el incremento ahora es atómico vía `UPDATE ... SET meta_value = meta_value + 1`.
 - `wp_enqueue_script()` recibía el parámetro `$in_footer` mal posicionado: el script se imprimía en el `<head>` con jQuery como dependencia innecesaria.
+- Las traducciones nunca se cargaban por una ruta incorrecta en `load_plugin_textdomain()`.
 - `uninstall.php` no limpiaba multisitio.
 ### Seguridad
 - El endpoint `POST /set-post-views` validaba mal el nonce (condición `&&` en vez de `||`, comparación directa en vez de `wp_verify_nonce()`) y aceptaba cualquier `post_id`, incluidos IDs inexistentes o de contenido no público.
-- Se sustituyó el nonce (ineficaz detrás de caché de página) por validación estricta del `post_id` (post publicado y públicamente visible), deduplicación por visitante vía transient, y una comprobación de origen same-site (`check_request_origin`) como `permission_callback`.
+- Se sustituyó el nonce (ineficaz detrás de caché de página) por validación estricta del `post_id` (post publicado y públicamente visible) y deduplicación por visitante vía transient.
 ### Cambiado
 - La versión del plugin (`BBK_PLUGIN_VERSION`) se deriva ahora de la cabecera del archivo principal en lugar de estar duplicada en tres sitios.
 - `Requires PHP` subido a 7.4 y `Requires at least` a 5.7 (uso de `is_post_publicly_viewable()`).
 - El script del cliente usa `navigator.sendBeacon()` (con *fallback* a `fetch` con `keepalive`) y descarta pestañas en segundo plano.
-- Se eliminó la carga de traducciones (`load_plugin_textdomain()`): WordPress.org las sirve automáticamente desde 4.6 para plugins públicos, y la implementación previa cargaba desde una ruta incorrecta (nunca funcionó).
-- Migración PSR-4 completa (`docs/MIGRATION-PSR4.md`): clases movidas a `src/{Core,Api,Frontend}/` y renombradas sin prefijo (`Plugin`, `Db`, `RestApi`, `Assets`). El autoloader propio (`bbk_autoload`) ahora resuelve subnamespaces.
-- Añadidos tests automatizados sin dependencias externas (`Tests/run.php`, sin PHPUnit) que cubren el incremento atómico, la validación de origen y la deduplicación; integrados en CI (`validate.yml`).
-- `phpcs.xml` excluye los skills enlazados (`.claude/`, `.codex/`, `.gemini/`, `skills/`) para que `composer run-script lint` no falle por código de referencia ajeno al plugin.
 
 ## [1.0.4] - 2024-05-24
 ### Cambiado
