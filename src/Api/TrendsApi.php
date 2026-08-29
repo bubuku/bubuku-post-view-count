@@ -1,0 +1,99 @@
+<?php
+/**
+ * TrendsApi Class.
+ *
+ * @package Bubuku Post View Count
+ * @author     Luis Ruiz <lruiz@bubuku.com>
+ * @copyright  2022 Bubuku
+ * @version    1.2.1
+ */
+
+declare( strict_types=1 );
+
+namespace Bubuku\Plugins\PostViewCount\Api;
+
+use Bubuku\Plugins\PostViewCount\Core\Query;
+use WP_REST_Request;
+use WP_REST_Response;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Read-only, cacheable REST endpoint over `Core\Query::trend()` (docs/ANALYTICS-PLAN.md §4,
+ * F4). Separate from `Api\RestApi` on purpose: that class is the public, anonymous,
+ * write-only view counter with its own same-origin/dedupe security model — this one is
+ * capability-gated and read-only, a different concern that must not be mixed into it.
+ */
+class TrendsApi {
+
+	public function __construct() {
+		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+	}
+
+	/**
+	 * @return void
+	 */
+	public function register_routes() {
+		register_rest_route(
+			BBK_PLUGIN_ENDPOINTS_URL,
+			'trends',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'get_trends' ),
+				'permission_callback' => array( $this, 'check_permission' ),
+				'args'                => array(
+					'post_ids'    => array(
+						'type'  => 'array',
+						'items' => array( 'type' => 'integer' ),
+					),
+					'post_types'  => array(
+						'type'  => 'array',
+						'items' => array( 'type' => 'string' ),
+					),
+					'granularity' => array(
+						'type'    => 'string',
+						'enum'    => array( 'day', 'week', 'month' ),
+						'default' => 'day',
+					),
+					'from'        => array(
+						'type' => 'string',
+					),
+					'to'          => array(
+						'type' => 'string',
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Only readers who can already manage post content see traffic figures.
+	 *
+	 * @return bool
+	 */
+	public function check_permission(): bool {
+		return current_user_can( 'edit_posts' );
+	}
+
+	/**
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response
+	 */
+	public function get_trends( WP_REST_Request $request ) {
+		$trend = Query::trend(
+			(array) ( $request->get_param( 'post_ids' ) ?? array() ),
+			(array) ( $request->get_param( 'post_types' ) ?? array() ),
+			(string) ( $request->get_param( 'granularity' ) ?? 'day' ),
+			$request->get_param( 'from' ),
+			$request->get_param( 'to' )
+		);
+
+		$response = new WP_REST_Response( array( 'trend' => $trend ), 200 );
+
+		// Object-cached in Core\Query::trend() (5 min); mirror that at the HTTP layer too,
+		// for any reverse proxy or browser cache sitting in front of a per-capability response.
+		$response->header( 'Cache-Control', 'private, max-age=300' );
+
+		return $response;
+	}
+}

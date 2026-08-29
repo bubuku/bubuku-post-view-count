@@ -194,6 +194,14 @@ class Query {
 		$granularity = in_array( $granularity, array( 'day', 'week', 'month' ), true ) ? $granularity : 'day';
 		$from        = $from ?? gmdate( 'Y-m-d', strtotime( '-3 months' ) );
 		$to          = $to ?? current_time( 'Y-m-d', true );
+
+		$cache_key = 'trend_' . md5( (string) wp_json_encode( array( $post_ids, $post_types, $granularity, $from, $to ) ) );
+		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
+
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
 		$daily_table = Schema::table_daily();
 
 		$buckets = array(
@@ -243,6 +251,8 @@ class Query {
 				'total_views' => (int) $row['total_views'],
 			);
 		}
+
+		wp_cache_set( $cache_key, $result, self::CACHE_GROUP, self::CACHE_TTL );
 
 		return $result;
 	}

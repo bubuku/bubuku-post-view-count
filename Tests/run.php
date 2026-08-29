@@ -11,9 +11,11 @@ declare( strict_types=1 );
 
 use Bubuku\Plugins\PostViewCount\Admin\Settings;
 use Bubuku\Plugins\PostViewCount\Api\RestApi;
+use Bubuku\Plugins\PostViewCount\Api\TrendsApi;
 use Bubuku\Plugins\PostViewCount\Core\Db;
 use Bubuku\Plugins\PostViewCount\Core\Query;
 use Bubuku\Plugins\PostViewCount\Core\Schema;
+use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetContentTrends;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetPostViews;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetViewsSummary;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\ListMostViewed;
@@ -95,7 +97,7 @@ $tests = array(
 
 		bbk_test_same( array( '7|2026-01-01' => 2 ), TestState::$daily, 'Same-day views must aggregate into one row.' );
 	},
-	'two views on different days produce two daily rows' => static function (): void {
+	'two views on different days produce two daily rows'  => static function (): void {
 		TestState::reset();
 		TestState::$now = '2026-01-01 09:00:00';
 		( new Db() )->record_view( 7 );
@@ -118,7 +120,7 @@ $tests = array(
 		bbk_test_same( 1, ( new Db() )->set_post_views( 5 ), 'set_post_views() must still return an int.' );
 		bbk_test_same( 2, ( new Db() )->set_post_views( 5 ), 'set_post_views() must still return an int.' );
 	},
-	'migrating from postmeta is idempotent'              => static function (): void {
+	'migrating from postmeta is idempotent'               => static function (): void {
 		TestState::reset();
 		TestState::$meta[10] = array( 'views' => 9 );
 		TestState::$meta[11] = array( 'views' => 3 );
@@ -130,7 +132,7 @@ $tests = array(
 		bbk_test_same( 9, TestState::$views[10]['views'], 'Migrating twice must not duplicate or sum the count.' );
 		bbk_test_same( 3, TestState::$views[11]['views'], 'Migrating twice must not duplicate or sum the count.' );
 	},
-	'accepts requests from the site origin'              => static function (): void {
+	'accepts requests from the site origin'               => static function (): void {
 		$api     = new RestApi();
 		$request = new WP_REST_Request( array(), array( 'Origin' => 'https://test.wp.local' ) );
 
@@ -142,13 +144,13 @@ $tests = array(
 
 		bbk_test_same( true, $api->check_request_origin( $request ), 'A same-origin referer should be accepted.' );
 	},
-	'rejects requests from another origin'               => static function (): void {
+	'rejects requests from another origin'                => static function (): void {
 		$api     = new RestApi();
 		$request = new WP_REST_Request( array(), array( 'Origin' => 'https://attacker.example' ) );
 
 		bbk_test_error_status( $api->check_request_origin( $request ), 403 );
 	},
-	'rejects requests without origin evidence'           => static function (): void {
+	'rejects requests without origin evidence'            => static function (): void {
 		$api = new RestApi();
 
 		bbk_test_error_status( $api->check_request_origin( new WP_REST_Request() ), 403 );
@@ -301,7 +303,7 @@ $tests = array(
 		bbk_test_same( true, isset( $result['results'] ) && is_array( $result['results'] ), 'The tool must return a "results" array.' );
 		bbk_test_same( '2026-01-01 00:00:00', $result['meta']['data_available_since'], 'The tool must report data_available_since from Schema::daily_data_since().' );
 	},
-	'ListStaleContent tool delegates to Query::stale()'  => static function (): void {
+	'ListStaleContent tool delegates to Query::stale()'   => static function (): void {
 		TestState::reset();
 
 		$result = ( new ListStaleContent() )->execute_callback( array( 'post_types' => array( 'page' ) ) );
@@ -344,6 +346,36 @@ $tests = array(
 
 		bbk_test_same( 0, $result['total_views'], 'With no data recorded, total_views must be 0.' );
 		bbk_test_same( true, isset( $result['computed_at'] ), 'The tool must add a computed_at timestamp.' );
+	},
+	'GetContentTrends tool delegates to Query::trend() and returns a bucketed series' => static function (): void {
+		TestState::reset();
+
+		$result = ( new GetContentTrends() )->execute_callback( array( 'post_ids' => array( 7 ) ) );
+
+		bbk_test_same( array(), $result['trend'], 'With no daily rows recorded, the trend must be an empty series.' );
+		bbk_test_same( true, isset( $result['meta']['computed_at'] ), 'The tool must add a computed_at timestamp.' );
+	},
+	'TrendsApi::check_permission() requires the edit_posts capability' => static function (): void {
+		TestState::reset();
+
+		bbk_test_same( false, ( new TrendsApi() )->check_permission(), 'A visitor without edit_posts must be denied.' );
+
+		TestState::$current_user_can['edit_posts'] = true;
+
+		bbk_test_same( true, ( new TrendsApi() )->check_permission(), 'A user with edit_posts must be allowed.' );
+	},
+	'TrendsApi::get_trends() delegates to Query::trend()' => static function (): void {
+		TestState::reset();
+		$request = new WP_REST_Request(
+			array(
+				'post_ids'    => array( 7 ),
+				'granularity' => 'week',
+			)
+		);
+
+		$response = ( new TrendsApi() )->get_trends( $request );
+
+		bbk_test_same( array( 'trend' => array() ), $response->get_data(), 'With no daily rows recorded, the trend must be an empty series.' );
 	},
 );
 

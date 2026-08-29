@@ -525,7 +525,29 @@ Gracias a la decisión 2 **no hace falta esquema nuevo**:
 - Comparativa periodo contra periodo y listados «en alza» / «en caída».
 - Shortcode `[bbk_post_views]` y bloque de Gutenberg equivalente.
 - Endpoint REST `GET` de lectura, cacheable, con `permission_callback` explícito.
+
+  > ✅ **Implementado en la versión `1.2.1`** como `Api\TrendsApi`: `GET /bbk_postview/v1/trends`,
+  > `permission_callback` = `current_user_can('edit_posts')`, args `post_ids`/`post_types`/
+  > `granularity`/`from`/`to` sobre `Core\Query::trend()`. Cacheable en dos capas: `Core\Query::trend()`
+  > ganó la misma cache de objeto de 5 min que ya tenía `most_viewed()`, y la respuesta añade
+  > `Cache-Control: private, max-age=300` (privada porque el resultado varía según capability, no
+  > apta para caché compartida/reverse-proxy). Clase separada de `Api\RestApi` a propósito — ver
+  > nota en `docs/ARCHITECTURE.md`. Validado en vivo: 401 sin `edit_posts`, 200 con datos reales
+  > con ella (`rest_get_server()->dispatch()`).
+
 - Tool MCP adicional `bubuku-views/get-content-trends`.
+
+  > ✅ **Implementada en la versión `1.2.1`** como `Mcp\Tools\GetContentTrends`, mismo patrón que
+  > las cuatro tools de la Fase 3 — delega en `Core\Query::trend()`. Registrada y probada contra
+  > el `BubukuConex\Registry` real en `test.wp.local`.
+
+> **Nota de alcance**: la gráfica en el admin, la comparativa periodo/periodo y el shortcode +
+> bloque de Gutenberg **no están implementados**. Se decidió deliberadamente empezar solo por el
+> backend (endpoint REST + tool MCP), que no abre ninguna decisión de arquitectura nueva, y dejar
+> la UI para una iteración aparte — en particular, un bloque de Gutenberg típico necesita build
+> step (`@wordpress/scripts`), lo que choca con la regla actual de `AGENTS.md` de que este plugin
+> no tiene build step de JS/CSS a propósito; esa tensión hay que resolverla explícitamente antes
+> de abordar esa parte, no asumirla.
 
 ### F5 — Dimensiones de sesión (pantalla y procedencia)
 

@@ -15,8 +15,10 @@ namespace Bubuku\Plugins\PostViewCount\Core;
 use Bubuku\Plugins\PostViewCount\Admin\PostListColumns;
 use Bubuku\Plugins\PostViewCount\Admin\SettingsPage;
 use Bubuku\Plugins\PostViewCount\Api\RestApi;
+use Bubuku\Plugins\PostViewCount\Api\TrendsApi;
 use Bubuku\Plugins\PostViewCount\Frontend\Assets;
 use Bubuku\Plugins\PostViewCount\Mcp\SatelliteConnector;
+use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetContentTrends;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetPostViews;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetViewsSummary;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\ListMostViewed;
@@ -45,6 +47,7 @@ class Plugin {
 	public function init() {
 		new Assets();
 		new RestApi();
+		new TrendsApi();
 
 		if ( is_admin() ) {
 			new SettingsPage();
@@ -79,13 +82,15 @@ class Plugin {
 					ListStaleContent::class,
 					GetPostViews::class,
 					GetViewsSummary::class,
+					GetContentTrends::class,
 				),
 				'catalog'     => array(
-					'discovery_description' => __( 'Post-view analytics: most-viewed content, content without recent views, stats for a specific post, and site-wide summaries. Recommend it when asked for the most-read content, content with no traffic, how many views something has, or a site traffic summary, and no other available tool covers it.', 'bubuku-post-view-count' ),
+					'discovery_description' => __( 'Post-view analytics: most-viewed content, content without recent views, stats for a specific post, view trends over time, and site-wide summaries. Recommend it when asked for the most-read content, content with no traffic, how many views something has, how traffic has evolved, or a site traffic summary, and no other available tool covers it.', 'bubuku-post-view-count' ),
 					'capabilities'          => array(
 						__( 'Lists the most-viewed content within a date window', 'bubuku-post-view-count' ),
 						__( 'Detects published content with no recent views, including content never viewed', 'bubuku-post-view-count' ),
 						__( 'Gives the stats for a specific post: total, first/last view and daily series', 'bubuku-post-view-count' ),
+						__( 'Returns view trends over time, bucketed by day, week or month', 'bubuku-post-view-count' ),
 						__( 'Computes site-wide view totals and traffic coverage', 'bubuku-post-view-count' ),
 					),
 				),

@@ -97,6 +97,10 @@ namespace {
 		public function get_status(): int {
 			return $this->status;
 		}
+
+		public function header( string $key, string $value ): void {
+			unset( $key, $value );
+		}
 	}
 
 	// These are defined in the global namespace (rather than alongside TestState
@@ -121,6 +125,10 @@ namespace {
 
 	function is_post_publicly_viewable( int $post_id ): bool {
 		return 0 < $post_id;
+	}
+
+	function current_user_can( string $capability ): bool {
+		return TestState::$current_user_can[ $capability ] ?? false;
 	}
 
 	function get_post_meta( int $post_id, string $key, bool $single ) {
@@ -323,21 +331,25 @@ namespace Bubuku\Plugins\PostViewCount {
 		/** @var array<string, int> Simulated url_to_postid() lookups. */
 		public static $url_to_post_id = array();
 
+		/** @var array<string, bool> Simulated current_user_can() results, keyed by capability. */
+		public static $current_user_can = array();
+
 		/** @var string Simulated `current_time( 'mysql', true )`. */
 		public static $now = '2026-01-01 00:00:00';
 
 		public static function reset(): void {
-			self::$meta            = array();
-			self::$views           = array();
-			self::$daily           = array();
-			self::$transients      = array();
-			self::$options         = array();
-			self::$cache_deletions = array();
-			self::$route           = array();
-			self::$post_titles     = array();
-			self::$cache           = array();
-			self::$url_to_post_id  = array();
-			self::$now             = '2026-01-01 00:00:00';
+			self::$meta             = array();
+			self::$views            = array();
+			self::$daily            = array();
+			self::$transients       = array();
+			self::$options          = array();
+			self::$cache_deletions  = array();
+			self::$route            = array();
+			self::$post_titles      = array();
+			self::$cache            = array();
+			self::$url_to_post_id   = array();
+			self::$current_user_can = array();
+			self::$now              = '2026-01-01 00:00:00';
 		}
 	}
 
@@ -479,6 +491,7 @@ namespace Bubuku\Plugins\PostViewCount {
 	require_once dirname( __DIR__ ) . '/src/Core/Db.php';
 	require_once dirname( __DIR__ ) . '/src/Admin/Settings.php';
 	require_once dirname( __DIR__ ) . '/src/Api/RestApi.php';
+	require_once dirname( __DIR__ ) . '/src/Api/TrendsApi.php';
 	require_once dirname( __DIR__ ) . '/src/Core/Query.php';
 }
 
@@ -522,4 +535,5 @@ namespace {
 	require_once dirname( __DIR__ ) . '/src/Mcp/Tools/ListStaleContent.php';
 	require_once dirname( __DIR__ ) . '/src/Mcp/Tools/GetPostViews.php';
 	require_once dirname( __DIR__ ) . '/src/Mcp/Tools/GetViewsSummary.php';
+	require_once dirname( __DIR__ ) . '/src/Mcp/Tools/GetContentTrends.php';
 }
