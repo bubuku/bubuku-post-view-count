@@ -318,6 +318,19 @@ en silencio. Igual para roles.
 - **Columna «Vistas» ordenable** en los listados admin de cada CPT activo, más una columna
   «Última visita». Con la tabla propia es un `JOIN` con índice, no el `CAST` sobre
   `postmeta` que habría hecho falta antes.
+
+  > ✅ **Implementada en la versión `1.2.1`** como `Admin\PostListColumns`. El valor
+  > mostrado se lee del espejo en post meta (`views`/`views_last`) — WP ya precarga esa
+  > meta en bloque para toda la lista, cero queries extra por fila. El orden, en cambio, usa
+  > exactamente el `JOIN` indexado que pedía esta nota (`posts_join`/`posts_orderby` contra
+  > `bbk_post_views`, nunca `CAST` sobre `postmeta`), leyendo `order`/`orderby` desde
+  > `WP_Query::get()` en vez de `$_GET` directamente. Solo se registra para los tipos de
+  > contenido actualmente habilitados. Sin test automatizado — depende de `WP_Query` real
+  > (`is_main_query()` solo es cierto para la query principal reencolada por
+  > `wp_edit_posts_query()`, no para una `new WP_Query()` suelta); validado manualmente
+  > contra la query principal de `test.wp.local`, confirmando el `LEFT JOIN` y el
+  > `ORDER BY bbk_v.views DESC` / `bbk_v.last_viewed_at ASC` generados.
+
 - **Bloque de estado de la integración MCP** (ver fase 3): si `bubuku-mcp-conex` está activo,
   mostrar que las tools están registradas; si no, una nota informativa. Este bloque es el
   sustituto deliberado del `admin_notices` del contrato satélite (§4.2).
@@ -474,6 +487,15 @@ declara la capability y **nunca** llama a `current_user_can()` por su cuenta.
   periodo que no lo es.
 
 ### 4.4 Extra propuesto: WP-CLI
+
+> ✅ **Implementada en la versión `1.2.1`** como `Cli\ViewsCommand`, registrada con
+> `WP_CLI::add_command()` solo si `defined('WP_CLI') && WP_CLI` (nunca carga en una
+> request normal). Los tres subcomandos son envoltorios de `WP_CLI\Utils\format_items()`
+> sobre `Core\Query`, tal cual proponía esta nota — `top`, `stale` y `post <id>` (este
+> último añade la serie diaria como una segunda tabla en formato `table`). Sin test
+> automatizado — depende de `WP_CLI\Utils\format_items()` real, sin stub en el harness;
+> validado manualmente en `test.wp.local` contra datos reales, incluida la exclusión
+> correcta de un borrador en `stale` (filtra `post_status = 'publish'`).
 
 Comandos `wp bbk-views top`, `wp bbk-views stale`, `wp bbk-views post <id>` sobre el mismo
 `PCV_query`. Coste marginal (son envoltorios de formato) y dan a esta fase una superficie

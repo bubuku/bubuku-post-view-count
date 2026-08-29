@@ -75,4 +75,8 @@ spl_autoload_register( 'bbk_autoload' );
 
 	register_activation_hook( __FILE__, array( $plugin, 'activate' ) );
 	register_deactivation_hook( __FILE__, array( $plugin, 'deactivate' ) );
+
+	if ( defined( 'WP_CLI' ) && WP_CLI ) {
+		WP_CLI::add_command( 'bbk-views', Bubuku\Plugins\PostViewCount\Cli\ViewsCommand::class );
+	}
 } )();

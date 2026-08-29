@@ -12,6 +12,7 @@ declare( strict_types=1 );
 
 namespace Bubuku\Plugins\PostViewCount\Core;
 
+use Bubuku\Plugins\PostViewCount\Admin\PostListColumns;
 use Bubuku\Plugins\PostViewCount\Admin\SettingsPage;
 use Bubuku\Plugins\PostViewCount\Api\RestApi;
 use Bubuku\Plugins\PostViewCount\Frontend\Assets;
@@ -47,6 +48,7 @@ class Plugin {
 
 		if ( is_admin() ) {
 			new SettingsPage();
+			new PostListColumns();
 		}
 
 		add_action( 'init', array( $this, 'init_mcp_satellite' ) );
