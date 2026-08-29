@@ -12,6 +12,8 @@ declare( strict_types=1 );
 
 namespace Bubuku\Plugins\PostViewCount\Frontend;
 
+use Bubuku\Plugins\PostViewCount\Admin\Settings;
+
 defined( 'ABSPATH' ) || exit;
 
 class Assets {
@@ -28,12 +30,12 @@ class Assets {
 	 * Enqueue Front Scripts
 	 */
 	public function enqueue_front_assets() {
-		if ( is_admin() || ! is_singular( 'post' ) ) {
+		if ( is_admin() || ! is_singular( Settings::enabled_post_types() ) ) {
 			return;
 		}
 
-		// Don't count views from users who can already edit content.
-		if ( current_user_can( 'edit_posts' ) ) {
+		// Don't count views from users belonging to an excluded role (default: anyone who can edit content).
+		if ( Settings::is_current_user_excluded() ) {
 			return;
 		}
 

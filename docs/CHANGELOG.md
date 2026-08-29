@@ -10,13 +10,16 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/).
 - `Core\Db::record_view()`: dos upserts atómicos (`INSERT ... ON DUPLICATE KEY UPDATE`) sin lectura previa en PHP. `Core\Db::get_stats()` para leer el estado actual desde la tabla.
 - El post meta `views` se conserva como espejo de compatibilidad (temas/consultas de terceros que ya lo leen); se añade `views_last` con la fecha de la última visita. Desactivable con el filtro `bbk_postview_mirror_meta`.
 - La respuesta del endpoint `POST /set-post-views` incluye ahora `last_viewed_at` junto al `count` ya existente.
+- Fase 2 de `docs/ANALYTICS-PLAN.md`: página de ajustes en Ajustes → Post View Count (`Admin\Settings`, `Admin\SettingsPage`). Permite elegir qué tipos de contenido cuentan visitas (por defecto solo `post`, igual que antes), excluir roles de usuario (por defecto los que ya pueden editar contenido), excluir bots y crawlers conocidos (Googlebot, Bingbot, GPTBot, ClaudeBot, etc.), configurar la retención del agregado diario y eliminar todos los datos registrados con un botón, sin desinstalar el plugin.
 ### Cambiado
 - `Core\Db::set_post_views()` se conserva como alias delgado de `record_view()` (compatibilidad con consumidores existentes).
-- `uninstall.php` reescrito: además de la meta, borra las tablas propias, las options (`bbk_postview_settings`, `bbk_schema_version`) y los transients de deduplicación (`bbk_view_*`), siempre en multisitio. Por defecto borra todo (recomendación de las guidelines de WordPress.org); la opción para conservar los datos llegará con la página de ajustes de la Fase 2.
+- `uninstall.php` reescrito: además de la meta, borra las tablas propias, las options (`bbk_postview_settings`, `bbk_schema_version`) y los transients de deduplicación (`bbk_view_*`), siempre en multisitio. Si borrar los datos al desinstalar ahora es configurable desde la página de ajustes (activado por defecto, según las guidelines de WordPress.org).
+- `Frontend\Assets` y `Api\RestApi` ya no hardcodean `'post'` ni `current_user_can('edit_posts')`: consumen `Admin\Settings::enabled_post_types()` e `is_current_user_excluded()`.
 ### Notas
 - Cambio de modelo de datos (riesgo alto, ver `docs/ANALYTICS-PLAN.md` §1). El post meta `views` nunca se borra durante la migración: revertir a `1.1.x` es seguro, el contador sigue funcionando desde donde estaba.
-- Ninguna de las tres capas de seguridad del endpoint (origen same-site, validación de `post_id`, deduplicación) se ha tocado.
-- Fases 2 (página de ajustes y CPTs seleccionables) y 3 (consultas + satélite MCP) quedan para versiones posteriores (`1.3.0`, `1.4.0` sugeridas en el propio plan), no incluidas en esta versión.
+- Ninguna de las tres capas de seguridad del endpoint (origen same-site, validación de `post_id`, deduplicación) se ha tocado; el filtro de bots es una capa adicional, no un reemplazo.
+- La retención del agregado diario solo afecta a mostrar el desglose diario de cada contenido (tendencias, ventanas temporales); el total de vistas nunca se ve afectado ni se borra por esta retención.
+- Fase 3 (consultas + satélite MCP) queda para una versión posterior (`1.4.0` sugerida en el propio plan), no incluida en esta versión.
 
 ## [1.1.1] - 2026-08-29
 ### Seguridad

@@ -255,7 +255,24 @@ sigue ahí, congelado en el momento del rollback. Documentarlo en el changelog d
 
 ## 3. Fase 2 — Página de ajustes y CPT seleccionables
 
-*Cubre el requerimiento 2 y la decisión 3.* Versión sugerida **`1.3.0`** *(a confirmar)*.
+*Cubre el requerimiento 2 y la decisión 3.* Versión sugerida **`1.3.0`** *(a confirmar,
+pendiente de bump — ver "Versionado del plugin" en `AGENTS.md`)*.
+
+> ✅ **Implementada** (aún bajo la versión de header `1.2.0`, pendiente de bump explícito
+> del usuario). Clases nuevas: `Admin\Settings` (lectura/sanitización de
+> `bbk_postview_settings`, roles excluidos por defecto calculados desde
+> `get_editable_roles()`, detección de user-agents de bot) y `Admin\SettingsPage`
+> (Settings API clásica bajo Ajustes → Post View Count, sin build step — ver AGENTS.md).
+> `Frontend\Assets` y `Api\RestApi` consumen `Settings::enabled_post_types()` en vez del
+> `'post'` hardcodeado; `Api\RestApi` añade el filtro `exclude_bots` como capa adicional
+> (nunca sustituye las tres capas de seguridad existentes). No implementada todavía la
+> columna "Vistas"/"Última visita" ordenable en los listados admin (§3.5, extra de bajo
+> coste marcado como opcional) ni el bloque de estado MCP (depende de la Fase 3).
+> Tests nuevos en `Tests/run.php` cubren `enabled_post_types()`, `validate_post_id()` con
+> CPT habilitado/deshabilitado, `Settings::sanitize()` (descarta tipos/roles inexistentes,
+> retention_days con `max(1, …)`) y el filtro de bots en `set_post_views()`. Validado
+> manualmente en `test.wp.local` (activación/reset de tablas, render de la página,
+> sanitización real, filtrado de bot en el endpoint REST).
 
 ### 3.1 El punto clave: solo hay dos sitios que hardcodean `'post'`
 

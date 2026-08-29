@@ -58,7 +58,12 @@ namespace {
 
 		public function __construct( array $params = array(), array $headers = array() ) {
 			$this->params  = $params;
-			$this->headers = array_change_key_case( $headers, CASE_LOWER );
+			$headers       = array_change_key_case( $headers, CASE_LOWER );
+			$this->headers = array();
+
+			foreach ( $headers as $key => $value ) {
+				$this->headers[ str_replace( '-', '_', $key ) ] = $value;
+			}
 		}
 
 		public function get_param( string $key ) {
@@ -66,7 +71,9 @@ namespace {
 		}
 
 		public function get_header( string $key ): string {
-			return $this->headers[ strtolower( $key ) ] ?? '';
+			// Mirrors WP_REST_Request::get_header(): header keys are normalized
+			// to underscores, so lookups work regardless of "-" or "_" in $key.
+			return $this->headers[ str_replace( '-', '_', strtolower( $key ) ) ] ?? '';
 		}
 	}
 
@@ -212,6 +219,36 @@ namespace {
 		unset( $domain );
 
 		return $text;
+	}
+
+	function sanitize_key( string $key ): string {
+		return strtolower( preg_replace( '/[^a-z0-9_\-]/', '', $key ) );
+	}
+
+	function get_post_types( array $args = array() ) {
+		unset( $args );
+
+		return array(
+			'post' => 'post',
+			'page' => 'page',
+		);
+	}
+
+	function get_editable_roles(): array {
+		return array(
+			'administrator' => array(
+				'name'         => 'Administrator',
+				'capabilities' => array( 'edit_posts' => true ),
+			),
+			'editor'        => array(
+				'name'         => 'Editor',
+				'capabilities' => array( 'edit_posts' => true ),
+			),
+			'subscriber'    => array(
+				'name'         => 'Subscriber',
+				'capabilities' => array( 'edit_posts' => false ),
+			),
+		);
 	}
 }
 
@@ -382,5 +419,6 @@ namespace Bubuku\Plugins\PostViewCount {
 
 	require_once dirname( __DIR__ ) . '/src/Core/Schema.php';
 	require_once dirname( __DIR__ ) . '/src/Core/Db.php';
+	require_once dirname( __DIR__ ) . '/src/Admin/Settings.php';
 	require_once dirname( __DIR__ ) . '/src/Api/RestApi.php';
 }

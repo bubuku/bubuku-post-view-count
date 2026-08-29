@@ -12,6 +12,7 @@ declare( strict_types=1 );
 
 namespace Bubuku\Plugins\PostViewCount\Core;
 
+use Bubuku\Plugins\PostViewCount\Admin\SettingsPage;
 use Bubuku\Plugins\PostViewCount\Api\RestApi;
 use Bubuku\Plugins\PostViewCount\Frontend\Assets;
 
@@ -38,6 +39,10 @@ class Plugin {
 	public function init() {
 		new Assets();
 		new RestApi();
+
+		if ( is_admin() ) {
+			new SettingsPage();
+		}
 	}
 
 	/**

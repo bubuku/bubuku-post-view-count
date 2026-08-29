@@ -62,17 +62,14 @@ Yes, the plugin now includes multisite support, including in the uninstall routi
 == Changelog ==
 
 = 1.2.0 =
-* New: the view counter now has its own database tables (`{prefix}bbk_post_views`, `{prefix}bbk_post_views_daily`), tracking the date and time of the first and last view per post in addition to the total — the first step towards analytics features (most-viewed content, stale content) planned for upcoming versions.
+* The view counter now has its own database tables (`{prefix}bbk_post_views`, `{prefix}bbk_post_views_daily`), tracking the date and time of the first and last view per post in addition to the total — the first step towards analytics features (most-viewed content, stale content) planned for upcoming versions.
+* New: a settings page under Settings → Post View Count. Choose which content types count views (defaults to Posts, same as before), exclude specific user roles (defaults to roles that can already edit content), optionally exclude known bots and crawlers (Googlebot, Bingbot, GPTBot, ClaudeBot, etc.), and set how long the daily view history is kept.
+* New: a "delete all data now" button on the settings page to reset all recorded views without uninstalling the plugin.
 * Improvement: the counter increment is now a single atomic upsert per table (no read-then-write), removing the last possible race condition under concurrent traffic.
 * Improvement: existing `views` post meta is migrated automatically and incrementally (500 rows per batch via WP-Cron) into the new tables on upgrade — no data is lost, and the migration is safe to run more than once.
 * Kept: the `views` post meta is still written on every view as a compatibility mirror for themes and queries that already read it (e.g. `orderby=meta_value_num`); a new `views_last` post meta exposes the last-view date the same way.
-* Improvement: `uninstall.php` now removes the plugin's own tables, options and deduplication transients (in addition to post meta), including on multisite — see the FAQ for how to keep your data on reinstall.
+* Improvement: `uninstall.php` now removes the plugin's own tables, options and deduplication transients (in addition to post meta), including on multisite. Whether to delete this data on uninstall is now configurable from the settings page (enabled by default, per WordPress.org guidelines).
 * Note: this is a database schema change. Rolling back to 1.1.x after upgrading is safe — the `views` post meta is never removed, so the counter keeps working from where it was.
-
-== Upgrade Notice ==
-
-= 1.2.0 =
-This version changes how views are stored (new database tables; existing counts are migrated automatically, nothing is lost). See the changelog and FAQ before upgrading a site with a lot of existing view data.
 
 = 1.1.1 =
 * Security: the view-count endpoint now also checks the request's `Origin`/`Referer` against the site's own URL, rejecting cross-origin browser requests in addition to the existing post_id validation and per-visitor deduplication.

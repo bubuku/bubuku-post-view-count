@@ -12,6 +12,7 @@ declare( strict_types=1 );
 
 namespace Bubuku\Plugins\PostViewCount\Api;
 
+use Bubuku\Plugins\PostViewCount\Admin\Settings;
 use Bubuku\Plugins\PostViewCount\Core\Db;
 use WP_Error;
 use WP_REST_Request;
@@ -108,7 +109,7 @@ class RestApi {
 
 		$post_id = absint( $param );
 
-		return 'post' === get_post_type( $post_id )
+		return in_array( get_post_type( $post_id ), Settings::enabled_post_types(), true )
 			&& is_post_publicly_viewable( $post_id );
 	}
 
@@ -119,7 +120,7 @@ class RestApi {
 	public function set_post_views( WP_REST_Request $request ) {
 		$post_id = absint( $request->get_param( 'post_id' ) );
 
-		if ( $this->is_deduped( $post_id, $request ) ) {
+		if ( $this->is_deduped( $post_id, $request ) || $this->is_bot_request( $request ) ) {
 			return new WP_REST_Response( $this->response_data( $this->db->get_stats( $post_id ) ), 200 );
 		}
 
@@ -153,6 +154,22 @@ class RestApi {
 	 */
 	private function is_deduped( int $post_id, WP_REST_Request $request ): bool {
 		return (bool) get_transient( $this->dedupe_key( $post_id, $request ) );
+	}
+
+	/**
+	 * Whether this request should be ignored as coming from a known bot,
+	 * per the `exclude_bots` setting (Admin\Settings). Views from bots are
+	 * never recorded, but the response still reflects the current stats.
+	 *
+	 * @param WP_REST_Request $request Current request.
+	 * @return bool
+	 */
+	private function is_bot_request( WP_REST_Request $request ): bool {
+		if ( ! Settings::exclude_bots() ) {
+			return false;
+		}
+
+		return Settings::is_bot_user_agent( $request->get_header( 'user_agent' ) );
 	}
 
 	/**

@@ -1,0 +1,255 @@
+<?php
+/**
+ * SettingsPage Class.
+ *
+ * @package Bubuku Post View Count
+ * @author     Luis Ruiz <lruiz@bubuku.com>
+ * @copyright  2022 Bubuku
+ * @version    1.3.0
+ */
+
+declare( strict_types=1 );
+
+namespace Bubuku\Plugins\PostViewCount\Admin;
+
+use Bubuku\Plugins\PostViewCount\Core\Db;
+use Bubuku\Plugins\PostViewCount\Core\Schema;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Settings > Post View Count admin page. Classic Settings API — no build
+ * step, consistent with the rest of the plugin (see AGENTS.md).
+ */
+class SettingsPage {
+
+	const OPTION_GROUP = 'bbk_postview_settings_group';
+	const PAGE_SLUG    = 'bbk-postview-settings';
+	const SECTION_ID   = 'bbk_postview_main';
+	const RESET_ACTION = 'bbk_postview_reset_data';
+
+	public function __construct() {
+		add_action( 'admin_menu', array( $this, 'register_menu' ) );
+		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_post_' . self::RESET_ACTION, array( $this, 'handle_reset_data' ) );
+	}
+
+	/**
+	 * Registers the submenu page under Settings.
+	 *
+	 * @return void
+	 */
+	public function register_menu() {
+		add_options_page(
+			__( 'Post View Count', 'bubuku-post-view-count' ),
+			__( 'Post View Count', 'bubuku-post-view-count' ),
+			'manage_options',
+			self::PAGE_SLUG,
+			array( $this, 'render' )
+		);
+	}
+
+	/**
+	 * Registers the settings option, section and fields.
+	 *
+	 * @return void
+	 */
+	public function register_settings() {
+		register_setting(
+			self::OPTION_GROUP,
+			Settings::OPTION_KEY,
+			array( 'sanitize_callback' => array( Settings::class, 'sanitize' ) )
+		);
+
+		add_settings_section( self::SECTION_ID, '', '__return_false', self::PAGE_SLUG );
+
+		add_settings_field( 'post_types', __( 'Tipos de contenido', 'bubuku-post-view-count' ), array( $this, 'field_post_types' ), self::PAGE_SLUG, self::SECTION_ID );
+		add_settings_field( 'excluded_roles', __( 'Roles excluidos', 'bubuku-post-view-count' ), array( $this, 'field_excluded_roles' ), self::PAGE_SLUG, self::SECTION_ID );
+		add_settings_field( 'exclude_bots', __( 'Bots', 'bubuku-post-view-count' ), array( $this, 'field_exclude_bots' ), self::PAGE_SLUG, self::SECTION_ID );
+		add_settings_field( 'retention_days', __( 'Retención del agregado diario', 'bubuku-post-view-count' ), array( $this, 'field_retention_days' ), self::PAGE_SLUG, self::SECTION_ID );
+		add_settings_field( 'delete_data_on_uninstall', __( 'Al desinstalar', 'bubuku-post-view-count' ), array( $this, 'field_delete_on_uninstall' ), self::PAGE_SLUG, self::SECTION_ID );
+	}
+
+	/**
+	 * Renders the page: the Settings API form, plus the standalone
+	 * "delete all data now" form (§1.8/§3.5 of ANALYTICS-PLAN.md).
+	 *
+	 * @return void
+	 */
+	public function render() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'No tienes permisos para acceder a esta página.', 'bubuku-post-view-count' ) );
+		}
+
+		if ( isset( $_GET['bbk_postview_reset'] ) ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' .
+				esc_html__( 'Se han eliminado todas las vistas registradas.', 'bubuku-post-view-count' ) .
+				'</p></div>';
+		}
+		?>
+		<div class="wrap">
+			<h1><?php esc_html_e( 'Bubuku Post View Count', 'bubuku-post-view-count' ); ?></h1>
+
+			<form method="post" action="options.php">
+				<?php
+				settings_fields( self::OPTION_GROUP );
+				do_settings_sections( self::PAGE_SLUG );
+				submit_button();
+				?>
+			</form>
+
+			<hr />
+
+			<h2><?php esc_html_e( 'Eliminar todos los datos', 'bubuku-post-view-count' ); ?></h2>
+			<p><?php esc_html_e( 'Elimina inmediatamente todas las vistas registradas (tablas propias y post meta). Esta acción no se puede deshacer.', 'bubuku-post-view-count' ); ?></p>
+			<form
+				method="post"
+				action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
+				onsubmit="return confirm('<?php echo esc_js( __( '¿Seguro que quieres eliminar todas las vistas registradas? Esta acción no se puede deshacer.', 'bubuku-post-view-count' ) ); ?>');"
+			>
+				<input type="hidden" name="action" value="<?php echo esc_attr( self::RESET_ACTION ); ?>" />
+				<?php wp_nonce_field( self::RESET_ACTION ); ?>
+				<?php submit_button( __( 'Eliminar todos los datos ahora', 'bubuku-post-view-count' ), 'delete' ); ?>
+			</form>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Field: post types allowed to count views.
+	 *
+	 * @return void
+	 */
+	public function field_post_types() {
+		$settings = Settings::get_all();
+
+		foreach ( get_post_types( array( 'public' => true ), 'objects' ) as $post_type ) {
+			printf(
+				'<label style="display:block;"><input type="checkbox" name="%1$s[post_types][]" value="%2$s" %3$s /> %4$s</label>',
+				esc_attr( Settings::OPTION_KEY ),
+				esc_attr( $post_type->name ),
+				checked( in_array( $post_type->name, $settings['post_types'], true ), true, false ),
+				esc_html( $post_type->labels->name )
+			);
+		}
+
+		printf(
+			'<p class="description">%s</p>',
+			esc_html__( 'Desmarcar un tipo de contenido detiene el conteo, pero no borra las visitas ya registradas. Volver a marcarlo reanuda el conteo sobre el total existente.', 'bubuku-post-view-count' )
+		);
+	}
+
+	/**
+	 * Field: roles whose views are never counted.
+	 *
+	 * @return void
+	 */
+	public function field_excluded_roles() {
+		$settings = Settings::get_all();
+		$roles    = function_exists( 'get_editable_roles' ) ? get_editable_roles() : array();
+
+		foreach ( $roles as $slug => $role ) {
+			printf(
+				'<label style="display:block;"><input type="checkbox" name="%1$s[excluded_roles][]" value="%2$s" %3$s /> %4$s</label>',
+				esc_attr( Settings::OPTION_KEY ),
+				esc_attr( $slug ),
+				checked( in_array( $slug, $settings['excluded_roles'], true ), true, false ),
+				esc_html( translate_user_role( $role['name'] ) )
+			);
+		}
+
+		printf(
+			'<p class="description">%s</p>',
+			esc_html__( 'Los usuarios logados con uno de estos roles no generan visitas al ver sus propios contenidos.', 'bubuku-post-view-count' )
+		);
+	}
+
+	/**
+	 * Field: exclude known bot user agents.
+	 *
+	 * @return void
+	 */
+	public function field_exclude_bots() {
+		$settings = Settings::get_all();
+
+		printf(
+			'<label><input type="checkbox" name="%1$s[exclude_bots]" value="1" %2$s /> %3$s</label>',
+			esc_attr( Settings::OPTION_KEY ),
+			checked( $settings['exclude_bots'], true, false ),
+			esc_html__( 'No contar visitas de user-agents de bots conocidos.', 'bubuku-post-view-count' )
+		);
+
+		printf(
+			'<p class="description"><small>%s %s</small></p>',
+			esc_html__( 'Incluye, entre otros:', 'bubuku-post-view-count' ),
+			esc_html( implode( ', ', Settings::bot_signature_examples() ) )
+		);
+	}
+
+	/**
+	 * Field: retention window for the daily aggregate table.
+	 *
+	 * @return void
+	 */
+	public function field_retention_days() {
+		$settings = Settings::get_all();
+
+		printf(
+			'<input type="number" min="1" name="%1$s[retention_days]" value="%2$d" class="small-text" /> %3$s',
+			esc_attr( Settings::OPTION_KEY ),
+			(int) $settings['retention_days'],
+			esc_html__( 'días', 'bubuku-post-view-count' )
+		);
+
+		printf(
+			'<p class="description"><small>%s</small></p>',
+			esc_html__( 'Solo afecta a mostrar los datos diarios de cada contenido, no al total: solo dispondrás del historial de esos días. El total de vistas no se ve afectado y nunca se borra por esta retención.', 'bubuku-post-view-count' )
+		);
+	}
+
+	/**
+	 * Field: whether to delete all plugin data on uninstall.
+	 *
+	 * @return void
+	 */
+	public function field_delete_on_uninstall() {
+		$settings = Settings::get_all();
+
+		printf(
+			'<label><input type="checkbox" name="%1$s[delete_data_on_uninstall]" value="1" %2$s /> %3$s</label>',
+			esc_attr( Settings::OPTION_KEY ),
+			checked( $settings['delete_data_on_uninstall'], true, false ),
+			esc_html__( 'Eliminar todas las tablas, meta y opciones del plugin al desinstalarlo.', 'bubuku-post-view-count' )
+		);
+	}
+
+	/**
+	 * Handles the "delete all data now" form: drops and recreates the tables
+	 * and removes the mirrored post meta, without uninstalling the plugin.
+	 *
+	 * @return void
+	 */
+	public function handle_reset_data() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'No tienes permisos para realizar esta acción.', 'bubuku-post-view-count' ) );
+		}
+
+		check_admin_referer( self::RESET_ACTION );
+
+		$db = new Db();
+		$db->drop_tables();
+		$db->remove_all_post_meta();
+
+		// Recreate the (now empty) tables immediately — this is a reset, not an uninstall.
+		( new Schema() )->activate( false );
+
+		wp_safe_redirect(
+			add_query_arg(
+				'bbk_postview_reset',
+				'1',
+				admin_url( 'options-general.php?page=' . self::PAGE_SLUG )
+			)
+		);
+		exit;
+	}
+}

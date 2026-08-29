@@ -4,9 +4,9 @@ Detalle arquitectónico del plugin. Este documento complementa `AGENTS.md` con l
 
 ## Estado actual: PSR-4 por responsabilidad
 
-El plugin usa autoload PSR-4 vía un autoloader propio (sin Composer en runtime — ver más abajo). Las clases viven en `src/{Core,Api,Frontend}/`, con namespace `Bubuku\Plugins\PostViewCount\{Core,Api,Frontend}` y nombres de clase sin prefijo (`Plugin`, `Db`, `RestApi`, `Assets`) — ver `docs/MIGRATION-PSR4.md` para el mapeo histórico aplicado.
+El plugin usa autoload PSR-4 vía un autoloader propio (sin Composer en runtime — ver más abajo). Las clases viven en `src/{Core,Api,Frontend,Admin}/`, con namespace `Bubuku\Plugins\PostViewCount\{Core,Api,Frontend,Admin}` y nombres de clase sin prefijo (`Plugin`, `Db`, `RestApi`, `Assets`, `Settings`, `SettingsPage`) — ver `docs/MIGRATION-PSR4.md` para el mapeo histórico aplicado a las 4 clases originales.
 
-Desde la 1.2.0 tiene 5 clases: además de las 4 originales, `Core\Schema` gestiona dos tablas propias y dos eventos de WP-Cron (ver `docs/ANALYTICS-PLAN.md`, Fase 1). No tiene capa de tools/abilities ni integración MCP todavía (Fase 3 del mismo plan).
+Desde la 1.2.0 tiene 5 clases: además de las 4 originales, `Core\Schema` gestiona dos tablas propias y dos eventos de WP-Cron (ver `docs/ANALYTICS-PLAN.md`, Fase 1). La Fase 2 de ese plan (implementada, aún bajo header `1.2.0` pendiente de bump) añade `Admin\Settings` y `Admin\SettingsPage`: página de ajustes con CPT seleccionables, roles excluidos y filtro de bots. No tiene capa de tools/abilities ni integración MCP todavía (Fase 3 del mismo plan).
 
 ## Autoload — sin vendor/ en producción
 
@@ -25,17 +25,19 @@ Composer (`composer.json`) se usa **solo como tooling de desarrollo**: PHPCS, PH
 | `Api\RestApi` | `src/Api/RestApi.php` | Ruta REST `POST /bbk_postview/v1/set-post-views` — validación de `post_id`, control de origen same-site y deduplicación por transient |
 | `Core\Db` | `src/Core/Db.php` | Acceso a datos — upserts atómicos en las tablas propias, espejo en post meta, lectura de estadísticas, borrado (meta y tablas) al desinstalar |
 | `Core\Schema` | `src/Core/Schema.php` | Esquema de BD — `dbDelta()`, versionado, migración desde `postmeta` por lotes vía cron, purga programada del agregado diario, alta en sitios nuevos de multisitio |
+| `Admin\Settings` | `src/Admin/Settings.php` | Lectura/sanitización de la option `bbk_postview_settings` — CPT habilitados, roles excluidos, filtro de bots, retención, borrado al desinstalar. Única fuente de `enabled_post_types()`, consumida por `Frontend\Assets` y `Api\RestApi` |
+| `Admin\SettingsPage` | `src/Admin/SettingsPage.php` | Página **Ajustes → Post View Count** (Settings API clásica, sin build step) y el botón «Eliminar todos los datos ahora» |
 
 No hay carpeta `includes/` ni capa de tools — toda la lógica cabe en `src/`.
 
 ## Flujo de una vista
 
-1. `Frontend\Assets::enqueue_front_assets()` decide si encolar el script (solo en `single` de `post`, visitante no editor) y localiza `post_id` + URL del endpoint.
+1. `Frontend\Assets::enqueue_front_assets()` decide si encolar el script (solo en `single` de un CPT habilitado — `Admin\Settings::enabled_post_types()`, visitante que no pertenece a un rol excluido — `Settings::is_current_user_excluded()`) y localiza `post_id` + URL del endpoint.
 2. `assets/js/common.js` hace `fetch`/`sendBeacon` a `bbk_postview/v1/set-post-views` con el `post_id`, tras un pequeño delay (evita contar rebotes inmediatos).
-3. `Api\RestApi::register_routes()` valida `post_id` (`validate_post_id` — debe ser un `post` publicado y visible) y comprueba el `permission_callback` (`check_request_origin`).
+3. `Api\RestApi::register_routes()` valida `post_id` (`validate_post_id` — debe pertenecer a un CPT habilitado y ser publicado y visible) y comprueba el `permission_callback` (`check_request_origin`).
 4. `check_request_origin()` compara el origin/host normalizado de la petición con `home_url()` — solo acepta peticiones same-site; es intencionalmente anónimo (sin nonce) para funcionar detrás de full-page caching con visitantes deslogueados.
-5. `set_post_views()` comprueba deduplicación (`is_deduped` — transient `bbk_view_{md5(post_id|ip|user_agent)}`, TTL `DEDUPE_TTL` = 30 minutos). Si ya está deduplicado, devuelve el estado actual (`Core\Db::get_stats()`) sin incrementar.
-6. Si no está deduplicado, marca el transient (`mark_deduped`) y delega en `Core\Db::record_view()`, que hace dos `INSERT ... ON DUPLICATE KEY UPDATE` atómicos (agregado + diario, ambos en UTC), refleja el total y la fecha en post meta (`mirror_post_meta`, filtrable con `bbk_postview_mirror_meta`), e invalida la cache de objeto (`wp_cache_delete`). La respuesta REST incluye `count` y `last_viewed_at`.
+5. `set_post_views()` comprueba deduplicación (`is_deduped` — transient `bbk_view_{md5(post_id|ip|user_agent)}`, TTL `DEDUPE_TTL` = 30 minutos) y, si `exclude_bots` está activo, el User-Agent contra `Settings::is_bot_user_agent()`. Si cualquiera de las dos aplica, devuelve el estado actual (`Core\Db::get_stats()`) sin incrementar.
+6. Si no, marca el transient (`mark_deduped`) y delega en `Core\Db::record_view()`, que hace dos `INSERT ... ON DUPLICATE KEY UPDATE` atómicos (agregado + diario, ambos en UTC), refleja el total y la fecha en post meta (`mirror_post_meta`, filtrable con `bbk_postview_mirror_meta`), e invalida la cache de objeto (`wp_cache_delete`). La respuesta REST incluye `count` y `last_viewed_at`.
 
 ## Constantes del plugin
 
@@ -67,7 +69,7 @@ Post meta (espejo, no fuente de verdad — filtrable con `bbk_postview_mirror_me
 | `views` | Entero, copia del total de la tabla | `Core\Db::mirror_post_meta()` (escritura), `Core\Db::remove_all_post_meta()` (borrado vía `delete_post_meta_by_key()`, llamado desde `uninstall.php`) |
 | `views_last` | Fecha/hora UTC de la última visita, copia de la tabla | Igual que `views` |
 
-Options: `bbk_schema_version` (versión de esquema instalada) y `bbk_postview_settings` (aún sin página de ajustes — Fase 2 de `docs/ANALYTICS-PLAN.md`; hoy solo se lee `retention_days` y `delete_data_on_uninstall` si existieran).
+Options: `bbk_schema_version` (versión de esquema instalada) y `bbk_postview_settings` (array gestionado por `Admin\Settings`/`Admin\SettingsPage` — Fase 2 de `docs/ANALYTICS-PLAN.md`: `post_types`, `excluded_roles`, `exclude_bots`, `retention_days`, `delete_data_on_uninstall`).
 
 Migración desde la 1.1.x: `Core\Schema::migrate_batch()` copia `postmeta.views` a la tabla en lotes de 500 vía un evento cron reencolable, con `INSERT ... ON DUPLICATE KEY UPDATE views = GREATEST(...)` (idempotente). Las filas migradas quedan con `first_viewed_at`/`last_viewed_at` a `NULL` — ese dato no existía antes.
 
@@ -85,7 +87,7 @@ No hay build step ni `assets/src/` — `assets/js/common.js` es JS plano servido
 php Tests/run.php          # o: composer run-script test
 ```
 
-Cubren: los dos upserts atómicos de `Core\Db::record_view()` (primera visita, incremento posterior, agregado diario por/entre días), `set_post_views()` como alias entero, idempotencia de `Core\Schema::migrate_batch()`, validación de origen same-site del endpoint REST, y deduplicación de vistas repetidas (incluyendo el nuevo `last_viewed_at` en la respuesta). `Core\Schema` no simula `dbDelta()` ni WP-Cron/multisitio en los tests — esa parte solo se valida manualmente en el entorno local (`AGENTS.md`). Al añadir lógica nueva a `Core\Db`, `Core\Schema` o `Api\RestApi`, extender `Tests/run.php` con el mismo patrón (`bbk_test_same`, `bbk_test_error_status`) antes de dar el cambio por terminado.
+Cubren: los dos upserts atómicos de `Core\Db::record_view()` (primera visita, incremento posterior, agregado diario por/entre días), `set_post_views()` como alias entero, idempotencia de `Core\Schema::migrate_batch()`, validación de origen same-site del endpoint REST, deduplicación de vistas repetidas (incluyendo el nuevo `last_viewed_at` en la respuesta), `Admin\Settings::enabled_post_types()`/`sanitize()` (descarta tipos y roles inexistentes, `retention_days` con `max(1, …)`), `validate_post_id()` frente a un CPT habilitado/deshabilitado, y el filtro `exclude_bots` en `set_post_views()`. `Core\Schema` no simula `dbDelta()` ni WP-Cron/multisitio en los tests — esa parte solo se valida manualmente en el entorno local (`AGENTS.md`). Al añadir lógica nueva a `Core\Db`, `Core\Schema`, `Api\RestApi` o `Admin\Settings`, extender `Tests/run.php` con el mismo patrón (`bbk_test_same`, `bbk_test_error_status`) antes de dar el cambio por terminado.
 
 ## CI
 
@@ -127,6 +129,10 @@ bubuku-post-view-count/
 │  │  └─ index.php
 │  ├─ Frontend/
 │  │  ├─ Assets.php
+│  │  └─ index.php
+│  ├─ Admin/
+│  │  ├─ Settings.php
+│  │  ├─ SettingsPage.php
 │  │  └─ index.php
 │  └─ index.php
 ├─ assets/
