@@ -74,12 +74,10 @@ Yes. Settings → Post View Count includes a chart of views over time (day/week/
 == Changelog ==
 
 = 1.2.1 =
-* New: read-only query layer (`Core\Query`) powering most-viewed content, stale content, per-post stats, trends and summary — used by the new admin columns, WP-CLI commands and MCP tools below.
-* New: sortable "Views" and "Last view" columns in the admin list table for every enabled content type.
-* New: WP-CLI commands `wp bbk-views top`, `wp bbk-views stale` and `wp bbk-views post <id>` (only registered when WP-CLI is present).
-* New: optional satellite integration with the `bubuku-mcp-conex` hub, exposing five MCP tools (most-viewed, stale content, single-post views, summary, content trends). Inactive and invisible if the hub plugin isn't active.
+* Read-only query layer (`Core\Query`) powering most-viewed content, stale content, per-post stats, trends and summary — used by the new admin columns, WP-CLI commands.
+* Sortable "Views" and "Last view" columns in the admin list table for every enabled content type.
+* WP-CLI commands `wp bbk-views top`, `wp bbk-views stale` and `wp bbk-views post <id>` (only registered when WP-CLI is present).
 * New: `GET /bbk_postview/v1/trends` REST endpoint (capability `edit_posts`, cacheable) for period-over-period view trends.
-* Fix: resolved Plugin Check warnings in the production zip (nonce verification and direct-DB-call/no-caching/unescaped-parameter notices on the plugin's own tables) — documentation only, no behavior change.
 
 = 1.2.0 =
 * The view counter now has its own database tables (`{prefix}bbk_post_views`, `{prefix}bbk_post_views_daily`), tracking the date and time of the first and last view per post in addition to the total — the first step towards analytics features (most-viewed content, stale content) planned for upcoming versions.
