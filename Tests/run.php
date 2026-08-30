@@ -478,10 +478,10 @@ $tests = array(
 		);
 		bbk_test_same( false, isset( TestState::$views[77] ), 'A bot request must not create a views row.' );
 	},
-	'Settings::exclude_bots() defaults to false, so a known bot is recorded unless the setting is turned on' => static function (): void {
+	'Settings::exclude_bots() defaults to true, so a known bot is not recorded unless the setting is turned off' => static function (): void {
 		TestState::reset();
 
-		bbk_test_same( false, Settings::exclude_bots(), 'exclude_bots must be disabled by default.' );
+		bbk_test_same( true, Settings::exclude_bots(), 'exclude_bots must be enabled by default.' );
 
 		TestState::$now          = '2026-01-01 12:00:00';
 		$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
@@ -496,7 +496,26 @@ $tests = array(
 
 		$api->set_post_views( $request );
 
-		bbk_test_same( true, isset( TestState::$views[78] ), 'With exclude_bots off (default), a known bot request must still be recorded.' );
+		bbk_test_same( false, isset( TestState::$views[78] ), 'With exclude_bots on (default), a known bot request must not be recorded.' );
+	},
+	'turning exclude_bots off records a known bot request like any other visitor' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'exclude_bots' => false ) );
+
+		TestState::$now          = '2026-01-01 12:00:00';
+		$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+		$api                     = new RestApi();
+		$request                 = new WP_REST_Request(
+			array( 'post_id' => 79 ),
+			array(
+				'Origin'     => 'https://test.wp.local',
+				'User-Agent' => 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+			)
+		);
+
+		$api->set_post_views( $request );
+
+		bbk_test_same( true, isset( TestState::$views[79] ), 'With exclude_bots explicitly off, a known bot request must be recorded.' );
 	},
 	'Query::most_viewed() returns an empty array for a post type that is not enabled' => static function (): void {
 		TestState::reset();

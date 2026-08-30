@@ -300,7 +300,7 @@ visitas en un CPT desactivado llamando al endpoint a mano.
 |---|---|
 | `post_types` | Casillas sobre `get_post_types( ['public' => true], 'objects' )`. **Default `['post']`** (retrocompatibilidad). |
 | `excluded_roles` | Qué roles no cuentan. Hoy está hardcodeado como `current_user_can( 'edit_posts' )`; pasa a ser configurable, con ese mismo default. |
-| `exclude_bots` | Excluir user-agents de bot conocidos (default **desactivado** desde la 1.2.2 — antes activado por defecto; ver `docs/CHANGELOG.md`). |
+| `exclude_bots` | Excluir user-agents de bot conocidos (default **activado**; se desactivó brevemente en la 1.2.2 y se revirtió en una versión posterior una vez que «Rastreo de bots de IA» quedó como ajuste independiente — ver `docs/CHANGELOG.md`). |
 | `retention_days` | Retención del agregado diario (default 400). |
 | `delete_data_on_uninstall` | Ver §1.8. Default **activado**. |
 

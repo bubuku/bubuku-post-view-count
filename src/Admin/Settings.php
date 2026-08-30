@@ -33,7 +33,7 @@ class Settings {
 		return array(
 			'post_types'               => array( 'post' ),
 			'excluded_roles'           => self::default_excluded_roles(),
-			'exclude_bots'             => false,
+			'exclude_bots'             => true,
 			'retention_days'           => 400,
 			'delete_data_on_uninstall' => true,
 			'ai_crawler_tracking'      => false,
