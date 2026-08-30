@@ -1,7 +1,7 @@
 === Bubuku post view count ===
 Contributors: lruizcode, bubuku
 Tags: page view count, post views, post count, posts, post view count
-Requires at least: 6.2
+Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
 Stable tag: 1.2.2
