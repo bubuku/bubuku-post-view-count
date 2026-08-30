@@ -251,8 +251,21 @@ const StatsPanel = ( { context } ) => {
 	const hasPartialHistory =
 		trendRange && availableDay && availableDay > trendRange.from;
 	let trendLabel = null;
+	let trendRangeLabel = null;
 
 	if ( trendRange ) {
+		const displayedFrom = hasPartialHistory
+			? availableDay
+			: trendRange.from;
+		trendRangeLabel = sprintf(
+			/* translators: 1: first displayed date, 2: last displayed date. */
+			__(
+				'Periodo mostrado: del %1$s al %2$s.',
+				'bubuku-post-view-count'
+			),
+			formatDate( displayedFrom ),
+			formatDate( trendRange.to )
+		);
 		trendLabel = hasPartialHistory
 			? sprintf(
 					/* translators: 1: number of views, 2: first available date, 3: grouping unit. */
@@ -303,13 +316,17 @@ const StatsPanel = ( { context } ) => {
 				}
 			>
 				{ trendLabel && (
-					<p className="bbk-trend-chart__comparison">
-						{ trendLabel }
+					<p className="bbk-trend-chart__summary">{ trendLabel }</p>
+				) }
+				{ trendRangeLabel && (
+					<p className="bbk-trend-chart__range">
+						{ trendRangeLabel }
 					</p>
 				) }
 				<div className="bbk-trend-chart">
 					<TrendChart
 						trend={ trend }
+						granularity={ granularity }
 						noDataLabel={ __(
 							'Todavía no hay datos suficientes para dibujar la gráfica.',
 							'bubuku-post-view-count'
