@@ -88,14 +88,16 @@ class SettingsPage {
 			'bbk-postview-admin-stats',
 			'bbk_postview_stats',
 			array(
-				'api_trends' => rest_url( BBK_PLUGIN_ENDPOINTS_URL . '/trends' ),
-				'nonce'      => wp_create_nonce( 'wp_rest' ),
-				'i18n'       => array(
+				'api_trends'   => rest_url( BBK_PLUGIN_ENDPOINTS_URL . '/trends' ),
+				'api_momentum' => rest_url( BBK_PLUGIN_ENDPOINTS_URL . '/trends/momentum' ),
+				'nonce'        => wp_create_nonce( 'wp_rest' ),
+				'i18n'         => array(
 					'noData'     => __( 'Todavía no hay datos suficientes para dibujar la gráfica.', 'bubuku-post-view-count' ),
 					'thisPeriod' => __( 'Este periodo', 'bubuku-post-view-count' ),
 					/* translators: %s: percentage change vs the previous period, e.g. "+12%". */
 					'vsPrevious' => __( '%s vs. periodo anterior', 'bubuku-post-view-count' ),
 					'views'      => __( 'vistas', 'bubuku-post-view-count' ),
+					'noMomentum' => __( 'Sin cambios relevantes en este periodo.', 'bubuku-post-view-count' ),
 				),
 			)
 		);
@@ -157,6 +159,19 @@ class SettingsPage {
 				</p>
 				<p id="bbk-postview-comparison" class="description"></p>
 				<canvas id="bbk-postview-chart" width="900" height="260"></canvas>
+			</div>
+
+			<h2><?php esc_html_e( 'En alza y en caída', 'bubuku-post-view-count' ); ?></h2>
+			<p class="description"><?php esc_html_e( 'Comparación entre los últimos 30 días y los 30 anteriores.', 'bubuku-post-view-count' ); ?></p>
+			<div id="bbk-postview-momentum" class="bbk-postview-momentum">
+				<div class="bbk-postview-momentum-column">
+					<h3><?php esc_html_e( 'En alza', 'bubuku-post-view-count' ); ?></h3>
+					<ul id="bbk-postview-momentum-rising"></ul>
+				</div>
+				<div class="bbk-postview-momentum-column">
+					<h3><?php esc_html_e( 'En caída', 'bubuku-post-view-count' ); ?></h3>
+					<ul id="bbk-postview-momentum-falling"></ul>
+				</div>
 			</div>
 
 			<hr />

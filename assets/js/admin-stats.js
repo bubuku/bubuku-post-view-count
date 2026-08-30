@@ -23,6 +23,7 @@
 
 		loadChart( select.value );
 		loadComparison();
+		loadMomentum();
 
 		select.addEventListener( 'change', function () {
 			loadChart( select.value );
@@ -65,7 +66,26 @@
 	 * @return {Promise<Array>} Resolves with the `trend` array from the REST response.
 	 */
 	function fetchTrends( params ) {
-		var url = new URL( CONFIG.api_trends );
+		return fetchJson( CONFIG.api_trends, params ).then( function ( body ) {
+			return body.trend || [];
+		} );
+	}
+
+	/**
+	 * @return {Promise<Object>} Resolves with the `{ rising, falling }` payload from the
+	 *   momentum endpoint.
+	 */
+	function fetchMomentum() {
+		return fetchJson( CONFIG.api_momentum, {} );
+	}
+
+	/**
+	 * @param {string} endpoint Full REST URL.
+	 * @param {Object} params   Query args to append.
+	 * @return {Promise<Object>} Resolves with the parsed JSON response body.
+	 */
+	function fetchJson( endpoint, params ) {
+		var url = new URL( endpoint );
 
 		Object.keys( params ).forEach( function ( key ) {
 			url.searchParams.set( key, params[ key ] );
@@ -74,17 +94,72 @@
 		return fetch( url.toString(), {
 			headers: { 'X-WP-Nonce': CONFIG.nonce },
 			credentials: 'same-origin',
-		} )
-			.then( function ( response ) {
-				if ( ! response.ok ) {
-					throw new Error( 'bbk_postview_stats: request failed' );
-				}
+		} ).then( function ( response ) {
+			if ( ! response.ok ) {
+				throw new Error( 'bbk_postview_stats: request failed' );
+			}
 
-				return response.json();
-			} )
+			return response.json();
+		} );
+	}
+
+	function loadMomentum() {
+		var risingEl = document.getElementById( 'bbk-postview-momentum-rising' );
+		var fallingEl = document.getElementById( 'bbk-postview-momentum-falling' );
+
+		if ( ! risingEl || ! fallingEl ) {
+			return;
+		}
+
+		fetchMomentum()
 			.then( function ( body ) {
-				return body.trend || [];
+				renderMomentumList( risingEl, body.rising || [], 'is-up' );
+				renderMomentumList( fallingEl, body.falling || [], 'is-down' );
+			} )
+			.catch( function () {
+				/* Silently skip the momentum lists if the request fails; the rest of the page still loads. */
 			} );
+	}
+
+	/**
+	 * @param {HTMLElement} el        <ul> to fill.
+	 * @param {Array}       items     Rows: [{ title, url, current_views, delta, delta_pct }, ...]
+	 * @param {string}      className Row class ('is-up' or 'is-down').
+	 */
+	function renderMomentumList( el, items, className ) {
+		el.innerHTML = '';
+
+		if ( ! items.length ) {
+			var empty = document.createElement( 'li' );
+			empty.className = 'description';
+			empty.textContent = CONFIG.i18n.noMomentum;
+			el.appendChild( empty );
+			return;
+		}
+
+		items.forEach( function ( item ) {
+			var li = document.createElement( 'li' );
+			li.className = className;
+
+			var link = document.createElement( 'a' );
+			link.href = item.url;
+			link.textContent = item.title;
+
+			var delta = document.createElement( 'span' );
+			var sign = 0 <= item.delta ? '+' : '';
+			var deltaText = sign + item.delta;
+
+			if ( null !== item.delta_pct ) {
+				deltaText += ' (' + sign + item.delta_pct + '%)';
+			}
+
+			delta.className = 'bbk-postview-momentum-delta';
+			delta.textContent = ' ' + deltaText;
+
+			li.appendChild( link );
+			li.appendChild( delta );
+			el.appendChild( li );
+		} );
 	}
 
 	/**

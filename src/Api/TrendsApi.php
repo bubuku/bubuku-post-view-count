@@ -64,6 +64,34 @@ class TrendsApi {
 				),
 			)
 		);
+
+		register_rest_route(
+			BBK_PLUGIN_ENDPOINTS_URL,
+			'trends/momentum',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'get_momentum' ),
+				'permission_callback' => array( $this, 'check_permission' ),
+				'args'                => array(
+					'post_types'  => array(
+						'type'  => 'array',
+						'items' => array( 'type' => 'string' ),
+					),
+					'period_days' => array(
+						'type'    => 'integer',
+						'default' => 30,
+					),
+					'limit'       => array(
+						'type'    => 'integer',
+						'default' => 10,
+					),
+					'min_views'   => array(
+						'type'    => 'integer',
+						'default' => 1,
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -92,6 +120,27 @@ class TrendsApi {
 
 		// Object-cached in Core\Query::trend() (5 min); mirror that at the HTTP layer too,
 		// for any reverse proxy or browser cache sitting in front of a per-capability response.
+		$response->header( 'Cache-Control', 'private, max-age=300' );
+
+		return $response;
+	}
+
+	/**
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response
+	 */
+	public function get_momentum( WP_REST_Request $request ) {
+		$momentum = Query::momentum(
+			(array) ( $request->get_param( 'post_types' ) ?? array() ),
+			(int) ( $request->get_param( 'period_days' ) ?? 30 ),
+			(int) ( $request->get_param( 'limit' ) ?? 10 ),
+			(int) ( $request->get_param( 'min_views' ) ?? 1 )
+		);
+
+		$response = new WP_REST_Response( $momentum, 200 );
+
+		// Object-cached in Core\Query::momentum() (5 min), same as trend(); mirror that at
+		// the HTTP layer too, same private, short-TTL policy as get_trends().
 		$response->header( 'Cache-Control', 'private, max-age=300' );
 
 		return $response;

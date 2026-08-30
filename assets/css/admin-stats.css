@@ -22,3 +22,37 @@
 #bbk-postview-comparison.is-down {
 	color: #b32d2e;
 }
+
+.bbk-postview-momentum {
+	display: flex;
+	gap: 2em;
+	max-width: 900px;
+	margin-bottom: 1.5em;
+}
+
+.bbk-postview-momentum-column {
+	flex: 1;
+	min-width: 0;
+}
+
+.bbk-postview-momentum-column ul {
+	margin: 0;
+}
+
+.bbk-postview-momentum-column li {
+	padding: 4px 0;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.bbk-postview-momentum-delta {
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.bbk-postview-momentum-column li.is-up .bbk-postview-momentum-delta {
+	color: #007017;
+}
+
+.bbk-postview-momentum-column li.is-down .bbk-postview-momentum-delta {
+	color: #b32d2e;
+}

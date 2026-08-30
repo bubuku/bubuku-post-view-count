@@ -555,4 +555,5 @@ namespace {
 	require_once dirname( __DIR__ ) . '/src/Mcp/Tools/GetPostViews.php';
 	require_once dirname( __DIR__ ) . '/src/Mcp/Tools/GetViewsSummary.php';
 	require_once dirname( __DIR__ ) . '/src/Mcp/Tools/GetContentTrends.php';
+	require_once dirname( __DIR__ ) . '/src/Mcp/Tools/ListMomentum.php';
 }

@@ -581,10 +581,31 @@ Gracias a la decisión 2 **no hace falta esquema nuevo**:
 >   (mismo patrón que `dbDelta()`/`WP_CLI`/`PostListColumns` en fases previas) — validados
 >   manualmente en `test.wp.local`.
 >
-> **Pendiente, fuera de esta pasada**: los listados "en alza"/"en caída" (necesitan un método
-> nuevo en `Core\Query` y decidir el criterio de variación — absoluta vs. porcentual, umbral
-> mínimo de vistas para no generar ruido con posts que pasan de 0 a 1 vista). Se deja como nota
-> explícita, no como omisión silenciosa.
+> ✅ **Listados "en alza"/"en caída" implementados** (versión sin publicar, ver
+> `docs/CHANGELOG.md` → `[Unreleased]`): `Core\Query::momentum( post_types, period_days,
+> limit, min_views )` compara los últimos `period_days` días contra el periodo
+> inmediatamente anterior de igual longitud sobre `bbk_post_views_daily`. Criterio elegido:
+> variación **absoluta** (`delta`) para ordenar cada lista — no porcentual, porque un post
+> que pasa de 1 a 5 vistas tendría un `+400%` más llamativo que uno que pasa de 500 a 2000,
+> que es el cambio que de verdad importa en un sitio con tráfico real. El `delta_pct` se
+> devuelve igualmente como dato complementario, y es `null` cuando `previous_views` es 0 (el
+> porcentaje no está definido). `min_views` (default 1, suma de ambos periodos) es el filtro
+> de ruido acordado en la nota de alcance: sin él, cualquier post que pase de 0 a 1 vista
+> aparecería en "en alza" sin significar nada. Expuesto en tres superficies, todas
+> delegando en el mismo método — nunca se duplica el SQL: `GET
+> /bbk_postview/v1/trends/momentum` en `Api\TrendsApi` (misma capability `edit_posts` y
+> `Cache-Control: private, max-age=300` que `get_trends()`, más cache de objeto de 5 min en
+> `Core\Query::momentum()`, igual que `most_viewed()`/`trend()`); tool MCP
+> `bubuku-views/list-momentum` (`src/Mcp/Tools/ListMomentum.php`, registrada junto a las
+> cinco tools existentes); y dos listas nuevas ("En alza"/"En caída") en `Admin\SettingsPage`,
+> pintadas por `assets/js/admin-stats.js` sobre el endpoint anterior, sin librería ni build
+> step, igual que el resto de esta fase. Tests nuevos en `Tests/run.php` cubren el caso de
+> tipo de contenido deshabilitado (mismo patrón que el resto de `Core\Query`); el `JOIN` real
+> contra `wp_posts` no tiene tabla simulada en el harness sin dependencias y se validó
+> manualmente en `test.wp.local` con datos reales insertados por WP-CLI (un post subiendo de
+> 5 a 50 vistas y otro bajando de 40 a 2 entre dos periodos de 30 días), confirmando también
+> el registro sin rechazos de la tool en el `BubukuConex\Registry` real y el `401`/`200` del
+> endpoint sin/con `edit_posts`.
 
 ### F5 — Dimensiones de sesión (pantalla y procedencia)
 

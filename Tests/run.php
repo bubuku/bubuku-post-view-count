@@ -19,6 +19,7 @@ use Bubuku\Plugins\PostViewCount\Frontend\ViewsDisplay;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetContentTrends;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetPostViews;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetViewsSummary;
+use Bubuku\Plugins\PostViewCount\Mcp\Tools\ListMomentum;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\ListMostViewed;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\ListStaleContent;
 use Bubuku\Plugins\PostViewCount\TestState;
@@ -280,6 +281,16 @@ $tests = array(
 			'A disabled post type must never be queried, and must return zeros.'
 		);
 	},
+	'Query::momentum() returns empty lists for a post type that is not enabled' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+
+		$result = Query::momentum( array( 'page' ) );
+
+		bbk_test_same( array(), $result['rising'], 'A disabled post type must never be queried, and must return no rows.' );
+		bbk_test_same( array(), $result['falling'], 'A disabled post type must never be queried, and must return no rows.' );
+		bbk_test_same( true, isset( $result['period']['current'], $result['period']['previous'] ), 'momentum() must always report the two compared periods.' );
+	},
 	'Query::post_stats() reflects the recorded views, title and URL for a post' => static function (): void {
 		TestState::reset();
 		TestState::$now                = '2026-01-01 10:00:00';
@@ -356,6 +367,15 @@ $tests = array(
 		bbk_test_same( array(), $result['trend'], 'With no daily rows recorded, the trend must be an empty series.' );
 		bbk_test_same( true, isset( $result['meta']['computed_at'] ), 'The tool must add a computed_at timestamp.' );
 	},
+	'ListMomentum tool delegates to Query::momentum()'    => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+
+		$result = ( new ListMomentum() )->execute_callback( array( 'post_types' => array( 'page' ) ) );
+
+		bbk_test_same( array(), $result['rising'], 'A disabled post type must return no rows, same as Query::momentum().' );
+		bbk_test_same( array(), $result['falling'], 'A disabled post type must return no rows, same as Query::momentum().' );
+	},
 	'TrendsApi::check_permission() requires the edit_posts capability' => static function (): void {
 		TestState::reset();
 
@@ -377,6 +397,17 @@ $tests = array(
 		$response = ( new TrendsApi() )->get_trends( $request );
 
 		bbk_test_same( array( 'trend' => array() ), $response->get_data(), 'With no daily rows recorded, the trend must be an empty series.' );
+	},
+	'TrendsApi::get_momentum() delegates to Query::momentum()' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+		$request = new WP_REST_Request( array( 'post_types' => array( 'page' ) ) );
+
+		$response = ( new TrendsApi() )->get_momentum( $request );
+		$data     = $response->get_data();
+
+		bbk_test_same( array(), $data['rising'], 'A disabled post type must return no rows, same as Query::momentum().' );
+		bbk_test_same( array(), $data['falling'], 'A disabled post type must return no rows, same as Query::momentum().' );
 	},
 	'ViewsDisplay::render() shows the view count, and the last-viewed date when asked' => static function (): void {
 		TestState::reset();

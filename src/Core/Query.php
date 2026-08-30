@@ -330,6 +330,136 @@ class Query {
 	}
 
 	/**
+	 * Posts whose daily views are rising or falling, comparing the last `$period_days` days
+	 * against the equal-length period immediately before them (docs/ANALYTICS-PLAN.md §5,
+	 * "listados en alza/en caída" pendiente de la Fase 4). Unlike most_viewed(), this always
+	 * reads the daily aggregate — there is no all-time variant of a two-period comparison.
+	 *
+	 * `min_views` filters noise: a post going from 0 to 1 view has an undefined (null)
+	 * percentage change and would otherwise dominate the "rising" list without meaning
+	 * anything. A post with zero views in both periods is never returned (nothing changed).
+	 *
+	 * @param string[] $post_types  Post types to include; empty means every enabled type.
+	 * @param int      $period_days Length of each period being compared, in days.
+	 * @param int      $limit       Max rows per list (rising/falling), capped at self::MAX_LIMIT.
+	 * @param int      $min_views   Minimum combined views (current + previous period) to be considered.
+	 * @return array{
+	 *     rising: array<int, array{id:int,title:string,url:string,current_views:int,previous_views:int,delta:int,delta_pct:?float}>,
+	 *     falling: array<int, array{id:int,title:string,url:string,current_views:int,previous_views:int,delta:int,delta_pct:?float}>,
+	 *     period: array{current:array{from:string,to:string},previous:array{from:string,to:string}}
+	 * }
+	 */
+	public static function momentum( array $post_types = array(), int $period_days = 30, int $limit = 10, int $min_views = 1 ): array {
+		global $wpdb;
+
+		$current_end    = current_time( 'Y-m-d', true );
+		$period_days    = max( 1, $period_days );
+		$current_start  = gmdate( 'Y-m-d', strtotime( "{$current_end} -" . ( $period_days - 1 ) . ' days' ) );
+		$previous_end   = gmdate( 'Y-m-d', strtotime( "{$current_start} -1 day" ) );
+		$previous_start = gmdate( 'Y-m-d', strtotime( "{$previous_end} -" . ( $period_days - 1 ) . ' days' ) );
+
+		$empty = array(
+			'rising'  => array(),
+			'falling' => array(),
+			'period'  => array(
+				'current'  => array(
+					'from' => $current_start,
+					'to'   => $current_end,
+				),
+				'previous' => array(
+					'from' => $previous_start,
+					'to'   => $previous_end,
+				),
+			),
+		);
+
+		$post_types = self::resolve_post_types( $post_types );
+
+		if ( empty( $post_types ) ) {
+			return $empty;
+		}
+
+		$limit     = self::cap_limit( $limit );
+		$min_views = max( 0, $min_views );
+
+		$cache_key = 'momentum_' . md5( (string) wp_json_encode( array( $post_types, $period_days, $limit, $min_views ) ) );
+		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
+
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
+		$daily_table       = Schema::table_daily();
+		$type_placeholders = self::placeholders( $post_types, '%s' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Read query over the plugin's own table, no equivalent WP API. $daily_table is an internal constant (Schema::table_daily()), never user input.
+		$rows = $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- {$type_placeholders} expands to a dynamic run of %s placeholders at runtime, which this static sniff cannot count.
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$daily_table} is an internal constant (Schema::table_daily()), never user input; {$type_placeholders} is a fixed run of %s placeholders.
+				"SELECT d.post_id AS post_id, SUM(CASE WHEN d.day >= %s THEN d.views ELSE 0 END) AS current_views, SUM(CASE WHEN d.day < %s THEN d.views ELSE 0 END) AS previous_views FROM {$daily_table} d INNER JOIN {$wpdb->posts} p ON p.ID = d.post_id WHERE p.post_type IN ({$type_placeholders}) AND p.post_status = 'publish' AND d.day BETWEEN %s AND %s GROUP BY d.post_id",
+				array_merge( array( $current_start, $current_start ), $post_types, array( $previous_start, $current_end ) )
+			),
+			ARRAY_A
+		);
+
+		$rising  = array();
+		$falling = array();
+
+		foreach ( is_array( $rows ) ? $rows : array() as $row ) {
+			$current  = (int) $row['current_views'];
+			$previous = (int) $row['previous_views'];
+
+			if ( ( $current + $previous ) < $min_views ) {
+				continue;
+			}
+
+			$delta = $current - $previous;
+
+			if ( 0 === $delta ) {
+				continue;
+			}
+
+			$post_id = (int) $row['post_id'];
+			$item    = array(
+				'id'             => $post_id,
+				'title'          => get_the_title( $post_id ),
+				'url'            => get_permalink( $post_id ),
+				'current_views'  => $current,
+				'previous_views' => $previous,
+				'delta'          => $delta,
+				'delta_pct'      => $previous > 0 ? round( ( $delta / $previous ) * 100, 1 ) : null,
+			);
+
+			if ( $delta > 0 ) {
+				$rising[] = $item;
+			} else {
+				$falling[] = $item;
+			}
+		}
+
+		usort(
+			$rising,
+			static function ( array $a, array $b ): int {
+				return $b['delta'] <=> $a['delta'];
+			}
+		);
+		usort(
+			$falling,
+			static function ( array $a, array $b ): int {
+				return $a['delta'] <=> $b['delta'];
+			}
+		);
+
+		$empty['rising']  = array_slice( $rising, 0, $limit );
+		$empty['falling'] = array_slice( $falling, 0, $limit );
+
+		wp_cache_set( $cache_key, $empty, self::CACHE_GROUP, self::CACHE_TTL );
+
+		return $empty;
+	}
+
+	/**
 	 * Requested post types intersected with the enabled ones (§3.1) — never trust a
 	 * caller-supplied list, and never query a type the site has excluded from counting.
 	 * Empty input means "every enabled type".

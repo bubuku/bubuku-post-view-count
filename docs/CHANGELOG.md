@@ -7,8 +7,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/).
 ### Añadido
 - UI de la Fase F4 de `docs/ANALYTICS-PLAN.md`: gráfica de evolución (día/semana/mes) y comparativa de vistas del periodo actual vs. el anterior en Ajustes → Post View Count, dibujada a mano con la Canvas API (sin librería de gráficos ni CDN) sobre el endpoint `GET /bbk_postview/v1/trends` ya existente.
 - Shortcode `[bbk_post_views]` (atributos `post_id`, `show_last_viewed`) y bloque de Gutenberg equivalente `bubuku/post-views` (`assets/blocks/post-views/`), ambos delegando en la nueva `Frontend\ViewsDisplay` para no duplicar el renderizado. El bloque se registra sin build step: `index.js` a mano (sin JSX) con un `index.asset.php` manual como equivalente del manifiesto que generaría `@wordpress/scripts`, y `render.php` como `render_callback` server-side.
-### Notas
-- Los listados «en alza»/«en caída» entre dos periodos, mencionados en el plan junto a la comparativa, quedan pendientes a propósito: necesitan un método nuevo en `Core\Query` y decidir el criterio de variación (absoluta vs. porcentual, umbral mínimo de vistas). Ver la nota de alcance en `docs/ANALYTICS-PLAN.md`.
+- Cierre de la Fase F4: listados «en alza»/«en caída» entre dos periodos consecutivos. `Core\Query::momentum()` compara los últimos N días contra los N anteriores sobre `bbk_post_views_daily`, ordenando por variación absoluta de vistas (`min_views` filtra el ruido de posts que pasan de 0 a 1 vista). Expuesto en tres superficies sin duplicar SQL: `GET /bbk_postview/v1/trends/momentum` (`Api\TrendsApi`), la tool MCP `bubuku-views/list-momentum`, y dos listas nuevas en Ajustes → Post View Count pintadas por `assets/js/admin-stats.js`. Ver la nota `✅ implementados` en `docs/ANALYTICS-PLAN.md` (F4) para el criterio elegido y su validación.
 
 ## [1.2.1] - 2026-08-29
 ### Añadido
