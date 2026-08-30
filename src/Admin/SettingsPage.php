@@ -90,6 +90,7 @@ class SettingsPage {
 			array(
 				'api_trends'   => rest_url( BBK_PLUGIN_ENDPOINTS_URL . '/trends' ),
 				'api_momentum' => rest_url( BBK_PLUGIN_ENDPOINTS_URL . '/trends/momentum' ),
+				'api_dims'     => rest_url( BBK_PLUGIN_ENDPOINTS_URL . '/trends/dims' ),
 				'nonce'        => wp_create_nonce( 'wp_rest' ),
 				'i18n'         => array(
 					'noData'     => __( 'Todavía no hay datos suficientes para dibujar la gráfica.', 'bubuku-post-view-count' ),
@@ -98,6 +99,7 @@ class SettingsPage {
 					'vsPrevious' => __( '%s vs. periodo anterior', 'bubuku-post-view-count' ),
 					'views'      => __( 'vistas', 'bubuku-post-view-count' ),
 					'noMomentum' => __( 'Sin cambios relevantes en este periodo.', 'bubuku-post-view-count' ),
+					'noDims'     => __( 'Todavía no hay datos suficientes.', 'bubuku-post-view-count' ),
 				),
 			)
 		);
@@ -174,6 +176,19 @@ class SettingsPage {
 				</div>
 			</div>
 
+			<h2><?php esc_html_e( 'Dispositivo y procedencia', 'bubuku-post-view-count' ); ?></h2>
+			<p class="description"><?php esc_html_e( 'Últimos 3 meses.', 'bubuku-post-view-count' ); ?></p>
+			<div id="bbk-postview-dims" class="bbk-postview-dims">
+				<div class="bbk-postview-dims-column">
+					<h3><?php esc_html_e( 'Dispositivo', 'bubuku-post-view-count' ); ?></h3>
+					<ul id="bbk-postview-dims-viewport"></ul>
+				</div>
+				<div class="bbk-postview-dims-column">
+					<h3><?php esc_html_e( 'Procedencia', 'bubuku-post-view-count' ); ?></h3>
+					<ul id="bbk-postview-dims-referrer"></ul>
+				</div>
+			</div>
+
 			<hr />
 
 			<form method="post" action="options.php">
@@ -209,7 +224,7 @@ class SettingsPage {
 	public function field_post_types() {
 		$settings = Settings::get_all();
 
-		foreach ( get_post_types( array( 'public' => true ), 'objects' ) as $post_type ) {
+		foreach ( Settings::selectable_post_types() as $post_type ) {
 			printf(
 				'<label style="display:block;"><input type="checkbox" name="%1$s[post_types][]" value="%2$s" %3$s /> %4$s</label>',
 				esc_attr( Settings::OPTION_KEY ),

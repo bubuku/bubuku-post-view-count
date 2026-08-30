@@ -24,6 +24,7 @@
 		loadChart( select.value );
 		loadComparison();
 		loadMomentum();
+		loadDims();
 
 		select.addEventListener( 'change', function () {
 			loadChart( select.value );
@@ -119,6 +120,65 @@
 			.catch( function () {
 				/* Silently skip the momentum lists if the request fails; the rest of the page still loads. */
 			} );
+	}
+
+	/**
+	 * @param {string} dimension 'viewport' or 'referrer'.
+	 * @return {Promise<Array>} Resolves with the `breakdown` array from the REST response.
+	 */
+	function fetchDims( dimension ) {
+		return fetchJson( CONFIG.api_dims, { dimension: dimension } ).then( function ( body ) {
+			return body.breakdown || [];
+		} );
+	}
+
+	function loadDims() {
+		var viewportEl = document.getElementById( 'bbk-postview-dims-viewport' );
+		var referrerEl = document.getElementById( 'bbk-postview-dims-referrer' );
+
+		if ( ! viewportEl || ! referrerEl ) {
+			return;
+		}
+
+		// Each dimension fetched and rendered independently: one failing request
+		// must not blank the other list.
+		fetchDims( 'viewport' )
+			.then( function ( breakdown ) {
+				renderDimsList( viewportEl, breakdown );
+			} )
+			.catch( function () {
+				/* Silently skip this list if the request fails; the other list still loads. */
+			} );
+
+		fetchDims( 'referrer' )
+			.then( function ( breakdown ) {
+				renderDimsList( referrerEl, breakdown );
+			} )
+			.catch( function () {
+				/* Silently skip this list if the request fails; the other list still loads. */
+			} );
+	}
+
+	/**
+	 * @param {HTMLElement} el    <ul> to fill.
+	 * @param {Array}       items Rows: [{ value, views }, ...]
+	 */
+	function renderDimsList( el, items ) {
+		el.innerHTML = '';
+
+		if ( ! items.length ) {
+			var empty = document.createElement( 'li' );
+			empty.className = 'description';
+			empty.textContent = CONFIG.i18n.noDims;
+			el.appendChild( empty );
+			return;
+		}
+
+		items.forEach( function ( item ) {
+			var li = document.createElement( 'li' );
+			li.textContent = item.value + ': ' + item.views;
+			el.appendChild( li );
+		} );
 	}
 
 	/**

@@ -609,6 +609,74 @@ Gracias a la decisión 2 **no hace falta esquema nuevo**:
 
 ### F5 — Dimensiones de sesión (pantalla y procedencia)
 
+> ✅ **Implementada** (versión sin publicar, ver `docs/CHANGELOG.md` → `[Unreleased]`).
+>
+> - **`referrer`: se persiste la clasificación, nunca el host.** El propio §F6 de este
+>   documento da la razón: dice que ve el tráfico de IA "sin infraestructura adicional"
+>   porque ya es "la dimensión `source = 'ai'` de la F5" — es decir, esta fase debía
+>   persistir ya el valor clasificado, no el host bruto. Además `value VARCHAR(100)` con
+>   "lista blanca cerrada" es incompatible con un host arbitrario. El host se calcula
+>   transitoriamente en `assets/js/common.js` solo para clasificar (`direct`/`internal`/
+>   `search`/`social`/`ai`/`other`) y nunca se envía ni se guarda.
+> - **`dpr` (device pixel ratio) no se envía ni se persiste.** La tabla no tiene columna
+>   para él y ninguna consulta/UI/tool lo usa — inventar una tercera dimensión sin
+>   consumidor habría contradicho el propio criterio de "lista blanca cerrada" de esta
+>   fase.
+> - **`dimension = 'source'`** (de la definición SQL de abajo) queda sin implementar: no
+>   hay ningún escritor para ella en F5, reservada tal cual dice el propio documento para
+>   la F6.
+> - Índice `KEY day_dimension_value (day, dimension, value)` añadido sobre el SQL literal
+>   de abajo: `Core\Query::dims_breakdown()` es una consulta site-wide por
+>   `dimension`+`value` con filtro de `day` y sin `post_id` en el `WHERE`, así que no puede
+>   aprovechar el prefijo `post_id` de la clave primaria.
+> - Única fuente de verdad de la lista blanca: `Core\Dimensions` (`DIMENSIONS`,
+>   `VIEWPORT_BUCKETS`, `REFERRER_CLASSES`, `values_for()`), consumida tanto por
+>   `Api\RestApi` (valida los valores al escribir) como por `Core\Query`/la tool MCP
+>   (validan el nombre de dimensión al leer) — ninguno de los dos duplica la lista del
+>   otro.
+> - `Db::record_view()` gana un segundo parámetro opcional `$dims` (vacío por defecto, sin
+>   romper ningún llamador existente), reutilizando el mismo `$now`/`$day` ya calculado
+>   para los dos upserts existentes — evita una segunda llamada a `current_time()` y que la
+>   fila de dims caiga en un día distinto al de la vista por un cruce de medianoche.
+>   `Api\RestApi::set_post_views()` construye `$dims` validando cada valor contra
+>   `Dimensions::values_for()` **sin** `validate_callback` en el arg REST (un
+>   `validate_callback` que falla tumbaría toda la petición con 400; el requisito es que un
+>   valor inválido se ignore, nunca impida contar la vista) — un valor desconocido se
+>   descarta en silencio, la vista se sigue contando igual. El guard de dedupe/bot ya
+>   existente protege las dims de forma automática, sin cableado extra: ambos retornan
+>   antes de llamar a `record_view()`.
+> - `Core\Query::dims_breakdown( dimension, post_types, since, until )`: primer método de
+>   esta clase sin `LIMIT`/`cap_limit()` — cardinalidad fija y pequeña (máx. 6 filas para
+>   `referrer`, 4 para `viewport`). Mismo patrón de caché de objeto (5 min) y `JOIN` contra
+>   `wp_posts` que `momentum()`/`trend()`.
+> - `GET /bbk_postview/v1/trends/dims?dimension=viewport|referrer` en `Api\TrendsApi`
+>   (misma `permission_callback` y `Cache-Control: private, max-age=300` que `/trends` y
+>   `/trends/momentum`) y tool MCP `bubuku-views/get-dims-breakdown`
+>   (`src/Mcp/Tools/GetDimsBreakdown.php`), ambos delegando en `Core\Query::dims_breakdown()`
+>   sin duplicar SQL, con `data_available_since` en la respuesta de la tool igual que las
+>   demás.
+> - Nueva sección "Dispositivo y procedencia" en Ajustes → Post View Count
+>   (`Admin\SettingsPage` + `assets/js/admin-stats.js`), dos listas independientes
+>   (dispositivo/procedencia) que fallan por separado si un endpoint falla — mismo patrón
+>   que la sección de momentum de la F4.
+> - `assets/js/common.js` añade `getViewportBucket()` (basado en `window.innerWidth`) y
+>   `getReferrerClass()` (basado en `document.referrer` vs `location.host`, comparado
+>   contra listas cortas de buscadores/redes sociales/asistentes IA) al payload existente.
+>   Nunca se envía el host bruto, `document.referrer` en crudo, ni el ancho de píxel
+>   exacto.
+> - Tests nuevos en `Tests/run.php` cubren: el upsert de dims (agregación, no duplicado),
+>   que `record_view()` sin `$dims` no toca la tabla nueva, la validación/descarte
+>   silencioso de un valor inválido en el endpoint REST, que el guard de dedupe protege
+>   también las dims, y la delegación superficial de `Core\Query::dims_breakdown()`
+>   (dimensión desconocida o tipo de contenido deshabilitado → `array()`), de la ruta REST y
+>   de la tool MCP. La agregación real con `JOIN`/`GROUP BY` se deja **"validar
+>   manualmente"**, mismo precedente ya establecido para `momentum()`/`trend()` — el stub
+>   `TestWpdb` no tiene motor SQL real. Validado manualmente en `test.wp.local`: creación de
+>   la tabla vía `dbDelta()` en la actualización de esquema, una visita real generando filas
+>   `viewport`/`referrer`, deduplicación, clasificación de un referrer de buscador conocido,
+>   render real de la sección de admin, `GET /trends/dims` con/sin `edit_posts`, registro de
+>   la tool contra el hub real, y borrado de la tabla al desinstalar.
+
 Una **única** tabla, agregada por día y dimensión — **nunca evento por evento** (privacidad
 y volumen):
 

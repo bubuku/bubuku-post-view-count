@@ -12,6 +12,7 @@ declare( strict_types=1 );
 
 namespace Bubuku\Plugins\PostViewCount\Api;
 
+use Bubuku\Plugins\PostViewCount\Core\Dimensions;
 use Bubuku\Plugins\PostViewCount\Core\Query;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -92,6 +93,33 @@ class TrendsApi {
 				),
 			)
 		);
+
+		register_rest_route(
+			BBK_PLUGIN_ENDPOINTS_URL,
+			'trends/dims',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'get_dims_breakdown' ),
+				'permission_callback' => array( $this, 'check_permission' ),
+				'args'                => array(
+					'dimension'  => array(
+						'type'     => 'string',
+						'enum'     => Dimensions::DIMENSIONS,
+						'required' => true,
+					),
+					'post_types' => array(
+						'type'  => 'array',
+						'items' => array( 'type' => 'string' ),
+					),
+					'since'      => array(
+						'type' => 'string',
+					),
+					'until'      => array(
+						'type' => 'string',
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -141,6 +169,26 @@ class TrendsApi {
 
 		// Object-cached in Core\Query::momentum() (5 min), same as trend(); mirror that at
 		// the HTTP layer too, same private, short-TTL policy as get_trends().
+		$response->header( 'Cache-Control', 'private, max-age=300' );
+
+		return $response;
+	}
+
+	/**
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response
+	 */
+	public function get_dims_breakdown( WP_REST_Request $request ) {
+		$breakdown = Query::dims_breakdown(
+			(string) $request->get_param( 'dimension' ),
+			(array) ( $request->get_param( 'post_types' ) ?? array() ),
+			$request->get_param( 'since' ),
+			$request->get_param( 'until' )
+		);
+
+		$response = new WP_REST_Response( array( 'breakdown' => $breakdown ), 200 );
+
+		// Object-cached in Core\Query::dims_breakdown() (5 min), same as trend()/momentum().
 		$response->header( 'Cache-Control', 'private, max-age=300' );
 
 		return $response;

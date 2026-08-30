@@ -17,13 +17,19 @@ defined( 'ABSPATH' ) || exit;
 class Db {
 
 	/**
-	 * Record a view: two atomic upserts (aggregate + daily), then mirror the
-	 * running total into post meta for backwards compatibility.
+	 * Record a view: two atomic upserts (aggregate + daily), an optional
+	 * upsert per session dimension (F5), then mirror the running total into
+	 * post meta for backwards compatibility.
 	 *
-	 * @param int $post_id Post ID.
+	 * @param int   $post_id Post ID.
+	 * @param array $dims    Already-whitelisted dimension => value pairs, e.g.
+	 *                       ['viewport' => '576-991', 'referrer' => 'search'].
+	 *                       Empty by default; the caller (RestApi) is
+	 *                       responsible for validating against Dimensions
+	 *                       before calling this method.
 	 * @return array{views:int,first_viewed_at:?string,last_viewed_at:?string}
 	 */
-	public function record_view( int $post_id ): array {
+	public function record_view( int $post_id, array $dims = array() ): array {
 		global $wpdb;
 
 		$now = current_time( 'mysql', true );
@@ -31,6 +37,7 @@ class Db {
 
 		$views_table = Schema::table_views();
 		$daily_table = Schema::table_daily();
+		$dims_table  = Schema::table_dims();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Atomic upsert on the plugin's own view-counter table, no equivalent WP API; a running counter must never be served from cache. $views_table is an internal constant (Schema::table_views()), never user input.
 		$wpdb->query(
@@ -52,6 +59,24 @@ class Db {
 				$day
 			)
 		);
+
+		foreach ( $dims as $dimension => $value ) {
+			if ( '' === $value ) {
+				continue;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Atomic upsert on the plugin's own session-dimensions table, no equivalent WP API; a running counter must never be served from cache. $dims_table is an internal constant (Schema::table_dims()), never user input.
+			$wpdb->query(
+				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$dims_table} is an internal constant (Schema::table_dims()), never user input.
+					"INSERT INTO {$dims_table} (post_id, day, dimension, value, views) VALUES (%d, %s, %s, %s, 1) ON DUPLICATE KEY UPDATE views = views + 1",
+					$post_id,
+					$day,
+					$dimension,
+					$value
+				)
+			);
+		}
 
 		$stats = $this->get_stats( $post_id );
 
@@ -140,5 +165,7 @@ class Db {
 		$wpdb->query( 'DROP TABLE IF EXISTS ' . Schema::table_daily() );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Uninstall-only table drop; DDL can't use placeholders for identifiers, and the name is an internal constant (Schema::table_views()), never user input.
 		$wpdb->query( 'DROP TABLE IF EXISTS ' . Schema::table_views() );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Uninstall-only table drop; DDL can't use placeholders for identifiers, and the name is an internal constant (Schema::table_dims()), never user input.
+		$wpdb->query( 'DROP TABLE IF EXISTS ' . Schema::table_dims() );
 	}
 }

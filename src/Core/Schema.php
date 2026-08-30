@@ -19,7 +19,7 @@ class Schema {
 	/**
 	 * Current schema version. Bump when the table structure changes.
 	 */
-	const VERSION = 1;
+	const VERSION = 2;
 
 	const OPTION_SCHEMA_VERSION = 'bbk_schema_version';
 
@@ -66,6 +66,17 @@ class Schema {
 		global $wpdb;
 
 		return $wpdb->prefix . 'bbk_post_views_daily';
+	}
+
+	/**
+	 * Table name for the session-dimensions aggregate (F5: viewport/referrer).
+	 *
+	 * @return string
+	 */
+	public static function table_dims(): string {
+		global $wpdb;
+
+		return $wpdb->prefix . 'bbk_post_view_dims';
 	}
 
 	/**
@@ -175,6 +186,7 @@ class Schema {
 		$charset_collate = $wpdb->get_charset_collate();
 		$views_table     = self::table_views();
 		$daily_table     = self::table_daily();
+		$dims_table      = self::table_dims();
 
 		$sql = "CREATE TABLE {$views_table} (
 			post_id BIGINT UNSIGNED NOT NULL,
@@ -191,6 +203,15 @@ class Schema {
 			views INT UNSIGNED NOT NULL DEFAULT 0,
 			PRIMARY KEY  (post_id, day),
 			KEY day_views (day, views)
+		) {$charset_collate};
+		CREATE TABLE {$dims_table} (
+			post_id BIGINT UNSIGNED NOT NULL,
+			day DATE NOT NULL,
+			dimension VARCHAR(20) NOT NULL,
+			value VARCHAR(100) NOT NULL,
+			views INT UNSIGNED NOT NULL DEFAULT 0,
+			PRIMARY KEY  (post_id, day, dimension, value),
+			KEY day_dimension_value (day, dimension, value)
 		) {$charset_collate};";
 
 		dbDelta( $sql );
@@ -276,12 +297,22 @@ class Schema {
 		$settings       = get_option( 'bbk_postview_settings', array() );
 		$retention_days = isset( $settings['retention_days'] ) ? (int) $settings['retention_days'] : self::DEFAULT_RETENTION_DAYS;
 		$daily_table    = self::table_daily();
+		$dims_table     = self::table_dims();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Daily cron purge on the plugin's own table, no equivalent WP API; a purge query must never be served from cache. $daily_table is an internal constant (self::table_daily()), never user input.
 		$wpdb->query(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$daily_table} is an internal constant (self::table_daily()), never user input.
 				"DELETE FROM {$daily_table} WHERE day < DATE_SUB(UTC_DATE(), INTERVAL %d DAY)",
+				$retention_days
+			)
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Daily cron purge on the plugin's own table, no equivalent WP API; a purge query must never be served from cache. $dims_table is an internal constant (self::table_dims()), never user input.
+		$wpdb->query(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$dims_table} is an internal constant (self::table_dims()), never user input.
+				"DELETE FROM {$dims_table} WHERE day < DATE_SUB(UTC_DATE(), INTERVAL %d DAY)",
 				$retention_days
 			)
 		);

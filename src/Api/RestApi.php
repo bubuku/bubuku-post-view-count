@@ -14,6 +14,7 @@ namespace Bubuku\Plugins\PostViewCount\Api;
 
 use Bubuku\Plugins\PostViewCount\Admin\Settings;
 use Bubuku\Plugins\PostViewCount\Core\Db;
+use Bubuku\Plugins\PostViewCount\Core\Dimensions;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -54,11 +55,25 @@ class RestApi {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'set_post_views' ),
 				'args'                => array(
-					'post_id' => array(
+					'post_id'  => array(
 						'required'          => true,
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
 						'validate_callback' => array( $this, 'validate_post_id' ),
+					),
+					// Optional (F5): already-classified session dimensions sent by
+					// assets/js/common.js. No validate_callback — an unknown/invalid
+					// value must never fail the whole request, only be dropped
+					// silently before it's written (see set_post_views()).
+					'viewport' => array(
+						'required'          => false,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'referrer' => array(
+						'required'          => false,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
 					),
 				),
 				// Anonymous by design: views must be countable for logged-out visitors
@@ -126,9 +141,31 @@ class RestApi {
 
 		$this->mark_deduped( $post_id, $request );
 
-		$stats = $this->db->record_view( $post_id );
+		$stats = $this->db->record_view( $post_id, $this->valid_dims( $request ) );
 
 		return new WP_REST_Response( $this->response_data( $stats ), 200 );
+	}
+
+	/**
+	 * Build the dimension => value pairs to record, keeping only values that
+	 * pass the closed whitelist (Dimensions::values_for()). An absent or
+	 * unknown value is dropped silently — it never fails the request.
+	 *
+	 * @param WP_REST_Request $request Current request.
+	 * @return array<string,string>
+	 */
+	private function valid_dims( WP_REST_Request $request ): array {
+		$dims = array();
+
+		foreach ( Dimensions::DIMENSIONS as $dimension ) {
+			$value = (string) $request->get_param( $dimension );
+
+			if ( '' !== $value && in_array( $value, Dimensions::values_for( $dimension ), true ) ) {
+				$dims[ $dimension ] = $value;
+			}
+		}
+
+		return $dims;
 	}
 
 	/**

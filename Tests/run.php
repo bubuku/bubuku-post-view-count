@@ -13,10 +13,12 @@ use Bubuku\Plugins\PostViewCount\Admin\Settings;
 use Bubuku\Plugins\PostViewCount\Api\RestApi;
 use Bubuku\Plugins\PostViewCount\Api\TrendsApi;
 use Bubuku\Plugins\PostViewCount\Core\Db;
+use Bubuku\Plugins\PostViewCount\Core\Dimensions;
 use Bubuku\Plugins\PostViewCount\Core\Query;
 use Bubuku\Plugins\PostViewCount\Core\Schema;
 use Bubuku\Plugins\PostViewCount\Frontend\ViewsDisplay;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetContentTrends;
+use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetDimsBreakdown;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetPostViews;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetViewsSummary;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\ListMomentum;
@@ -122,6 +124,40 @@ $tests = array(
 		bbk_test_same( 1, ( new Db() )->set_post_views( 5 ), 'set_post_views() must still return an int.' );
 		bbk_test_same( 2, ( new Db() )->set_post_views( 5 ), 'set_post_views() must still return an int.' );
 	},
+	'record_view() with dims writes one row per dimension, aggregating repeats' => static function (): void {
+		TestState::reset();
+		TestState::$now = '2026-01-01 10:00:00';
+		( new Db() )->record_view(
+			42,
+			array(
+				'viewport' => '576-991',
+				'referrer' => 'search',
+			)
+		);
+		( new Db() )->record_view(
+			42,
+			array(
+				'viewport' => '576-991',
+				'referrer' => 'search',
+			)
+		);
+
+		bbk_test_same(
+			array(
+				'42|2026-01-01|viewport|576-991' => 2,
+				'42|2026-01-01|referrer|search'  => 2,
+			),
+			TestState::$dims,
+			'A repeated dimension/value pair on the same day must increment, not duplicate.'
+		);
+	},
+	'record_view() without dims (default) writes nothing to the dims table' => static function (): void {
+		TestState::reset();
+		TestState::$now = '2026-01-01 10:00:00';
+		( new Db() )->record_view( 42 );
+
+		bbk_test_same( array(), TestState::$dims, 'A call with no dims argument must not touch the dims table.' );
+	},
 	'migrating from postmeta is idempotent'               => static function (): void {
 		TestState::reset();
 		TestState::$meta[10] = array( 'views' => 9 );
@@ -191,6 +227,62 @@ $tests = array(
 		);
 		bbk_test_same( 1, TestState::$views[99]['views'], 'A duplicate REST request was stored.' );
 	},
+	'set_post_views() records valid viewport/referrer dims and drops an invalid value' => static function (): void {
+		TestState::reset();
+		TestState::$now          = '2026-01-01 12:00:00';
+		$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+		$api                     = new RestApi();
+		$request                 = new WP_REST_Request(
+			array(
+				'post_id'  => 101,
+				'viewport' => '576-991',
+				'referrer' => '9999px-not-a-real-bucket',
+			),
+			array(
+				'Origin'     => 'https://test.wp.local',
+				'User-Agent' => 'Bubuku test',
+			)
+		);
+
+		$response = $api->set_post_views( $request );
+
+		bbk_test_same( 1, $response->get_data()['count'], 'An invalid dimension value must not prevent the view itself from being counted.' );
+		bbk_test_same(
+			array( '101|2026-01-01|viewport|576-991' => 1 ),
+			TestState::$dims,
+			'Only the whitelisted viewport value must be recorded; the invalid referrer value must be dropped silently.'
+		);
+	},
+	'a deduplicated REST view records neither the view nor its dims' => static function (): void {
+		TestState::reset();
+		TestState::$now          = '2026-01-01 12:00:00';
+		$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+		$api                     = new RestApi();
+		$request                 = new WP_REST_Request(
+			array(
+				'post_id'  => 102,
+				'viewport' => '576-991',
+				'referrer' => 'search',
+			),
+			array(
+				'Origin'     => 'https://test.wp.local',
+				'User-Agent' => 'Bubuku test',
+			)
+		);
+
+		$api->set_post_views( $request );
+		$api->set_post_views( $request );
+
+		bbk_test_same( 1, TestState::$views[102]['views'], 'A deduplicated repeat must not increment the view total.' );
+		bbk_test_same(
+			array(
+				'102|2026-01-01|viewport|576-991' => 1,
+				'102|2026-01-01|referrer|search'  => 1,
+			),
+			TestState::$dims,
+			'A deduplicated repeat must not increment the dims either.'
+		);
+	},
 	'enabled_post_types() returns [post] when the option does not exist yet' => static function (): void {
 		TestState::reset();
 
@@ -229,6 +321,14 @@ $tests = array(
 		$sanitized = Settings::sanitize( array( 'post_types' => array( 'made-up-type' ) ) );
 
 		bbk_test_same( array( 'post' ), $sanitized['post_types'], 'Falling back to the default post type failed.' );
+	},
+	'Settings::selectable_post_types() never offers "attachment" (Media)' => static function (): void {
+		bbk_test_same( false, isset( Settings::selectable_post_types()['attachment'] ), 'Media must never be a selectable content type.' );
+	},
+	'Settings::sanitize() rejects "attachment" like any other unknown post type' => static function (): void {
+		$sanitized = Settings::sanitize( array( 'post_types' => array( 'attachment' ) ) );
+
+		bbk_test_same( array( 'post' ), $sanitized['post_types'], 'Media must never survive sanitize(), even if submitted directly.' );
 	},
 	'known bot user agents are never recorded, but the response still reflects current stats' => static function (): void {
 		TestState::reset();
@@ -290,6 +390,18 @@ $tests = array(
 		bbk_test_same( array(), $result['rising'], 'A disabled post type must never be queried, and must return no rows.' );
 		bbk_test_same( array(), $result['falling'], 'A disabled post type must never be queried, and must return no rows.' );
 		bbk_test_same( true, isset( $result['period']['current'], $result['period']['previous'] ), 'momentum() must always report the two compared periods.' );
+	},
+	'Query::dims_breakdown() returns an empty array for an unknown dimension' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+
+		bbk_test_same( array(), Query::dims_breakdown( 'not-a-real-dimension' ), 'An unknown dimension must never be queried, and must return no rows.' );
+	},
+	'Query::dims_breakdown() returns an empty array for a post type that is not enabled' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+
+		bbk_test_same( array(), Query::dims_breakdown( 'viewport', array( 'page' ) ), 'A disabled post type must never be queried, and must return no rows.' );
 	},
 	'Query::post_stats() reflects the recorded views, title and URL for a post' => static function (): void {
 		TestState::reset();
@@ -376,6 +488,20 @@ $tests = array(
 		bbk_test_same( array(), $result['rising'], 'A disabled post type must return no rows, same as Query::momentum().' );
 		bbk_test_same( array(), $result['falling'], 'A disabled post type must return no rows, same as Query::momentum().' );
 	},
+	'GetDimsBreakdown tool delegates to Query::dims_breakdown()' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+
+		$result = ( new GetDimsBreakdown() )->execute_callback(
+			array(
+				'dimension'  => 'viewport',
+				'post_types' => array( 'page' ),
+			)
+		);
+
+		bbk_test_same( array(), $result['breakdown'], 'A disabled post type must return no rows, same as Query::dims_breakdown().' );
+		bbk_test_same( true, isset( $result['meta']['computed_at'] ), 'The tool must add a computed_at timestamp.' );
+	},
 	'TrendsApi::check_permission() requires the edit_posts capability' => static function (): void {
 		TestState::reset();
 
@@ -408,6 +534,20 @@ $tests = array(
 
 		bbk_test_same( array(), $data['rising'], 'A disabled post type must return no rows, same as Query::momentum().' );
 		bbk_test_same( array(), $data['falling'], 'A disabled post type must return no rows, same as Query::momentum().' );
+	},
+	'TrendsApi::get_dims_breakdown() delegates to Query::dims_breakdown()' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+		$request = new WP_REST_Request(
+			array(
+				'dimension'  => 'viewport',
+				'post_types' => array( 'page' ),
+			)
+		);
+
+		$response = ( new TrendsApi() )->get_dims_breakdown( $request );
+
+		bbk_test_same( array( 'breakdown' => array() ), $response->get_data(), 'A disabled post type must return no rows, same as Query::dims_breakdown().' );
 	},
 	'ViewsDisplay::render() shows the view count, and the last-viewed date when asked' => static function (): void {
 		TestState::reset();

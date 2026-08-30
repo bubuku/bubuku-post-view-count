@@ -265,13 +265,27 @@ namespace {
 		return strtolower( preg_replace( '/[^a-z0-9_\-]/', '', $key ) );
 	}
 
-	function get_post_types( array $args = array() ) {
+	function get_post_types( array $args = array(), string $output = 'names' ) {
 		unset( $args );
 
-		return array(
-			'post' => 'post',
-			'page' => 'page',
-		);
+		// Mirrors real WordPress: 'attachment' is public too, and would show up
+		// here just like 'post'/'page' unless a caller explicitly excludes it.
+		$names = array( 'post', 'page', 'attachment' );
+
+		if ( 'objects' !== $output ) {
+			return array_combine( $names, $names );
+		}
+
+		$objects = array();
+
+		foreach ( $names as $name ) {
+			$objects[ $name ] = (object) array(
+				'name'   => $name,
+				'labels' => (object) array( 'name' => ucfirst( $name ) ),
+			);
+		}
+
+		return $objects;
 	}
 
 	function get_the_title( int $post_id ): string {
@@ -328,6 +342,9 @@ namespace Bubuku\Plugins\PostViewCount {
 		/** @var array<string, int> */
 		public static $daily = array();
 
+		/** @var array<string, int> Keyed by "post_id|day|dimension|value". */
+		public static $dims = array();
+
 		/** @var array<string, int> */
 		public static $transients = array();
 
@@ -359,6 +376,7 @@ namespace Bubuku\Plugins\PostViewCount {
 			self::$meta             = array();
 			self::$views            = array();
 			self::$daily            = array();
+			self::$dims             = array();
 			self::$transients       = array();
 			self::$options          = array();
 			self::$cache_deletions  = array();
@@ -446,8 +464,21 @@ namespace Bubuku\Plugins\PostViewCount {
 				return 1;
 			}
 
+			if ( preg_match( "/INSERT INTO wp_bbk_post_view_dims \\(post_id, day, dimension, value, views\\) VALUES \\((\\d+), '([^']+)', '([^']+)', '([^']+)', 1\\)/", $query, $m ) ) {
+				$key                    = $m[1] . '|' . $m[2] . '|' . $m[3] . '|' . $m[4];
+				TestState::$dims[ $key ] = ( TestState::$dims[ $key ] ?? 0 ) + 1;
+
+				return 1;
+			}
+
 			if ( preg_match( '/^DROP TABLE IF EXISTS wp_bbk_post_views_daily/', $query ) ) {
 				TestState::$daily = array();
+
+				return true;
+			}
+
+			if ( preg_match( '/^DROP TABLE IF EXISTS wp_bbk_post_view_dims/', $query ) ) {
+				TestState::$dims = array();
 
 				return true;
 			}
@@ -506,6 +537,7 @@ namespace Bubuku\Plugins\PostViewCount {
 	}
 
 	require_once dirname( __DIR__ ) . '/src/Core/Schema.php';
+	require_once dirname( __DIR__ ) . '/src/Core/Dimensions.php';
 	require_once dirname( __DIR__ ) . '/src/Core/Db.php';
 	require_once dirname( __DIR__ ) . '/src/Admin/Settings.php';
 	require_once dirname( __DIR__ ) . '/src/Api/RestApi.php';
@@ -556,4 +588,5 @@ namespace {
 	require_once dirname( __DIR__ ) . '/src/Mcp/Tools/GetViewsSummary.php';
 	require_once dirname( __DIR__ ) . '/src/Mcp/Tools/GetContentTrends.php';
 	require_once dirname( __DIR__ ) . '/src/Mcp/Tools/ListMomentum.php';
+	require_once dirname( __DIR__ ) . '/src/Mcp/Tools/GetDimsBreakdown.php';
 }

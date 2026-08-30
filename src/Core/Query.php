@@ -460,6 +460,69 @@ class Query {
 	}
 
 	/**
+	 * Site-wide breakdown of a session dimension (F5: 'viewport'|'referrer'), summed across
+	 * matching posts and ordered by views DESC. Fixed, small cardinality (at most 6 rows for
+	 * 'referrer', 4 for 'viewport' — one per Dimensions::values_for() entry), so unlike every
+	 * other method here this never needs a LIMIT/cap_limit().
+	 *
+	 * @param string      $dimension  One of Dimensions::DIMENSIONS.
+	 * @param string[]    $post_types Post types to include; empty means every enabled type.
+	 * @param string|null $since      Inclusive start day (Y-m-d, UTC). Null = 3 months ago.
+	 * @param string|null $until      Inclusive end day (Y-m-d, UTC). Null = today (UTC).
+	 * @return array<int, array{value:string,views:int}>
+	 */
+	public static function dims_breakdown( string $dimension, array $post_types = array(), ?string $since = null, ?string $until = null ): array {
+		global $wpdb;
+
+		if ( empty( Dimensions::values_for( $dimension ) ) ) {
+			return array();
+		}
+
+		$post_types = self::resolve_post_types( $post_types );
+
+		if ( empty( $post_types ) ) {
+			return array();
+		}
+
+		$since = $since ?? gmdate( 'Y-m-d', strtotime( '-3 months' ) );
+		$until = $until ?? current_time( 'Y-m-d', true );
+
+		$cache_key = 'dims_breakdown_' . md5( (string) wp_json_encode( array( $dimension, $post_types, $since, $until ) ) );
+		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
+
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
+		$dims_table        = Schema::table_dims();
+		$type_placeholders = self::placeholders( $post_types, '%s' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Read query over the plugin's own table, no equivalent WP API; short-lived object cache applied above. $dims_table is an internal constant (Schema::table_dims()), never user input.
+		$rows = $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- {$type_placeholders} expands to a dynamic run of %s placeholders at runtime, which this static sniff cannot count.
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$dims_table} is an internal constant (Schema::table_dims()), never user input; {$type_placeholders} is a fixed run of %s placeholders.
+				"SELECT d.value AS value, SUM(d.views) AS total_views FROM {$dims_table} d INNER JOIN {$wpdb->posts} p ON p.ID = d.post_id WHERE d.dimension = %s AND p.post_type IN ({$type_placeholders}) AND p.post_status = 'publish' AND d.day BETWEEN %s AND %s GROUP BY d.value ORDER BY total_views DESC",
+				...array_merge( array( $dimension ), $post_types, array( $since, $until ) )
+			),
+			ARRAY_A
+		);
+
+		$result = array();
+
+		foreach ( is_array( $rows ) ? $rows : array() as $row ) {
+			$result[] = array(
+				'value' => (string) $row['value'],
+				'views' => (int) $row['total_views'],
+			);
+		}
+
+		wp_cache_set( $cache_key, $result, self::CACHE_GROUP, self::CACHE_TTL );
+
+		return $result;
+	}
+
+	/**
 	 * Requested post types intersected with the enabled ones (§3.1) — never trust a
 	 * caller-supplied list, and never query a type the site has excluded from counting.
 	 * Empty input means "every enabled type".

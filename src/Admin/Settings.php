@@ -51,6 +51,24 @@ class Settings {
 	}
 
 	/**
+	 * Public post types a site admin can choose to count views for, excluding
+	 * `attachment` ("Media"): attachments are not standalone content a visitor
+	 * browses to like a post or page, and WordPress core marks them `public`
+	 * regardless, so they would otherwise show up as a selectable content type.
+	 * Single source of truth for both the settings page checkboxes
+	 * (`SettingsPage::field_post_types()`) and the `sanitize()` whitelist below.
+	 *
+	 * @return array<string, \WP_Post_Type>
+	 */
+	public static function selectable_post_types(): array {
+		$post_types = get_post_types( array( 'public' => true ), 'objects' );
+
+		unset( $post_types['attachment'] );
+
+		return apply_filters( 'bbk_postview_selectable_post_types', $post_types );
+	}
+
+	/**
 	 * Post types that currently count views. The single source of truth for
 	 * both `Frontend\Assets` (whether to enqueue the script) and
 	 * `Api\RestApi` (whether to accept a view for a given post_id) — see
@@ -164,7 +182,7 @@ class Settings {
 		$input    = is_array( $input ) ? $input : array();
 		$defaults = self::defaults();
 
-		$valid_post_types = array_keys( get_post_types( array( 'public' => true ) ) );
+		$valid_post_types = array_keys( self::selectable_post_types() );
 		$post_types       = isset( $input['post_types'] ) ? (array) $input['post_types'] : array();
 		$post_types       = array_values( array_intersect( array_map( 'sanitize_key', $post_types ), $valid_post_types ) );
 
