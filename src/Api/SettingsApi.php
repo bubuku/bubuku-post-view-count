@@ -92,10 +92,8 @@ class SettingsApi {
 
 		$roles = array();
 
-		if ( function_exists( 'get_editable_roles' ) ) {
-			foreach ( get_editable_roles() as $slug => $role ) {
-				$roles[ $slug ] = translate_user_role( $role['name'] );
-			}
+		foreach ( Settings::selectable_roles() as $slug => $role ) {
+			$roles[ $slug ] = translate_user_role( $role['name'] );
 		}
 
 		return new WP_REST_Response(

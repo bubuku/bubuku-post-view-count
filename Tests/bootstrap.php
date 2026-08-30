@@ -422,19 +422,21 @@ namespace {
 		return true;
 	}
 
-	function get_editable_roles(): array {
-		return array(
-			'administrator' => array(
-				'name'         => 'Administrator',
-				'capabilities' => array( 'edit_posts' => true ),
-			),
-			'editor'        => array(
-				'name'         => 'Editor',
-				'capabilities' => array( 'edit_posts' => true ),
-			),
-			'subscriber'    => array(
-				'name'         => 'Subscriber',
-				'capabilities' => array( 'edit_posts' => false ),
+	function wp_roles(): object {
+		return (object) array(
+			'roles' => array(
+				'administrator' => array(
+					'name'         => 'Administrator',
+					'capabilities' => array( 'edit_posts' => true ),
+				),
+				'editor'        => array(
+					'name'         => 'Editor',
+					'capabilities' => array( 'edit_posts' => true ),
+				),
+				'subscriber'    => array(
+					'name'         => 'Subscriber',
+					'capabilities' => array( 'edit_posts' => false ),
+				),
 			),
 		);
 	}

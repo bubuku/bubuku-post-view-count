@@ -72,6 +72,27 @@ class Settings {
 	}
 
 	/**
+	 * Roles a site administrator can select in the settings screen.
+	 *
+	 * `get_editable_roles()` lives in wp-admin/includes/user.php and is not
+	 * loaded during a standalone REST request. Fall back to WordPress' role
+	 * registry while preserving the same `editable_roles` filter.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public static function selectable_roles(): array {
+		if ( function_exists( 'get_editable_roles' ) ) {
+			return get_editable_roles();
+		}
+
+		if ( ! function_exists( 'wp_roles' ) ) {
+			return array();
+		}
+
+		return apply_filters( 'editable_roles', wp_roles()->roles );
+	}
+
+	/**
 	 * Post types that currently count views. The single source of truth for
 	 * both `Frontend\Assets` (whether to enqueue the script) and
 	 * `Api\RestApi` (whether to accept a view for a given post_id) — see
@@ -226,7 +247,7 @@ class Settings {
 		$post_types       = isset( $input['post_types'] ) ? (array) $input['post_types'] : array();
 		$post_types       = array_values( array_intersect( array_map( 'sanitize_key', $post_types ), $valid_post_types ) );
 
-		$valid_roles    = function_exists( 'get_editable_roles' ) ? array_keys( get_editable_roles() ) : array();
+		$valid_roles    = array_keys( self::selectable_roles() );
 		$excluded_roles = isset( $input['excluded_roles'] ) ? (array) $input['excluded_roles'] : array();
 		$excluded_roles = array_values( array_intersect( array_map( 'sanitize_key', $excluded_roles ), $valid_roles ) );
 
@@ -251,13 +272,9 @@ class Settings {
 	 * @return string[]
 	 */
 	private static function default_excluded_roles(): array {
-		if ( ! function_exists( 'get_editable_roles' ) ) {
-			return array( 'administrator', 'editor', 'author', 'contributor' );
-		}
-
 		$roles = array();
 
-		foreach ( get_editable_roles() as $slug => $role ) {
+		foreach ( self::selectable_roles() as $slug => $role ) {
 			if ( ! empty( $role['capabilities']['edit_posts'] ) ) {
 				$roles[] = $slug;
 			}

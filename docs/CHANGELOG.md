@@ -5,6 +5,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 ### Corregido
+
+- La lista de roles excluidos vuelve a estar disponible en peticiones REST independientes, donde WordPress no carga `get_editable_roles()`.
+- Los checkboxes de Ajustes usan ahora los tokens y estados de interacción del design system Bubuku.
 - La aplicación React del admin ya recibe correctamente `BbkPostViewCount` mediante `window`, de modo que usa la URL REST y el nonce inyectados por PHP en vez de intentar cargar `/settings` desde una ruta incorrecta. Se añaden tests del registro de la página, enqueue, configuración inline y mount point.
 - La toolchain JavaScript fija una versión de TypeScript compatible con el ESLint de `@wordpress/scripts`, declara los paquetes WordPress importados y corrige los hallazgos de formato, JSDoc y accesibilidad del admin; `npm run lint:js` vuelve a estar operativo.
 - El requisito mínimo de WordPress queda sincronizado en 6.6 entre el header PHP y `readme.txt`, ya que el bundle generado utiliza `react-jsx-runtime`.

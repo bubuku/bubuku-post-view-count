@@ -902,7 +902,15 @@ $tests = array(
 
 		bbk_test_same( 90, $data['retention_days'], 'get_settings() must reflect the saved option.' );
 		bbk_test_same( true, isset( $data['available_post_types'] ), 'get_settings() must include available_post_types for the form.' );
-		bbk_test_same( true, isset( $data['available_roles'] ), 'get_settings() must include available_roles for the form.' );
+		bbk_test_same(
+			array(
+				'administrator' => 'Administrator',
+				'editor'        => 'Editor',
+				'subscriber'    => 'Subscriber',
+			),
+			$data['available_roles'],
+			'get_settings() must include roles even when wp-admin/includes/user.php is not loaded.'
+		);
 		bbk_test_same( Settings::bot_signature_examples(), $data['bot_signature_examples'], 'get_settings() must include bot_signature_examples verbatim.' );
 	},
 	'SettingsApi::update_settings() sanitizes and persists the submitted settings' => static function (): void {

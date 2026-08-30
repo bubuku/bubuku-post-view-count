@@ -154,25 +154,29 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 					<p className="bbk-field-group__label">
 						{ __( 'Tipos de contenido', 'bubuku-post-view-count' ) }
 					</p>
-					{ Object.entries( postTypes ).map( ( [ slug, label ] ) => (
-						<label
-							key={ slug }
-							className="bbk-checkbox"
-							htmlFor={ `bbk-post-type-${ slug }` }
-						>
-							<input
-								id={ `bbk-post-type-${ slug }` }
-								type="checkbox"
-								checked={ (
-									settings.post_types || []
-								).includes( slug ) }
-								onChange={ () =>
-									toggleInList( 'post_types', slug )
-								}
-							/>
-							{ label }
-						</label>
-					) ) }
+					<div className="bbk-checkbox-list">
+						{ Object.entries( postTypes ).map(
+							( [ slug, label ] ) => (
+								<label
+									key={ slug }
+									className="bbk-checkbox"
+									htmlFor={ `bbk-post-type-${ slug }` }
+								>
+									<input
+										id={ `bbk-post-type-${ slug }` }
+										type="checkbox"
+										checked={ (
+											settings.post_types || []
+										).includes( slug ) }
+										onChange={ () =>
+											toggleInList( 'post_types', slug )
+										}
+									/>
+									<span>{ label }</span>
+								</label>
+							)
+						) }
+					</div>
 					<p className="bbk-field-group__help">
 						{ __(
 							'Desmarcar un tipo de contenido detiene el conteo, pero no borra las visitas ya registradas. Volver a marcarlo reanuda el conteo sobre el total existente.',
@@ -185,25 +189,27 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 					<p className="bbk-field-group__label">
 						{ __( 'Roles excluidos', 'bubuku-post-view-count' ) }
 					</p>
-					{ Object.entries( roles ).map( ( [ slug, label ] ) => (
-						<label
-							key={ slug }
-							className="bbk-checkbox"
-							htmlFor={ `bbk-role-${ slug }` }
-						>
-							<input
-								id={ `bbk-role-${ slug }` }
-								type="checkbox"
-								checked={ (
-									settings.excluded_roles || []
-								).includes( slug ) }
-								onChange={ () =>
-									toggleInList( 'excluded_roles', slug )
-								}
-							/>
-							{ label }
-						</label>
-					) ) }
+					<div className="bbk-checkbox-list">
+						{ Object.entries( roles ).map( ( [ slug, label ] ) => (
+							<label
+								key={ slug }
+								className="bbk-checkbox"
+								htmlFor={ `bbk-role-${ slug }` }
+							>
+								<input
+									id={ `bbk-role-${ slug }` }
+									type="checkbox"
+									checked={ (
+										settings.excluded_roles || []
+									).includes( slug ) }
+									onChange={ () =>
+										toggleInList( 'excluded_roles', slug )
+									}
+								/>
+								<span>{ label }</span>
+							</label>
+						) ) }
+					</div>
 					<p className="bbk-field-group__help">
 						{ __(
 							'Los usuarios logados con uno de estos roles no generan visitas al ver sus propios contenidos.',
