@@ -38,6 +38,7 @@ class Settings {
 			'delete_data_on_uninstall' => true,
 			'ai_crawler_tracking'      => false,
 			'respect_dnt'              => true,
+			'write_buffer'             => false,
 		);
 	}
 
@@ -124,6 +125,19 @@ class Settings {
 	 */
 	public static function respect_dnt(): bool {
 		return (bool) self::get_all()['respect_dnt'];
+	}
+
+	/**
+	 * Whether the best-effort write buffer (docs/ANALYTICS-PLAN.md §F7) is
+	 * enabled. Disabled by default — it only ever has an effect on a site
+	 * with a persistent external object cache (`Core\WriteBuffer::enabled()`
+	 * also checks `wp_using_ext_object_cache()`); without one it would be a
+	 * silent no-op benefit, so it stays opt-in rather than auto-detected.
+	 *
+	 * @return bool
+	 */
+	public static function write_buffer_enabled(): bool {
+		return (bool) self::get_all()['write_buffer'];
 	}
 
 	/**
@@ -226,6 +240,7 @@ class Settings {
 			'delete_data_on_uninstall' => ! empty( $input['delete_data_on_uninstall'] ),
 			'ai_crawler_tracking'      => ! empty( $input['ai_crawler_tracking'] ),
 			'respect_dnt'              => ! empty( $input['respect_dnt'] ),
+			'write_buffer'             => ! empty( $input['write_buffer'] ),
 		);
 	}
 

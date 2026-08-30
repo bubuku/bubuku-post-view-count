@@ -128,6 +128,7 @@ class SettingsPage {
 		add_settings_field( 'exclude_bots', __( 'Bots', 'bubuku-post-view-count' ), array( $this, 'field_exclude_bots' ), self::PAGE_SLUG, self::SECTION_ID );
 		add_settings_field( 'ai_crawler_tracking', __( 'Rastreo de bots de IA', 'bubuku-post-view-count' ), array( $this, 'field_ai_crawler_tracking' ), self::PAGE_SLUG, self::SECTION_ID );
 		add_settings_field( 'respect_dnt', __( 'Privacidad (DNT / GPC)', 'bubuku-post-view-count' ), array( $this, 'field_respect_dnt' ), self::PAGE_SLUG, self::SECTION_ID );
+		add_settings_field( 'write_buffer', __( 'Buffer de escrituras', 'bubuku-post-view-count' ), array( $this, 'field_write_buffer' ), self::PAGE_SLUG, self::SECTION_ID );
 		add_settings_field( 'retention_days', __( 'Retención del agregado diario', 'bubuku-post-view-count' ), array( $this, 'field_retention_days' ), self::PAGE_SLUG, self::SECTION_ID );
 		add_settings_field( 'delete_data_on_uninstall', __( 'Al desinstalar', 'bubuku-post-view-count' ), array( $this, 'field_delete_on_uninstall' ), self::PAGE_SLUG, self::SECTION_ID );
 	}
@@ -382,6 +383,29 @@ class SettingsPage {
 		printf(
 			'<p class="description"><small>%s</small></p>',
 			esc_html__( 'El conteo de vistas se mantiene igual (ya es anónimo, sin IP ni user-agent almacenados): esta opción solo omite el dispositivo y la procedencia de esa visita.', 'bubuku-post-view-count' )
+		);
+	}
+
+	/**
+	 * Field: opt-in best-effort write buffer for high-traffic sites (F7).
+	 *
+	 * @return void
+	 */
+	public function field_write_buffer() {
+		$settings = Settings::get_all();
+
+		printf(
+			'<label><input type="checkbox" name="%1$s[write_buffer]" value="1" %2$s /> %3$s</label>',
+			esc_attr( Settings::OPTION_KEY ),
+			checked( $settings['write_buffer'], true, false ),
+			esc_html__( 'Acumular incrementos en memoria y escribirlos en la base de datos por lotes, cada minuto, en vez de en cada visita.', 'bubuku-post-view-count' )
+		);
+
+		printf(
+			'<p class="description"><small>%s</small></p>',
+			wp_using_ext_object_cache()
+				? esc_html__( 'Este sitio tiene un object cache persistente activo: el buffer tendrá efecto.', 'bubuku-post-view-count' )
+				: esc_html__( 'Este sitio no tiene un object cache persistente (Redis, Memcached...) activo: sin uno, esta opción no tiene ningún efecto — cada visita se sigue escribiendo de inmediato.', 'bubuku-post-view-count' )
 		);
 	}
 

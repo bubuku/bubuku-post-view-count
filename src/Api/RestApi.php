@@ -15,6 +15,7 @@ namespace Bubuku\Plugins\PostViewCount\Api;
 use Bubuku\Plugins\PostViewCount\Admin\Settings;
 use Bubuku\Plugins\PostViewCount\Core\Db;
 use Bubuku\Plugins\PostViewCount\Core\Dimensions;
+use Bubuku\Plugins\PostViewCount\Core\WriteBuffer;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -136,12 +137,20 @@ class RestApi {
 		$post_id = absint( $request->get_param( 'post_id' ) );
 
 		if ( $this->is_deduped( $post_id, $request ) || $this->is_bot_request( $request ) ) {
-			return new WP_REST_Response( $this->response_data( $this->db->get_stats( $post_id ) ), 200 );
+			return new WP_REST_Response( $this->response_data( $this->db->get_stats( $post_id ), $post_id ), 200 );
 		}
 
 		$this->mark_deduped( $post_id, $request );
 
-		$stats = $this->db->record_view( $post_id, $this->valid_dims( $request ) );
+		$dims = $this->valid_dims( $request );
+
+		if ( WriteBuffer::enabled() ) {
+			WriteBuffer::buffer( $post_id, $dims );
+
+			return new WP_REST_Response( $this->response_data( $this->db->get_stats( $post_id ), $post_id ), 200 );
+		}
+
+		$stats = $this->db->record_view( $post_id, $dims );
 
 		return new WP_REST_Response( $this->response_data( $stats ), 200 );
 	}
@@ -176,13 +185,18 @@ class RestApi {
 	 * Shape the public REST response — keeps the historical `count` key and adds
 	 * `last_viewed_at` now that the aggregate table tracks it.
 	 *
-	 * @param array $stats Stats as returned by Db::get_stats()/record_view().
+	 * @param array   $stats   Stats as returned by Db::get_stats()/record_view().
+	 * @param int|null $post_id Post ID, only when the write buffer (F7) is active —
+	 *                          adds the buffered-but-not-yet-flushed views to `count`
+	 *                          so the response doesn't lag behind what was just recorded.
 	 * @return array{count:int,last_viewed_at:?string}
 	 */
-	private function response_data( array $stats ): array {
+	private function response_data( array $stats, ?int $post_id = null ): array {
+		$pending = null !== $post_id ? WriteBuffer::pending_views( $post_id ) : 0;
+
 		return array(
-			'count'          => $stats['views'],
-			'last_viewed_at' => $stats['last_viewed_at'],
+			'count'          => $stats['views'] + $pending,
+			'last_viewed_at' => $pending > 0 ? current_time( 'mysql', true ) : $stats['last_viewed_at'],
 		);
 	}
 

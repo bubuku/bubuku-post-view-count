@@ -769,11 +769,46 @@ Tool MCP `bubuku-views/get-ai-traffic` que devuelve ambos bloques claramente sep
 > header `DNT`/`Sec-GPC` descarta las dims aunque el cliente las haya enviado, que
 > desactivar el ajuste conserva el comportamiento anterior, y la sanitización del checkbox.
 >
-> **Pendiente de esta fase**: el **buffer de escrituras** sigue sin implementar a
-> propósito — el propio plan lo condiciona a que la medición lo justifique, y no hay
-> evidencia de ese cuello de botella. **Regenerar el `.pot`** tampoco se ha hecho todavía:
-> el repo no tiene tooling de i18n (`wp i18n make-pot` vía WP-CLI, no instalado en el
-> entorno de desarrollo) — pendiente de ejecutar antes de la próxima release.
+> **Buffer de escrituras implementado** (versión sin publicar, ver `docs/CHANGELOG.md` →
+> `[Unreleased]`), a petición explícita del usuario para poder revisar cómo se ven los datos
+> con él activo — no porque hubiera evidencia de un cuello de botella real; sigue siendo
+> **opt-in** (`Admin\Settings::write_buffer_enabled()`, desactivado por defecto) y, sobre
+> todo, **solo tiene efecto con un object cache persistente** (`wp_using_ext_object_cache()`):
+> sin uno (el caso por defecto en la mayoría de instalaciones) cada vista se sigue
+> escribiendo de inmediato, igual que antes — la casilla de ajustes lo indica explícitamente.
+> `Core\WriteBuffer` acumula los incrementos (vista + dimensiones de sesión de la F5) en el
+> object cache, coalescidos por `post_id|día`, y `Core\Schema` programa un cron propio cada
+> minuto (`bbk_postview_flush_buffer`, con un `cron_schedules` a medida — WP core no trae
+> nada tan corto) que llama a `Core\WriteBuffer::flush()`. Un "flag" de object cache
+> (`seen:{post_id}|{día}`) limita el coste de indexar el pendiente a **una** llamada a
+> `update_option()` por post/minuto, no una por vista, que es lo que hace que el buffer
+> compense bajo tráfico real. `Core\Db::record_view()` se refactorizó a un `record_view_bulk()`
+> genérico (mismo upsert con `views = views + VALUES(views)`, ya usado antes en la migración
+> §1.6) para no duplicar la lógica SQL entre el camino síncrono (un post, 1 vista) y el del
+> buffer (un post, N vistas coalescidas). `Api\RestApi::set_post_views()` devuelve el `count`
+> sumando lo ya persistido más lo pendiente en el buffer (`WriteBuffer::pending_views()`), para
+> que la respuesta no se quede desfasada mientras el buffer está activo. **Trade-offs
+> asumidos y documentados** (aceptables por ser una función opt-in de rendimiento): la lectura
+> + borrado del contador al volcar no es un *get-and-delete* atómico (la API de
+> `WP_Object_Cache` no lo tiene), así que una vista que coincide exactamente con el instante
+> del flush puede perderse por una unidad; `first_viewed_at`/`last_viewed_at` de las vistas
+> compradas reflejan el momento del flush, no el de cada vista individual, acotado al
+> intervalo de un minuto. Tests en `Tests/run.php` cubren: `WriteBuffer::enabled()` (requiere
+> ajuste **y** cache persistente), la coalescencia de varios incrementos sin tocar la BD hasta
+> `flush()`, que el índice de flush registra un post/día una sola vez pese a múltiples vistas,
+> que `flush()` sin nada pendiente es un no-op, y el recorrido completo vía `RestApi` (respuesta
+> con el pendiente incluido, sin escritura en BD hasta el flush). La coalescencia real con
+> Redis/Memcached (atomicidad de `wp_cache_incr()` bajo concurrencia real) no es simulable en
+> el harness sin dependencias — el entorno de `test.wp.local` no tiene un object cache
+> persistente instalado, así que se validó manualmente lo que sí es observable sin uno: alta/
+> baja del cron y del `cron_schedules` a medida, `flush()` como no-op con el índice vacío,
+> render de la casilla de ajustes con el aviso correcto ("sin object cache persistente, esta
+> opción no tiene ningún efecto"), y que con el ajuste activado pero sin cache persistente el
+> conteo sigue escribiéndose de inmediato como antes (fallback correcto).
+>
+> El `.pot` (`languages/bubuku-post-view-count.pot`) **ya está regenerado y al día** con las
+> cadenas de F5/F6/F7 (verificado comparando contra un `wp i18n make-pot` fresco: mismos 104
+> `msgid`) — la nota anterior sobre falta de tooling de WP-CLI estaba desactualizada.
 
 - **Buffer de escrituras** para sitios de alto tráfico: acumular incrementos en object cache
   y volcarlos por lotes vía cron. Solo si la medición lo justifica.

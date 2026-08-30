@@ -11,9 +11,11 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 require_once __DIR__ . '/src/Core/Db.php';
 require_once __DIR__ . '/src/Core/Schema.php';
+require_once __DIR__ . '/src/Core/WriteBuffer.php';
 
 use Bubuku\Plugins\PostViewCount\Core\Db;
 use Bubuku\Plugins\PostViewCount\Core\Schema;
+use Bubuku\Plugins\PostViewCount\Core\WriteBuffer;
 
 /**
  * Clean up the current site: always clears the cron hooks (never leave one
@@ -26,6 +28,8 @@ use Bubuku\Plugins\PostViewCount\Core\Schema;
 function bbk_uninstall_current_site() {
 	wp_clear_scheduled_hook( Schema::PURGE_CRON_HOOK );
 	wp_clear_scheduled_hook( Schema::MIGRATION_CRON_HOOK );
+	wp_clear_scheduled_hook( Schema::BUFFER_FLUSH_CRON_HOOK );
+	delete_option( WriteBuffer::OPTION_INDEX );
 
 	$settings    = get_option( 'bbk_postview_settings', array() );
 	$delete_data = $settings['delete_data_on_uninstall'] ?? true;

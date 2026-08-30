@@ -39,11 +39,46 @@ class Schema {
 
 	const DEFAULT_RETENTION_DAYS = 400;
 
+	/**
+	 * Recurring hook that flushes the write buffer (F7, `Core\WriteBuffer`).
+	 * Always scheduled — flush() itself is a fast no-op when nothing is
+	 * buffered, which is the case whenever `Admin\Settings::write_buffer_enabled()`
+	 * is off (the default) or there is no persistent object cache.
+	 */
+	const BUFFER_FLUSH_CRON_HOOK = 'bbk_postview_flush_buffer';
+
+	/**
+	 * Custom cron schedule registered for the hook above: WP core only ships
+	 * hourly/twicedaily/daily, none short enough for a write buffer to be
+	 * useful.
+	 */
+	const BUFFER_FLUSH_SCHEDULE = 'bbk_postview_every_minute';
+
+	const BUFFER_FLUSH_INTERVAL = MINUTE_IN_SECONDS;
+
 	public function __construct() {
 		add_action( 'plugins_loaded', array( $this, 'maybe_upgrade' ) );
 		add_action( self::PURGE_CRON_HOOK, array( $this, 'purge_daily' ) );
 		add_action( self::MIGRATION_CRON_HOOK, array( $this, 'migrate_batch' ) );
+		add_action( self::BUFFER_FLUSH_CRON_HOOK, array( WriteBuffer::class, 'flush' ) );
 		add_action( 'wp_initialize_site', array( $this, 'install_on_new_site' ) );
+		add_filter( 'cron_schedules', array( $this, 'register_cron_schedule' ) ); // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval -- Interval is a class constant (MINUTE_IN_SECONDS), not a hardcoded literal.
+	}
+
+	/**
+	 * Registers the custom "every minute" cron schedule used by the write
+	 * buffer flush (F7). Filter callback for `cron_schedules`.
+	 *
+	 * @param array $schedules Existing schedules.
+	 * @return array
+	 */
+	public function register_cron_schedule( array $schedules ): array {
+		$schedules[ self::BUFFER_FLUSH_SCHEDULE ] = array(
+			'interval' => self::BUFFER_FLUSH_INTERVAL,
+			'display'  => __( 'Every minute (Bubuku Post View Count write buffer)', 'bubuku-post-view-count' ),
+		);
+
+		return $schedules;
 	}
 
 	/**
@@ -119,6 +154,7 @@ class Schema {
 	public function deactivate() {
 		wp_clear_scheduled_hook( self::PURGE_CRON_HOOK );
 		wp_clear_scheduled_hook( self::MIGRATION_CRON_HOOK );
+		wp_clear_scheduled_hook( self::BUFFER_FLUSH_CRON_HOOK );
 	}
 
 	/**
@@ -164,6 +200,7 @@ class Schema {
 
 		$this->create_tables();
 		$this->schedule_purge();
+		$this->schedule_buffer_flush();
 
 		if ( $is_new_install ) {
 			$this->schedule_migration();
@@ -245,6 +282,17 @@ class Schema {
 	private function schedule_purge() {
 		if ( ! wp_next_scheduled( self::PURGE_CRON_HOOK ) ) {
 			wp_schedule_event( time(), 'daily', self::PURGE_CRON_HOOK );
+		}
+	}
+
+	/**
+	 * Schedules the recurring write-buffer flush (F7), if not already scheduled.
+	 *
+	 * @return void
+	 */
+	private function schedule_buffer_flush() {
+		if ( ! wp_next_scheduled( self::BUFFER_FLUSH_CRON_HOOK ) ) {
+			wp_schedule_event( time(), self::BUFFER_FLUSH_SCHEDULE, self::BUFFER_FLUSH_CRON_HOOK );
 		}
 	}
 

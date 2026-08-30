@@ -17,6 +17,7 @@ use Bubuku\Plugins\PostViewCount\Core\Db;
 use Bubuku\Plugins\PostViewCount\Core\Dimensions;
 use Bubuku\Plugins\PostViewCount\Core\Query;
 use Bubuku\Plugins\PostViewCount\Core\Schema;
+use Bubuku\Plugins\PostViewCount\Core\WriteBuffer;
 use Bubuku\Plugins\PostViewCount\Frontend\ViewsDisplay;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetAiTraffic;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetContentTrends;
@@ -393,6 +394,114 @@ $tests = array(
 
 		$sanitized = Settings::sanitize( array() );
 		bbk_test_same( false, $sanitized['respect_dnt'], 'An absent checkbox must sanitize to false, matching the other checkbox fields.' );
+	},
+	'WriteBuffer::enabled() requires both the setting and a persistent object cache' => static function (): void {
+		TestState::reset();
+
+		bbk_test_same( false, WriteBuffer::enabled(), 'Off by default, and with no persistent object cache.' );
+
+		TestState::$ext_object_cache = true;
+		bbk_test_same( false, WriteBuffer::enabled(), 'A persistent object cache alone must not be enough; the setting must also be on.' );
+
+		update_option( Settings::OPTION_KEY, array( 'write_buffer' => true ) );
+		bbk_test_same( true, WriteBuffer::enabled(), 'With the setting on and a persistent object cache present, buffering must be enabled.' );
+
+		TestState::$ext_object_cache = false;
+		bbk_test_same( false, WriteBuffer::enabled(), 'Without a persistent object cache, buffering must stay off even if the setting is on.' );
+	},
+	'Settings::sanitize() honors a submitted write_buffer value' => static function (): void {
+		TestState::reset();
+
+		$sanitized = Settings::sanitize( array( 'write_buffer' => '1' ) );
+		bbk_test_same( true, $sanitized['write_buffer'], 'An explicit truthy value must sanitize to true.' );
+
+		$sanitized = Settings::sanitize( array() );
+		bbk_test_same( false, $sanitized['write_buffer'], 'An absent checkbox must sanitize to false, matching the other checkbox fields.' );
+	},
+	'WriteBuffer::buffer() coalesces several increments in the object cache without writing to the DB until flush()' => static function (): void {
+		TestState::reset();
+		TestState::$now = '2026-01-01 10:00:00';
+
+		WriteBuffer::buffer( 55, array( 'viewport' => '576-991' ) );
+		WriteBuffer::buffer( 55, array( 'viewport' => '576-991' ) );
+		WriteBuffer::buffer( 55, array( 'viewport' => '992-1399' ) );
+
+		bbk_test_same( array(), TestState::$views, 'Buffered views must not hit the aggregate table before flush().' );
+		bbk_test_same( array(), TestState::$daily, 'Buffered views must not hit the daily table before flush().' );
+		bbk_test_same( 3, WriteBuffer::pending_views( 55 ), 'pending_views() must reflect every buffered increment so far.' );
+
+		WriteBuffer::flush();
+
+		bbk_test_same( 3, TestState::$views[55]['views'], 'flush() must write the coalesced total in a single batch.' );
+		bbk_test_same( 3, TestState::$daily['55|2026-01-01'], 'flush() must add the full batch to the daily aggregate.' );
+		bbk_test_same(
+			array(
+				'55|2026-01-01|viewport|576-991'  => 2,
+				'55|2026-01-01|viewport|992-1399' => 1,
+			),
+			TestState::$dims,
+			'flush() must write one row per distinct dimension value, each with its own coalesced count.'
+		);
+		bbk_test_same( 0, WriteBuffer::pending_views( 55 ), 'flush() must clear the buffered counters it just wrote.' );
+	},
+	'WriteBuffer registers a post/day in the flush index only once, no matter how many views buffer it' => static function (): void {
+		TestState::reset();
+		TestState::$now = '2026-01-01 10:00:00';
+
+		WriteBuffer::buffer( 60, array() );
+		WriteBuffer::buffer( 60, array() );
+		WriteBuffer::buffer( 60, array() );
+
+		bbk_test_same(
+			array( '60|2026-01-01' ),
+			get_option( WriteBuffer::OPTION_INDEX, array() ),
+			'The flush index must list the post/day pair exactly once, keeping the write cost proportional to distinct posts, not views.'
+		);
+	},
+	'WriteBuffer::flush() with nothing buffered is a no-op' => static function (): void {
+		TestState::reset();
+
+		WriteBuffer::flush();
+
+		bbk_test_same( array(), TestState::$views, 'An empty flush index must never touch the DB.' );
+	},
+	'RestApi buffers the write when write_buffer is enabled, and the response count includes the pending views' => static function (): void {
+		TestState::reset();
+		TestState::$now              = '2026-01-01 10:00:00';
+		TestState::$ext_object_cache = true;
+		update_option( Settings::OPTION_KEY, array( 'write_buffer' => true ) );
+
+		$api = new RestApi();
+
+		$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+		$response1               = $api->set_post_views(
+			new WP_REST_Request(
+				array( 'post_id' => 70 ),
+				array(
+					'Origin'     => 'https://test.wp.local',
+					'User-Agent' => 'Visitor A',
+				)
+			)
+		);
+
+		$_SERVER['REMOTE_ADDR'] = '127.0.0.2';
+		$response2               = $api->set_post_views(
+			new WP_REST_Request(
+				array( 'post_id' => 70 ),
+				array(
+					'Origin'     => 'https://test.wp.local',
+					'User-Agent' => 'Visitor B',
+				)
+			)
+		);
+
+		bbk_test_same( 1, $response1->get_data()['count'], 'The first buffered view must still be reflected in the response.' );
+		bbk_test_same( 2, $response2->get_data()['count'], 'A second buffered view for the same post must add to the pending count already in the response.' );
+		bbk_test_same( array(), TestState::$views, 'Buffered views must not hit the DB until the next flush.' );
+
+		WriteBuffer::flush();
+
+		bbk_test_same( 2, TestState::$views[70]['views'], 'flush() must persist every buffered view once the cron runs.' );
 	},
 	'enabled_post_types() returns [post] when the option does not exist yet' => static function (): void {
 		TestState::reset();

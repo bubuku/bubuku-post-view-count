@@ -111,6 +111,45 @@ namespace {
 	function add_action(): void {
 	}
 
+	function add_filter(): void {
+	}
+
+	function wp_next_scheduled(): bool {
+		return false;
+	}
+
+	function wp_schedule_event(): bool {
+		return true;
+	}
+
+	function wp_clear_scheduled_hook(): bool {
+		return true;
+	}
+
+	function wp_using_ext_object_cache(): bool {
+		return TestState::$ext_object_cache;
+	}
+
+	function wp_cache_add( string $key, $value, string $group, int $ttl = 0 ): bool {
+		unset( $ttl );
+
+		if ( isset( TestState::$cache[ $group ][ $key ] ) ) {
+			return false;
+		}
+
+		TestState::$cache[ $group ][ $key ] = $value;
+
+		return true;
+	}
+
+	function wp_cache_incr( string $key, int $offset, string $group ) {
+		$current = TestState::$cache[ $group ][ $key ] ?? 0;
+
+		TestState::$cache[ $group ][ $key ] = (int) $current + $offset;
+
+		return TestState::$cache[ $group ][ $key ];
+	}
+
 	function register_rest_route( string $namespace, string $route, array $args ): void {
 		TestState::$route = compact( 'namespace', 'route', 'args' );
 	}
@@ -163,9 +202,9 @@ namespace {
 		return true;
 	}
 
-	function wp_cache_delete( int $post_id, string $group ): void {
-		unset( $group );
-		TestState::$cache_deletions[] = $post_id;
+	function wp_cache_delete( $key, string $group ): void {
+		TestState::$cache_deletions[] = $key;
+		unset( TestState::$cache[ $group ][ $key ] );
 	}
 
 	function get_transient( string $key ) {
@@ -375,6 +414,9 @@ namespace Bubuku\Plugins\PostViewCount {
 		/** @var string Simulated `current_time( 'mysql', true )`. */
 		public static $now = '2026-01-01 00:00:00';
 
+		/** @var bool Simulated `wp_using_ext_object_cache()` result. */
+		public static $ext_object_cache = false;
+
 		public static function reset(): void {
 			self::$meta             = array();
 			self::$views            = array();
@@ -390,6 +432,7 @@ namespace Bubuku\Plugins\PostViewCount {
 			self::$url_to_post_id   = array();
 			self::$current_user_can = array();
 			self::$now              = '2026-01-01 00:00:00';
+			self::$ext_object_cache = false;
 		}
 	}
 
@@ -426,25 +469,27 @@ namespace Bubuku\Plugins\PostViewCount {
 		}
 
 		public function query( string $query ) {
-			if ( preg_match( "/INSERT INTO wp_bbk_post_views_daily \\(post_id, day, views\\) VALUES \\((\\d+), '([^']+)', 1\\)/", $query, $m ) ) {
+			if ( preg_match( "/INSERT INTO wp_bbk_post_views_daily \\(post_id, day, views\\) VALUES \\((\\d+), '([^']+)', (\\d+)\\)/", $query, $m ) ) {
 				$key                     = $m[1] . '|' . $m[2];
-				TestState::$daily[ $key ] = ( TestState::$daily[ $key ] ?? 0 ) + 1;
+				$count                   = (int) $m[3];
+				TestState::$daily[ $key ] = ( TestState::$daily[ $key ] ?? 0 ) + $count;
 
 				return 1;
 			}
 
-			if ( preg_match( "/INSERT INTO wp_bbk_post_views \\(post_id, views, first_viewed_at, last_viewed_at\\) VALUES \\((\\d+), 1, '([^']+)', '([^']+)'\\)/", $query, $m ) ) {
+			if ( preg_match( "/INSERT INTO wp_bbk_post_views \\(post_id, views, first_viewed_at, last_viewed_at\\) VALUES \\((\\d+), (\\d+), '([^']+)', '([^']+)'\\)/", $query, $m ) ) {
 				$post_id = (int) $m[1];
-				$now     = $m[2];
+				$count   = (int) $m[2];
+				$now     = $m[3];
 
 				if ( ! isset( TestState::$views[ $post_id ] ) ) {
 					TestState::$views[ $post_id ] = array(
-						'views'           => 1,
+						'views'           => $count,
 						'first_viewed_at' => $now,
 						'last_viewed_at'  => $now,
 					);
 				} else {
-					++TestState::$views[ $post_id ]['views'];
+					TestState::$views[ $post_id ]['views']         += $count;
 					TestState::$views[ $post_id ]['last_viewed_at'] = $now;
 				}
 
@@ -468,9 +513,10 @@ namespace Bubuku\Plugins\PostViewCount {
 				return 1;
 			}
 
-			if ( preg_match( "/INSERT INTO wp_bbk_post_view_dims \\(post_id, day, dimension, value, views\\) VALUES \\((\\d+), '([^']+)', '([^']+)', '([^']+)', 1\\)/", $query, $m ) ) {
+			if ( preg_match( "/INSERT INTO wp_bbk_post_view_dims \\(post_id, day, dimension, value, views\\) VALUES \\((\\d+), '([^']+)', '([^']+)', '([^']+)', (\\d+)\\)/", $query, $m ) ) {
 				$key                    = $m[1] . '|' . $m[2] . '|' . $m[3] . '|' . $m[4];
-				TestState::$dims[ $key ] = ( TestState::$dims[ $key ] ?? 0 ) + 1;
+				$count                  = (int) $m[5];
+				TestState::$dims[ $key ] = ( TestState::$dims[ $key ] ?? 0 ) + $count;
 
 				return 1;
 			}
@@ -558,6 +604,7 @@ namespace Bubuku\Plugins\PostViewCount {
 	require_once dirname( __DIR__ ) . '/src/Core/AiCrawlers.php';
 	require_once dirname( __DIR__ ) . '/src/Core/Db.php';
 	require_once dirname( __DIR__ ) . '/src/Admin/Settings.php';
+	require_once dirname( __DIR__ ) . '/src/Core/WriteBuffer.php';
 	require_once dirname( __DIR__ ) . '/src/Api/RestApi.php';
 	require_once dirname( __DIR__ ) . '/src/Api/TrendsApi.php';
 	require_once dirname( __DIR__ ) . '/src/Core/Query.php';
