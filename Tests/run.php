@@ -314,6 +314,86 @@ $tests = array(
 			'A deduplicated repeat must not increment the dims either.'
 		);
 	},
+	'a DNT header drops dims but still counts the view, with respect_dnt on by default' => static function (): void {
+		TestState::reset();
+		TestState::$now          = '2026-01-01 12:00:00';
+		$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+
+		bbk_test_same( true, Settings::respect_dnt(), 'respect_dnt must be enabled by default.' );
+
+		$api     = new RestApi();
+		$request = new WP_REST_Request(
+			array(
+				'post_id'  => 103,
+				'viewport' => '576-991',
+				'referrer' => 'search',
+			),
+			array(
+				'Origin'     => 'https://test.wp.local',
+				'User-Agent' => 'Bubuku test',
+				'DNT'        => '1',
+			)
+		);
+
+		$response = $api->set_post_views( $request );
+
+		bbk_test_same( 1, $response->get_data()['count'], 'A DNT signal must not prevent the view itself from being counted.' );
+		bbk_test_same( array(), TestState::$dims, 'A DNT signal must drop dims server-side, even though the client already sent values.' );
+	},
+	'a Sec-GPC header drops dims the same way as DNT'     => static function (): void {
+		TestState::reset();
+		TestState::$now          = '2026-01-01 12:00:00';
+		$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+		$api                     = new RestApi();
+		$request                 = new WP_REST_Request(
+			array(
+				'post_id'  => 104,
+				'viewport' => '576-991',
+			),
+			array(
+				'Origin'  => 'https://test.wp.local',
+				'Sec-GPC' => '1',
+			)
+		);
+
+		$api->set_post_views( $request );
+
+		bbk_test_same( array(), TestState::$dims, 'A Sec-GPC signal must drop dims server-side.' );
+	},
+	'disabling respect_dnt keeps recording dims even with a DNT header' => static function (): void {
+		TestState::reset();
+		TestState::$now = '2026-01-01 12:00:00';
+		update_option( Settings::OPTION_KEY, array( 'respect_dnt' => false ) );
+		$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+		$api                     = new RestApi();
+		$request                 = new WP_REST_Request(
+			array(
+				'post_id'  => 105,
+				'viewport' => '576-991',
+			),
+			array(
+				'Origin' => 'https://test.wp.local',
+				'DNT'    => '1',
+			)
+		);
+
+		$api->set_post_views( $request );
+
+		bbk_test_same(
+			array( '105|2026-01-01|viewport|576-991' => 1 ),
+			TestState::$dims,
+			'With respect_dnt turned off, a DNT header must not affect dims recording.'
+		);
+	},
+	'Settings::sanitize() honors a submitted respect_dnt value' => static function (): void {
+		TestState::reset();
+
+		$sanitized = Settings::sanitize( array( 'respect_dnt' => false ) );
+		bbk_test_same( false, $sanitized['respect_dnt'], 'An explicit false must sanitize to false.' );
+
+		$sanitized = Settings::sanitize( array() );
+		bbk_test_same( false, $sanitized['respect_dnt'], 'An absent checkbox must sanitize to false, matching the other checkbox fields.' );
+	},
 	'enabled_post_types() returns [post] when the option does not exist yet' => static function (): void {
 		TestState::reset();
 

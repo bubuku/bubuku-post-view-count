@@ -41,6 +41,14 @@ Please [leave a 5-star review](https://wordpress.org/support/plugin/bubuku-post-
 
 We develop custom solutions for WordPress focused on performance, accessibility, and maintainable code. Our work includes plugins, themes, and integrations designed to improve the daily workflow of marketing and content teams.
 
+== Privacy ==
+
+This plugin does not store personal data at the per-visit level. It never persists the visitor's IP address or User-Agent string: the only per-visitor artifact is an ephemeral deduplication token (a hash of IP, User-Agent and post ID, expiring after 30 minutes) used to avoid counting the same visitor twice, which is discarded automatically and never written to any table. Everything else the plugin stores is aggregated: total views and last-viewed date per post, a daily view count per post, and — if you enable the optional session dimensions — a daily breakdown per post of device-width bucket and referrer category (never the raw screen width or referrer URL/host). None of this identifies an individual visitor.
+
+If a visitor's browser sends the "Do Not Track" (DNT) or Global Privacy Control (Sec-GPC) signal, the plugin skips recording the optional session dimensions (device width and referrer category) for that visit. This is enabled by default and can be turned off in Settings → Post View Count. The view count itself is unaffected either way, since it never stores anything that identifies the visitor.
+
+If you enable the optional "AI crawler tracking" setting (off by default), hits from known AI crawlers are counted in their own table, aggregated by day and bot name — never at the individual-request level and never mixed with human view data.
+
 == Frequently Asked Questions ==
 
 = How do I see the view count for a post? =
@@ -69,6 +77,9 @@ Yes. Use the `[bbk_post_views]` shortcode, or add the "Bubuku · Vistas del post
 
 = Can I see how views have evolved over time? =
 Yes. Settings → Post View Count includes a chart of views over time (day/week/month) and a comparison of the current 30-day period against the previous one, both drawn from the same data used by the REST/MCP trend endpoints.
+
+= Does the plugin respect "Do Not Track" or Global Privacy Control? =
+Yes, by default. When a visitor's browser sends the DNT or Sec-GPC signal, the plugin still counts the view (it's already anonymous — no IP or User-Agent is ever stored) but skips recording the optional device-width and referrer breakdown for that visit. You can turn this off in Settings → Post View Count if you'd rather always record the full breakdown.
 
 
 == Changelog ==

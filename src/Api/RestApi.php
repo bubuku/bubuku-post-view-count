@@ -155,6 +155,10 @@ class RestApi {
 	 * @return array<string,string>
 	 */
 	private function valid_dims( WP_REST_Request $request ): array {
+		if ( Settings::respect_dnt() && $this->has_privacy_signal( $request ) ) {
+			return array();
+		}
+
 		$dims = array();
 
 		foreach ( Dimensions::DIMENSIONS as $dimension ) {
@@ -207,6 +211,23 @@ class RestApi {
 		}
 
 		return Settings::is_bot_user_agent( $request->get_header( 'user_agent' ) );
+	}
+
+	/**
+	 * Whether the browser sent a DNT or Sec-GPC privacy signal with this
+	 * request. `assets/js/common.js` already omits `viewport`/`referrer`
+	 * client-side when it detects one, so this is a server-side defense in
+	 * depth: both headers are attached by the browser itself to every
+	 * outgoing request (including `navigator.sendBeacon()`), so they reach
+	 * the endpoint even for a visitor whose client somehow skipped the JS
+	 * check (docs/ANALYTICS-PLAN.md §F7). Never affects the view count
+	 * itself — only whether dims get written.
+	 *
+	 * @param WP_REST_Request $request Current request.
+	 * @return bool
+	 */
+	private function has_privacy_signal( WP_REST_Request $request ): bool {
+		return '1' === $request->get_header( 'dnt' ) || '1' === $request->get_header( 'sec_gpc' );
 	}
 
 	/**

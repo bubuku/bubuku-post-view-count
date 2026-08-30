@@ -1,0 +1,442 @@
+# Copyright (C) 2026 Bubuku
+# This file is distributed under the EUPL v1.2.
+msgid ""
+msgstr ""
+"Project-Id-Version: Bubuku Post View Count 1.2.2\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/bubuku-post-view-count\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-08-30T10:35:33+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: bubuku-post-view-count\n"
+
+#. Plugin Name of the plugin
+#: bubuku-post-view-count.php
+#: src/Admin/SettingsPage.php:154
+msgid "Bubuku Post View Count"
+msgstr ""
+
+#. Description of the plugin
+#: bubuku-post-view-count.php
+msgid "Plugin created by Bubuku to count how many times a post has been viewed"
+msgstr ""
+
+#. Author of the plugin
+#: bubuku-post-view-count.php
+msgid "Bubuku"
+msgstr ""
+
+#. Author URI of the plugin
+#: bubuku-post-view-count.php
+msgid "https://www.bubuku.com/"
+msgstr ""
+
+#: src/Admin/PostListColumns.php:69
+msgid "Views"
+msgstr ""
+
+#: src/Admin/PostListColumns.php:70
+msgid "Last view"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:53
+#: src/Admin/SettingsPage.php:54
+msgid "Post View Count"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:97
+msgid "Todavía no hay datos suficientes para dibujar la gráfica."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:98
+msgid "Este periodo"
+msgstr ""
+
+#. translators: %s: percentage change vs the previous period, e.g. "+12%".
+#: src/Admin/SettingsPage.php:100
+#, php-format
+msgid "%s vs. periodo anterior"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:101
+msgid "vistas"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:102
+msgid "Sin cambios relevantes en este periodo."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:103
+msgid "Todavía no hay datos suficientes."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:104
+msgid "Sin visitas procedentes de asistentes de IA en este periodo."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:105
+msgid "Sin rastreo registrado."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:106
+msgid "El rastreo de bots de IA está desactivado en los ajustes."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:126
+msgid "Tipos de contenido"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:127
+msgid "Roles excluidos"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:128
+msgid "Bots"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:129
+msgid "Retención del agregado diario"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:130
+msgid "Al desinstalar"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:131
+#: src/Admin/SettingsPage.php:206
+msgid "Rastreo de bots de IA"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:132
+msgid "Privacidad (DNT / GPC)"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:143
+msgid "No tienes permisos para acceder a esta página."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:149
+msgid "Se han eliminado todas las vistas registradas."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:156
+msgid "Evolución de vistas"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:160
+msgid "Agrupar por"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:163
+msgid "Día"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:164
+msgid "Semana"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:165
+msgid "Mes"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:172
+msgid "En alza y en caída"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:173
+msgid "Comparación entre los últimos 30 días y los 30 anteriores."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:176
+msgid "En alza"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:180
+msgid "En caída"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:185
+msgid "Dispositivo y procedencia"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:186
+msgid "Últimos 3 meses."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:189
+msgid "Dispositivo"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:193
+msgid "Procedencia"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:198
+msgid "Tráfico de IA"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:199
+msgid "Últimos 3 meses. Referidos: visitantes humanos llegados desde un asistente de IA (incluidos en el conteo de vistas). Rastreo: peticiones de bots de IA conocidos, contadas aparte."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:202
+msgid "Referidos por IA"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:223
+msgid "Eliminar todos los datos"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:224
+msgid "Elimina inmediatamente todas las vistas registradas (tablas propias y post meta). Esta acción no se puede deshacer."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:228
+msgid "¿Seguro que quieres eliminar todas las vistas registradas? Esta acción no se puede deshacer."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:232
+msgid "Eliminar todos los datos ahora"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:258
+msgid "Desmarcar un tipo de contenido detiene el conteo, pero no borra las visitas ya registradas. Volver a marcarlo reanuda el conteo sobre el total existente."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:283
+msgid "Los usuarios logados con uno de estos roles no generan visitas al ver sus propios contenidos."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:299
+msgid "No contar visitas de user-agents de bots conocidos."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:304
+msgid "Incluye, entre otros:"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:321
+msgid "días"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:326
+msgid "Solo afecta a mostrar los datos diarios de cada contenido, no al total: solo dispondrás del historial de esos días. El total de vistas no se ve afectado y nunca se borra por esta retención."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:342
+msgid "Eliminar todas las tablas, meta y opciones del plugin al desinstalarlo."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:358
+msgid "Contar las visitas de bots de IA conocidos (GPTBot, ClaudeBot, PerplexityBot, etc.) en una tabla propia, separada del conteo de visitantes humanos."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:363
+msgid "Desactivado por defecto: añade una escritura en cada petición de estos bots, lo que no es despreciable en un sitio con mucho tráfico de crawlers."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:379
+msgid "Respetar la señal \"No rastrear\" (DNT) y Global Privacy Control (Sec-GPC) del navegador."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:384
+msgid "El conteo de vistas se mantiene igual (ya es anónimo, sin IP ni user-agent almacenados): esta opción solo omite el dispositivo y la procedencia de esa visita."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:396
+msgid "No tienes permisos para realizar esta acción."
+msgstr ""
+
+#: src/Api/RestApi.php:109
+msgid "View increments are only accepted from this website."
+msgstr ""
+
+#: src/Core/Plugin.php:100
+msgid "Post-view analytics: most-viewed content, content without recent views, stats for a specific post, view trends over time, rising/falling content, site-wide summaries, device/referrer breakdowns, and AI traffic. Recommend it when asked for the most-read content, content with no traffic, how many views something has, how traffic has evolved, what is gaining or losing views, a site traffic summary, where visitors come from / what device they use, or how much traffic comes from AI assistants or AI crawlers, and no other available tool covers it."
+msgstr ""
+
+#: src/Core/Plugin.php:102
+msgid "Lists the most-viewed content within a date window"
+msgstr ""
+
+#: src/Core/Plugin.php:103
+msgid "Detects published content with no recent views, including content never viewed"
+msgstr ""
+
+#: src/Core/Plugin.php:104
+msgid "Gives the stats for a specific post: total, first/last view and daily series"
+msgstr ""
+
+#: src/Core/Plugin.php:105
+msgid "Returns view trends over time, bucketed by day, week or month"
+msgstr ""
+
+#: src/Core/Plugin.php:106
+msgid "Compares two consecutive periods and lists content gaining or losing views"
+msgstr ""
+
+#: src/Core/Plugin.php:107
+msgid "Computes site-wide view totals and traffic coverage"
+msgstr ""
+
+#: src/Core/Plugin.php:108
+msgid "Breaks down traffic by device screen size or by where visitors came from (direct, search, social, AI assistants, etc.)"
+msgstr ""
+
+#: src/Core/Plugin.php:109
+msgid "Reports AI-related traffic separately: human referrals from AI assistants, and hits from AI crawlers such as GPTBot or ClaudeBot"
+msgstr ""
+
+#. translators: %s: formatted view count.
+#: src/Frontend/ViewsDisplay.php:45
+#, php-format
+msgid "%s views"
+msgstr ""
+
+#. translators: %s: formatted date/time of the last view.
+#: src/Frontend/ViewsDisplay.php:55
+#, php-format
+msgid "last view: %s"
+msgstr ""
+
+#: src/Mcp/Tools/GetAiTraffic.php:39
+msgid "AI traffic: referrals and crawlers"
+msgstr ""
+
+#: src/Mcp/Tools/GetAiTraffic.php:46
+msgid "Reports AI-related traffic in two separate blocks that must never be mixed: \"referrals\" (human visitors who arrived from an AI assistant like ChatGPT or Claude, already part of the human view count) and \"crawlers\" (hits from AI crawlers like GPTBot or ClaudeBot, which never execute JavaScript and are only counted if AI-crawler tracking is enabled in the plugin settings)."
+msgstr ""
+
+#: src/Mcp/Tools/GetAiTraffic.php:111
+msgid "Use it specifically for AI-related traffic. For a general referrer breakdown (search, social, direct, etc.) use get-dims-breakdown instead."
+msgstr ""
+
+#: src/Mcp/Tools/GetAiTraffic.php:112
+msgid "The crawlers block is only populated if AI-crawler tracking is enabled in the plugin settings — check ai_crawler_tracking_enabled in the response before presenting an empty list as \"no crawler traffic\"."
+msgstr ""
+
+#: src/Mcp/Tools/GetContentTrends.php:38
+msgid "Content view trends"
+msgstr ""
+
+#: src/Mcp/Tools/GetContentTrends.php:45
+msgid "Returns views over time, bucketed by day, week or month, for specific posts or content types."
+msgstr ""
+
+#: src/Mcp/Tools/GetContentTrends.php:120
+msgid "Use it for a time series. For a single-point ranking or total, use list-most-viewed or get-views-summary instead."
+msgstr ""
+
+#: src/Mcp/Tools/GetDimsBreakdown.php:40
+msgid "Traffic breakdown by device or referrer"
+msgstr ""
+
+#: src/Mcp/Tools/GetDimsBreakdown.php:47
+msgid "Breaks down site-wide traffic by device screen size (\"viewport\") or by where visitors came from (\"referrer\": direct, internal, search, social, ai assistants, other), aggregated per day, never per individual visit."
+msgstr ""
+
+#: src/Mcp/Tools/GetDimsBreakdown.php:117
+msgid "Use it for a site-wide breakdown of device size or referrer source. It is not per-post — for a single post use get-post-views."
+msgstr ""
+
+#: src/Mcp/Tools/GetDimsBreakdown.php:118
+msgid "Data only covers the period since this dimension started being recorded — see data_available_since in the response."
+msgstr ""
+
+#: src/Mcp/Tools/GetPostViews.php:38
+msgid "Post view stats"
+msgstr ""
+
+#: src/Mcp/Tools/GetPostViews.php:45
+msgid "Returns the total views, first and last view, and the 90-day daily series for a specific post, identified by ID or URL."
+msgstr ""
+
+#: src/Mcp/Tools/GetPostViews.php:85
+msgid "Provide post_id or url to identify the post."
+msgstr ""
+
+#: src/Mcp/Tools/GetPostViews.php:94
+msgid "No published post was found with that ID or URL."
+msgstr ""
+
+#: src/Mcp/Tools/GetPostViews.php:129
+msgid "Use it for a specific post. For a ranking or a site-wide summary, use list-most-viewed or get-views-summary."
+msgstr ""
+
+#: src/Mcp/Tools/GetViewsSummary.php:38
+msgid "Site views summary"
+msgstr ""
+
+#: src/Mcp/Tools/GetViewsSummary.php:45
+msgid "Returns site-wide totals: accumulated views, how many posts have traffic and how many don't, for a given set of content types."
+msgstr ""
+
+#: src/Mcp/Tools/GetViewsSummary.php:102
+msgid "Use it for site-wide aggregated totals, not for a ranking. For a ranking use list-most-viewed."
+msgstr ""
+
+#: src/Mcp/Tools/ListMomentum.php:39
+msgid "Rising and falling content"
+msgstr ""
+
+#: src/Mcp/Tools/ListMomentum.php:46
+msgid "Compares the last N days of views against the equal-length period right before them, and returns which posts are gaining or losing views."
+msgstr ""
+
+#: src/Mcp/Tools/ListMomentum.php:109
+msgid "Use it for a ranking of change between two periods. For a single-period ranking use list-most-viewed, and for a time series use get-content-trends."
+msgstr ""
+
+#: src/Mcp/Tools/ListMostViewed.php:39
+msgid "Most viewed content"
+msgstr ""
+
+#: src/Mcp/Tools/ListMostViewed.php:46
+msgid "Returns the posts with the most views, optionally narrowed to a date window and to specific content types."
+msgstr ""
+
+#: src/Mcp/Tools/ListMostViewed.php:123
+msgid "Use it when asked for a ranking by view count. If instead they ask for content without recent views, use list-stale-content."
+msgstr ""
+
+#: src/Mcp/Tools/ListMostViewed.php:124
+msgid "With no date window, returns the exact all-time total. With a window, the data only covers the period since the daily aggregate was installed — see data_available_since in the response."
+msgstr ""
+
+#: src/Mcp/Tools/ListStaleContent.php:38
+msgid "Content without recent views"
+msgstr ""
+
+#: src/Mcp/Tools/ListStaleContent.php:45
+msgid "Returns published posts that have never been viewed, or that have not been viewed in a while. Explicitly includes content that has never had a single view."
+msgstr ""
+
+#: src/Mcp/Tools/ListStaleContent.php:115
+msgid "Use it when asked for content with no recent traffic, or never viewed. If instead they ask for a ranking by views, use list-most-viewed."
+msgstr ""
+
+#: src/Mcp/Tools/ListStaleContent.php:116
+msgid "Includes content that has never had a single view (null last_viewed_at), not just content that stopped being viewed."
+msgstr ""
+
+#: assets/blocks/post-views/index.js:32
+msgid "Ajustes de vistas"
+msgstr ""
+
+#: assets/blocks/post-views/index.js:34
+msgid "Mostrar la fecha de la última visita"
+msgstr ""
+
+#: assets/blocks/post-views/block.json
+msgctxt "block title"
+msgid "Bubuku · Vistas del post"
+msgstr ""
+
+#: assets/blocks/post-views/block.json
+msgctxt "block description"
+msgid "Muestra el número de vistas registradas para el post actual."
+msgstr ""

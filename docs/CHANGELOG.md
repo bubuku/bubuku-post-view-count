@@ -4,6 +4,10 @@ Todos los cambios relevantes de este proyecto se documentan aquí.
 Formato basado en [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
+### Añadido
+- Fase F7 de `docs/ANALYTICS-PLAN.md` (privacidad): nuevo ajuste «Privacidad (DNT / GPC)» en Ajustes → Post View Count (`Admin\Settings::respect_dnt()`, activado por defecto). Cuando un visitante envía la señal "Do Not Track" (`DNT: 1`) o Global Privacy Control (`Sec-GPC: 1`), el plugin sigue contando la vista con normalidad —el conteo ya es anónimo, sin IP ni user-agent almacenados— pero omite las dimensiones de sesión opcionales (dispositivo/procedencia, F5) para esa visita. `assets/js/common.js` detecta la señal en el cliente (`navigator.doNotTrack`/`navigator.globalPrivacyControl`) y no envía `viewport`/`referrer`; `Api\RestApi::valid_dims()` aplica el mismo criterio server-side como defensa adicional, ya que ambas cabeceras las añade el propio navegador a toda petición saliente (incluido `navigator.sendBeacon()`), cubriendo al visitante cuyo cliente no ejecute el JS. Nueva sección "Privacy" en `readme.txt` documentando qué se almacena (nada a nivel de visita individual) y una entrada de FAQ sobre DNT/GPC.
+### Nota
+- Del resto de la Fase F7, el buffer de escrituras para sitios de alto tráfico queda sin implementar a propósito: el propio plan lo condiciona a que la medición lo justifique, y no hay evidencia de ese cuello de botella todavía.
 
 ## [1.2.2] - 2026-08-30
 ### Añadido

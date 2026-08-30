@@ -37,6 +37,7 @@ class Settings {
 			'retention_days'           => 400,
 			'delete_data_on_uninstall' => true,
 			'ai_crawler_tracking'      => false,
+			'respect_dnt'              => true,
 		);
 	}
 
@@ -110,6 +111,19 @@ class Settings {
 	 */
 	public static function ai_crawler_tracking(): bool {
 		return (bool) self::get_all()['ai_crawler_tracking'];
+	}
+
+	/**
+	 * Whether the plugin should honor a visitor's DNT/Sec-GPC privacy signal
+	 * (docs/ANALYTICS-PLAN.md §F7). Enabled by default: it never blocks the
+	 * view count itself (already anonymous, no IP/UA stored), it only skips
+	 * the optional session dimensions (F5) for that visit — see
+	 * `RestApi::valid_dims()`.
+	 *
+	 * @return bool
+	 */
+	public static function respect_dnt(): bool {
+		return (bool) self::get_all()['respect_dnt'];
 	}
 
 	/**
@@ -211,6 +225,7 @@ class Settings {
 			'retention_days'           => max( 1, $retention_days ),
 			'delete_data_on_uninstall' => ! empty( $input['delete_data_on_uninstall'] ),
 			'ai_crawler_tracking'      => ! empty( $input['ai_crawler_tracking'] ),
+			'respect_dnt'              => ! empty( $input['respect_dnt'] ),
 		);
 	}
 

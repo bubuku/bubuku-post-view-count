@@ -41,6 +41,11 @@ const bk_postview_main = {
 		if (AI.some((h) => host.includes(h))) return 'ai';
 		return 'other';
 	},
+	// DNT is a per-navigator legacy signal; globalPrivacyControl is the modern
+	// successor (Sec-GPC). Either one means the visitor asked not to be tracked.
+	hasPrivacySignal: function () {
+		return navigator.doNotTrack === '1' || window.doNotTrack === '1' || navigator.globalPrivacyControl === true;
+	},
 	setPostView: function () {
 		// Skip background/prerendered tabs: they are not a real view yet.
 		if (document.visibilityState !== 'visible') {
@@ -48,11 +53,14 @@ const bk_postview_main = {
 		}
 
 		const url = `${this.end_point}/set-post-views`;
-		const data = {
-			post_id: this.post_id,
-			viewport: this.getViewportBucket(),
-			referrer: this.getReferrerClass(),
-		};
+		const data = { post_id: this.post_id };
+
+		// The view count itself stays anonymous either way (no IP/UA stored);
+		// only the optional session dimensions are skipped for this visit.
+		if (!bbk_post_view.respect_dnt || !this.hasPrivacySignal()) {
+			data.viewport = this.getViewportBucket();
+			data.referrer = this.getReferrerClass();
+		}
 
 		if (navigator.sendBeacon) {
 			const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });

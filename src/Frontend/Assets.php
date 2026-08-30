@@ -60,8 +60,9 @@ class Assets {
 			'bk-post-view-js',
 			'bbk_post_view',
 			array(
-				'api_public' => rest_url( BBK_PLUGIN_ENDPOINTS_URL ),
-				'post_id'    => $post_id,
+				'api_public'  => rest_url( BBK_PLUGIN_ENDPOINTS_URL ),
+				'post_id'     => $post_id,
+				'respect_dnt' => Settings::respect_dnt(),
 			)
 		);
 	}

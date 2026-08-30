@@ -752,13 +752,31 @@ Tool MCP `bubuku-views/get-ai-traffic` que devuelve ambos bloques claramente sep
 
 ### F7 — Rendimiento y privacidad
 
+> ✅ **Privacidad (DNT/Sec-GPC) y sección de `readme.txt` implementadas** (versión sin
+> publicar, ver `docs/CHANGELOG.md` → `[Unreleased]`). Decisiones tomadas con el usuario:
+> respetar la señal omite **solo las dimensiones de sesión** (F5), nunca el conteo en sí
+> —ya es anónimo, sin IP/UA persistidos— y el ajuste viene **activado por defecto**
+> (`Admin\Settings::respect_dnt()`), a diferencia de `exclude_bots`/`ai_crawler_tracking`,
+> porque no añade coste y reduce datos ya opcionales. Detección en dos capas sin duplicar
+> criterio: `assets/js/common.js` (`hasPrivacySignal()`) omite `viewport`/`referrer` del
+> payload cuando detecta `navigator.doNotTrack`/`navigator.globalPrivacyControl`, y
+> `Api\RestApi::valid_dims()` aplica el mismo criterio server-side leyendo las cabeceras
+> `DNT`/`Sec-GPC` como defensa en profundidad — ambas las añade el propio navegador a toda
+> petición saliente (incluido `navigator.sendBeacon()`, que no permite cabeceras propias),
+> así que cubre a un visitante cuyo cliente no llegue a ejecutar el JS. Sección `== Privacy
+> ==` nueva en `readme.txt` (qué se almacena, nunca a nivel de visita individual) y una
+> entrada de FAQ. Tests en `Tests/run.php` cubren el default de `respect_dnt()`, que un
+> header `DNT`/`Sec-GPC` descarta las dims aunque el cliente las haya enviado, que
+> desactivar el ajuste conserva el comportamiento anterior, y la sanitización del checkbox.
+>
+> **Pendiente de esta fase**: el **buffer de escrituras** sigue sin implementar a
+> propósito — el propio plan lo condiciona a que la medición lo justifique, y no hay
+> evidencia de ese cuello de botella. **Regenerar el `.pot`** tampoco se ha hecho todavía:
+> el repo no tiene tooling de i18n (`wp i18n make-pot` vía WP-CLI, no instalado en el
+> entorno de desarrollo) — pendiente de ejecutar antes de la próxima release.
+
 - **Buffer de escrituras** para sitios de alto tráfico: acumular incrementos en object cache
   y volcarlos por lotes vía cron. Solo si la medición lo justifica.
-- Respetar `DNT` y `Sec-GPC` cuando estén presentes (opción configurable).
-- **Sección de privacidad en `readme.txt`**: hoy el plugin no persiste ni IP ni user-agent
-  —solo el `md5` efímero del transient de deduplicación— y **eso debe seguir siendo cierto**
-  después de la F5 y la F6. Ninguna de las dimensiones propuestas se almacena a nivel de
-  visita individual.
 - Regenerar el `.pot` con las cadenas nuevas del admin.
 
 ---

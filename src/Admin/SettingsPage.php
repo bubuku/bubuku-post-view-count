@@ -129,6 +129,7 @@ class SettingsPage {
 		add_settings_field( 'retention_days', __( 'Retención del agregado diario', 'bubuku-post-view-count' ), array( $this, 'field_retention_days' ), self::PAGE_SLUG, self::SECTION_ID );
 		add_settings_field( 'delete_data_on_uninstall', __( 'Al desinstalar', 'bubuku-post-view-count' ), array( $this, 'field_delete_on_uninstall' ), self::PAGE_SLUG, self::SECTION_ID );
 		add_settings_field( 'ai_crawler_tracking', __( 'Rastreo de bots de IA', 'bubuku-post-view-count' ), array( $this, 'field_ai_crawler_tracking' ), self::PAGE_SLUG, self::SECTION_ID );
+		add_settings_field( 'respect_dnt', __( 'Privacidad (DNT / GPC)', 'bubuku-post-view-count' ), array( $this, 'field_respect_dnt' ), self::PAGE_SLUG, self::SECTION_ID );
 	}
 
 	/**
@@ -360,6 +361,27 @@ class SettingsPage {
 		printf(
 			'<p class="description"><small>%s</small></p>',
 			esc_html__( 'Desactivado por defecto: añade una escritura en cada petición de estos bots, lo que no es despreciable en un sitio con mucho tráfico de crawlers.', 'bubuku-post-view-count' )
+		);
+	}
+
+	/**
+	 * Field: whether to honor a visitor's DNT/Sec-GPC privacy signal (F7).
+	 *
+	 * @return void
+	 */
+	public function field_respect_dnt() {
+		$settings = Settings::get_all();
+
+		printf(
+			'<label><input type="checkbox" name="%1$s[respect_dnt]" value="1" %2$s /> %3$s</label>',
+			esc_attr( Settings::OPTION_KEY ),
+			checked( $settings['respect_dnt'], true, false ),
+			esc_html__( 'Respetar la señal "No rastrear" (DNT) y Global Privacy Control (Sec-GPC) del navegador.', 'bubuku-post-view-count' )
+		);
+
+		printf(
+			'<p class="description"><small>%s</small></p>',
+			esc_html__( 'El conteo de vistas se mantiene igual (ya es anónimo, sin IP ni user-agent almacenados): esta opción solo omite el dispositivo y la procedencia de esa visita.', 'bubuku-post-view-count' )
 		);
 	}
 
