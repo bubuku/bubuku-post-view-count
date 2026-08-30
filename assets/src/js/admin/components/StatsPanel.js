@@ -1,11 +1,9 @@
 import { useState, useEffect } from '@wordpress/element';
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import DashboardCard from './DashboardCard';
 import DataTable from './DataTable';
 import TrendChart from './TrendChart';
 import { bbkFetch } from '../App';
-
-const COMPARISON_PERIOD_DAYS = 30;
 
 const ICON_TREND = (
 	<svg
@@ -46,14 +44,85 @@ const ICON_AI = (
 	</svg>
 );
 
-function addDays( date, days ) {
-	const result = new Date( date );
-	result.setDate( result.getDate() + days );
-	return result;
+function parseIsoDate( value ) {
+	return new Date( `${ value.slice( 0, 10 ) }T00:00:00Z` );
 }
 
 function toIsoDate( date ) {
 	return date.toISOString().slice( 0, 10 );
+}
+
+function bucketStart( date, granularity ) {
+	const result = new Date( date );
+
+	if ( granularity === 'week' ) {
+		const daysSinceMonday = ( result.getUTCDay() + 6 ) % 7;
+		result.setUTCDate( result.getUTCDate() - daysSinceMonday );
+	} else if ( granularity === 'month' ) {
+		result.setUTCDate( 1 );
+	}
+
+	return result;
+}
+
+function nextBucket( date, granularity ) {
+	const result = new Date( date );
+
+	if ( granularity === 'day' ) {
+		result.setUTCDate( result.getUTCDate() + 1 );
+	} else if ( granularity === 'week' ) {
+		result.setUTCDate( result.getUTCDate() + 7 );
+	} else {
+		result.setUTCMonth( result.getUTCMonth() + 1 );
+	}
+
+	return result;
+}
+
+/**
+ * Adds zero-value buckets so horizontal spacing reflects elapsed time rather
+ * than the number of database rows. Dates before daily collection started are
+ * not invented as zeroes.
+ *
+ * @param {Array}       rows          Sparse API series.
+ * @param {Object|null} range         Inclusive API range (`from` / `to`).
+ * @param {string}      granularity   day, week or month.
+ * @param {string|null} dataAvailable First date with daily data.
+ * @return {Array} Continuous series for the canvas.
+ */
+function completeTrend( rows, range, granularity, dataAvailable ) {
+	if ( ! rows.length || ! range?.from || ! range?.to ) {
+		return rows;
+	}
+
+	const availableDay = dataAvailable?.slice( 0, 10 ) || range.from;
+	const effectiveFrom = availableDay > range.from ? availableDay : range.from;
+	const values = new Map(
+		rows.map( ( row ) => [ row.bucket.slice( 0, 10 ), row.total_views ] )
+	);
+	const series = [];
+	let cursor = bucketStart( parseIsoDate( effectiveFrom ), granularity );
+	const end = bucketStart( parseIsoDate( range.to ), granularity );
+
+	while ( cursor <= end ) {
+		const bucket = toIsoDate( cursor );
+		series.push( {
+			bucket,
+			total_views: Number( values.get( bucket ) || 0 ),
+		} );
+		cursor = nextBucket( cursor, granularity );
+	}
+
+	return series;
+}
+
+function formatDate( value ) {
+	return new Intl.DateTimeFormat( document.documentElement.lang || 'es', {
+		day: 'numeric',
+		month: 'long',
+		year: 'numeric',
+		timeZone: 'UTC',
+	} ).format( parseIsoDate( value ) );
 }
 
 const GRANULARITY_OPTIONS = [
@@ -68,13 +137,13 @@ const GRANULARITY_OPTIONS = [
  * Api\TrendsApi endpoints. No new backend for this panel.
  *
  * @param {Object} props
- * @param {Object} props.context GET /settings response — only used here for
- *                               the `ai_crawler_tracking` flag.
+ * @param {Object} props.context GET /settings response, including the first
+ *                               available daily date and AI tracking flag.
  */
 const StatsPanel = ( { context } ) => {
 	const [ granularity, setGranularity ] = useState( 'day' );
 	const [ trend, setTrend ] = useState( [] );
-	const [ comparison, setComparison ] = useState( null );
+	const [ trendRange, setTrendRange ] = useState( null );
 
 	const [ momentum, setMomentum ] = useState( null );
 	const [ dimsViewport, setDimsViewport ] = useState( null );
@@ -83,37 +152,22 @@ const StatsPanel = ( { context } ) => {
 
 	useEffect( () => {
 		bbkFetch( `/trends?granularity=${ granularity }` )
-			.then( ( body ) => setTrend( body.trend || [] ) )
-			.catch( () => setTrend( [] ) );
-	}, [ granularity ] );
-
-	useEffect( () => {
-		const today = new Date();
-		const currentStart = addDays( today, -COMPARISON_PERIOD_DAYS );
-		const previousStart = addDays( today, -COMPARISON_PERIOD_DAYS * 2 );
-
-		bbkFetch(
-			`/trends?granularity=day&from=${ toIsoDate(
-				previousStart
-			) }&to=${ toIsoDate( today ) }`
-		)
 			.then( ( body ) => {
-				const cutoff = toIsoDate( currentStart );
-				let current = 0;
-				let previous = 0;
-
-				( body.trend || [] ).forEach( ( row ) => {
-					if ( row.bucket >= cutoff ) {
-						current += row.total_views;
-					} else {
-						previous += row.total_views;
-					}
-				} );
-
-				setComparison( { current, previous } );
+				setTrendRange( body.range || null );
+				setTrend(
+					completeTrend(
+						body.trend || [],
+						body.range || null,
+						granularity,
+						context?.daily_data_since || null
+					)
+				);
 			} )
-			.catch( () => setComparison( null ) );
-	}, [] );
+			.catch( () => {
+				setTrend( [] );
+				setTrendRange( null );
+			} );
+	}, [ granularity, context?.daily_data_since ] );
 
 	useEffect( () => {
 		bbkFetch( '/trends/momentum' )
@@ -186,29 +240,43 @@ const StatsPanel = ( { context } ) => {
 		},
 	];
 
-	let comparisonLabel = null;
-	if ( comparison ) {
-		comparisonLabel = sprintf(
-			/* translators: %d: total views in the current 30-day period */
-			__( 'Este periodo: %d vistas', 'bubuku-post-view-count' ),
-			comparison.current
-		);
+	const trendTotal = trend.reduce(
+		( total, row ) => total + row.total_views,
+		0
+	);
+	const granularityLabel = GRANULARITY_OPTIONS.find(
+		( option ) => option.value === granularity
+	)?.label.toLocaleLowerCase();
+	const availableDay = context?.daily_data_since?.slice( 0, 10 );
+	const hasPartialHistory =
+		trendRange && availableDay && availableDay > trendRange.from;
+	let trendLabel = null;
 
-		if ( comparison.previous > 0 ) {
-			const change = Math.round(
-				( ( comparison.current - comparison.previous ) /
-					comparison.previous ) *
-					100
-			);
-			const sign = change >= 0 ? '+' : '';
-			comparisonLabel +=
-				' ' +
-				sprintf(
-					/* translators: %s: percentage change vs the previous period, e.g. "+12%". */
-					__( '(%s vs. periodo anterior)', 'bubuku-post-view-count' ),
-					`${ sign }${ change }%`
-				);
-		}
+	if ( trendRange ) {
+		trendLabel = hasPartialHistory
+			? sprintf(
+					/* translators: 1: number of views, 2: first available date, 3: grouping unit. */
+					_n(
+						'%1$d visita recibida desde el %2$s, agrupada por %3$s.',
+						'%1$d visitas recibidas desde el %2$s, agrupadas por %3$s.',
+						trendTotal,
+						'bubuku-post-view-count'
+					),
+					trendTotal,
+					formatDate( availableDay ),
+					granularityLabel
+			  )
+			: sprintf(
+					/* translators: 1: number of views, 2: grouping unit. */
+					_n(
+						'%1$d visita recibida en los últimos 3 meses, agrupada por %2$s.',
+						'%1$d visitas recibidas en los últimos 3 meses, agrupadas por %2$s.',
+						trendTotal,
+						'bubuku-post-view-count'
+					),
+					trendTotal,
+					granularityLabel
+			  );
 	}
 
 	return (
@@ -217,7 +285,7 @@ const StatsPanel = ( { context } ) => {
 				icon={ ICON_TREND }
 				title={ __( 'Evolución de vistas', 'bubuku-post-view-count' ) }
 				claim={ __(
-					'Agrupado por día, semana o mes, con comparativa de los últimos 30 días.',
+					'La agrupación solo cambia cómo se representa la evolución.',
 					'bubuku-post-view-count'
 				) }
 				headerMeta={
@@ -234,9 +302,9 @@ const StatsPanel = ( { context } ) => {
 					</select>
 				}
 			>
-				{ comparisonLabel && (
+				{ trendLabel && (
 					<p className="bbk-trend-chart__comparison">
-						{ comparisonLabel }
+						{ trendLabel }
 					</p>
 				) }
 				<div className="bbk-trend-chart">

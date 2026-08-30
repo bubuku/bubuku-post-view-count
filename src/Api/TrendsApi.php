@@ -158,15 +158,27 @@ class TrendsApi {
 	 * @return WP_REST_Response
 	 */
 	public function get_trends( WP_REST_Request $request ) {
-		$trend = Query::trend(
-			(array) ( $request->get_param( 'post_ids' ) ?? array() ),
-			(array) ( $request->get_param( 'post_types' ) ?? array() ),
-			(string) ( $request->get_param( 'granularity' ) ?? 'day' ),
+		$granularity = (string) ( $request->get_param( 'granularity' ) ?? 'day' );
+		$range       = Query::trend_range(
 			$request->get_param( 'from' ),
 			$request->get_param( 'to' )
 		);
+		$trend       = Query::trend(
+			(array) ( $request->get_param( 'post_ids' ) ?? array() ),
+			(array) ( $request->get_param( 'post_types' ) ?? array() ),
+			$granularity,
+			$range['from'],
+			$range['to']
+		);
 
-		$response = new WP_REST_Response( array( 'trend' => $trend ), 200 );
+		$response = new WP_REST_Response(
+			array(
+				'trend'       => $trend,
+				'range'       => $range,
+				'granularity' => $granularity,
+			),
+			200
+		);
 
 		// Object-cached in Core\Query::trend() (5 min); mirror that at the HTTP layer too,
 		// for any reverse proxy or browser cache sitting in front of a per-capability response.

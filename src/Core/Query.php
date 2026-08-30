@@ -39,6 +39,11 @@ class Query {
 	const MAX_LIMIT = 100;
 
 	/**
+	 * Default history shown by the trends graph.
+	 */
+	const DEFAULT_TREND_MONTHS = 3;
+
+	/**
 	 * Most-viewed posts. Uses the all-time aggregate when no window is given (exact total),
 	 * or the daily aggregate when `since`/`until` narrow the window (exact for that window,
 	 * limited to data collected since the daily table started — see §1.6).
@@ -192,8 +197,9 @@ class Query {
 		global $wpdb;
 
 		$granularity = in_array( $granularity, array( 'day', 'week', 'month' ), true ) ? $granularity : 'day';
-		$from        = $from ?? gmdate( 'Y-m-d', strtotime( '-3 months' ) );
-		$to          = $to ?? current_time( 'Y-m-d', true );
+		$range       = self::trend_range( $from, $to );
+		$from        = $range['from'];
+		$to          = $range['to'];
 
 		$cache_key = 'trend_' . md5( (string) wp_json_encode( array( $post_ids, $post_types, $granularity, $from, $to ) ) );
 		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
@@ -206,7 +212,7 @@ class Query {
 
 		$buckets = array(
 			'day'   => 'd.day',
-			'week'  => 'DATE_SUB(d.day, INTERVAL WEEKDAY(d.day) DAY)',
+			'week'  => 'DATE(DATE_SUB(d.day, INTERVAL WEEKDAY(d.day) DAY))',
 			'month' => "DATE_FORMAT(d.day, '%%Y-%%m-01')",
 		);
 		$bucket  = $buckets[ $granularity ];
@@ -255,6 +261,22 @@ class Query {
 		wp_cache_set( $cache_key, $result, self::CACHE_GROUP, self::CACHE_TTL );
 
 		return $result;
+	}
+
+	/**
+	 * Resolves the inclusive UTC date range used by a trends query.
+	 *
+	 * @param string|null $from Inclusive start day (Y-m-d, UTC).
+	 * @param string|null $to   Inclusive end day (Y-m-d, UTC).
+	 * @return array{from:string,to:string}
+	 */
+	public static function trend_range( ?string $from = null, ?string $to = null ): array {
+		$to = $to ?? current_time( 'Y-m-d', true );
+
+		return array(
+			'from' => $from ?? gmdate( 'Y-m-d', strtotime( $to . ' -' . self::DEFAULT_TREND_MONTHS . ' months' ) ),
+			'to'   => $to,
+		);
 	}
 
 	/**

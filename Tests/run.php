@@ -841,12 +841,25 @@ $tests = array(
 			array(
 				'post_ids'    => array( 7 ),
 				'granularity' => 'week',
+				'from'        => '2025-10-01',
+				'to'          => '2026-01-01',
 			)
 		);
 
 		$response = ( new TrendsApi() )->get_trends( $request );
 
-		bbk_test_same( array( 'trend' => array() ), $response->get_data(), 'With no daily rows recorded, the trend must be an empty series.' );
+		bbk_test_same(
+			array(
+				'trend'       => array(),
+				'range'       => array(
+					'from' => '2025-10-01',
+					'to'   => '2026-01-01',
+				),
+				'granularity' => 'week',
+			),
+			$response->get_data(),
+			'The endpoint must return the queried range and granularity with the series.'
+		);
 	},
 	'TrendsApi::get_momentum() delegates to Query::momentum()' => static function (): void {
 		TestState::reset();

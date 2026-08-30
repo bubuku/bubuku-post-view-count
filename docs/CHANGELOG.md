@@ -6,6 +6,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 ### Corregido
 
+- La gráfica de evolución muestra correctamente series de un único dato, rellena los intervalos sin visitas para respetar la distancia temporal y normaliza las fechas semanales sin componente de hora.
+- El resumen de la gráfica indica las visitas de los últimos 3 meses y la agrupación elegida; si el histórico diario empezó después, muestra la fecha real desde la que hay datos.
 - La página de administración abre ahora la pestaña Estadísticas por defecto.
 - La lista de roles excluidos vuelve a estar disponible en peticiones REST independientes, donde WordPress no carga `get_editable_roles()`.
 - Los checkboxes de Ajustes usan ahora los tokens y estados de interacción del design system Bubuku.
