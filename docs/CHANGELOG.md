@@ -6,6 +6,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 ### Corregido
 
+- La página de administración abre ahora la pestaña Estadísticas por defecto.
 - La lista de roles excluidos vuelve a estar disponible en peticiones REST independientes, donde WordPress no carga `get_editable_roles()`.
 - Los checkboxes de Ajustes usan ahora los tokens y estados de interacción del design system Bubuku.
 - La aplicación React del admin ya recibe correctamente `BbkPostViewCount` mediante `window`, de modo que usa la URL REST y el nonce inyectados por PHP en vez de intentar cargar `/settings` desde una ruta incorrecta. Se añaden tests del registro de la página, enqueue, configuración inline y mount point.

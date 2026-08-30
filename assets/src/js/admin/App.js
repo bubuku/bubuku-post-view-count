@@ -38,7 +38,7 @@ export function bbkFetch( path, init = {} ) {
 }
 
 function App() {
-	const [ activeTab, setActiveTab ] = useState( TAB_SETTINGS );
+	const [ activeTab, setActiveTab ] = useState( TAB_STATS );
 	const [ context, setContext ] = useState( null );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState( null );
