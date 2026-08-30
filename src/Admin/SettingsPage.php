@@ -126,10 +126,10 @@ class SettingsPage {
 		add_settings_field( 'post_types', __( 'Tipos de contenido', 'bubuku-post-view-count' ), array( $this, 'field_post_types' ), self::PAGE_SLUG, self::SECTION_ID );
 		add_settings_field( 'excluded_roles', __( 'Roles excluidos', 'bubuku-post-view-count' ), array( $this, 'field_excluded_roles' ), self::PAGE_SLUG, self::SECTION_ID );
 		add_settings_field( 'exclude_bots', __( 'Bots', 'bubuku-post-view-count' ), array( $this, 'field_exclude_bots' ), self::PAGE_SLUG, self::SECTION_ID );
-		add_settings_field( 'retention_days', __( 'Retención del agregado diario', 'bubuku-post-view-count' ), array( $this, 'field_retention_days' ), self::PAGE_SLUG, self::SECTION_ID );
-		add_settings_field( 'delete_data_on_uninstall', __( 'Al desinstalar', 'bubuku-post-view-count' ), array( $this, 'field_delete_on_uninstall' ), self::PAGE_SLUG, self::SECTION_ID );
 		add_settings_field( 'ai_crawler_tracking', __( 'Rastreo de bots de IA', 'bubuku-post-view-count' ), array( $this, 'field_ai_crawler_tracking' ), self::PAGE_SLUG, self::SECTION_ID );
 		add_settings_field( 'respect_dnt', __( 'Privacidad (DNT / GPC)', 'bubuku-post-view-count' ), array( $this, 'field_respect_dnt' ), self::PAGE_SLUG, self::SECTION_ID );
+		add_settings_field( 'retention_days', __( 'Retención del agregado diario', 'bubuku-post-view-count' ), array( $this, 'field_retention_days' ), self::PAGE_SLUG, self::SECTION_ID );
+		add_settings_field( 'delete_data_on_uninstall', __( 'Al desinstalar', 'bubuku-post-view-count' ), array( $this, 'field_delete_on_uninstall' ), self::PAGE_SLUG, self::SECTION_ID );
 	}
 
 	/**
