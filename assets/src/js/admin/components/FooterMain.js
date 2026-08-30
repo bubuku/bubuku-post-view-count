@@ -61,7 +61,10 @@ const SERVICES = [
 		),
 	},
 	{
-		label: __( 'Continuous maintenance and support', 'bubuku-post-view-count' ),
+		label: __(
+			'Continuous maintenance and support',
+			'bubuku-post-view-count'
+		),
 		icon: (
 			<svg
 				viewBox="0 0 24 24"

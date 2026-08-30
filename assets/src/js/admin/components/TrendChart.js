@@ -7,7 +7,7 @@ import { useRef, useEffect } from '@wordpress/element';
  * effect repaints on `trend`/size change instead of a one-off DOMContentLoaded call.
  *
  * @param {Object} props
- * @param {Array}  props.trend    Series to plot: [{ bucket: string, total_views: number }, ...].
+ * @param {Array}  props.trend       Series to plot: [{ bucket: string, total_views: number }, ...].
  * @param {string} props.noDataLabel Text shown when `trend` is empty.
  */
 const TrendChart = ( { trend, noDataLabel } ) => {
@@ -15,7 +15,9 @@ const TrendChart = ( { trend, noDataLabel } ) => {
 
 	useEffect( () => {
 		const canvas = canvasRef.current;
-		if ( ! canvas ) return;
+		if ( ! canvas ) {
+			return;
+		}
 
 		const ctx = canvas.getContext( '2d' );
 		const width = canvas.width;
@@ -56,7 +58,10 @@ const TrendChart = ( { trend, noDataLabel } ) => {
 
 		trend.forEach( ( row, index ) => {
 			const x = padding.left + stepX * index;
-			const y = padding.top + plotHeight - ( row.total_views / maxViews ) * plotHeight;
+			const y =
+				padding.top +
+				plotHeight -
+				( row.total_views / maxViews ) * plotHeight;
 
 			if ( index === 0 ) {
 				ctx.moveTo( x, y );
@@ -69,10 +74,21 @@ const TrendChart = ( { trend, noDataLabel } ) => {
 
 		ctx.fillStyle = '#646970';
 		ctx.fillText( trend[ 0 ].bucket, padding.left, height - 8 );
-		ctx.fillText( trend[ trend.length - 1 ].bucket, width - padding.right - 60, height - 8 );
+		ctx.fillText(
+			trend[ trend.length - 1 ].bucket,
+			width - padding.right - 60,
+			height - 8
+		);
 	}, [ trend, noDataLabel ] );
 
-	return <canvas ref={ canvasRef } className="bbk-trend-chart__canvas" width="900" height="260" />;
+	return (
+		<canvas
+			ref={ canvasRef }
+			className="bbk-trend-chart__canvas"
+			width="900"
+			height="260"
+		/>
+	);
 };
 
 export default TrendChart;

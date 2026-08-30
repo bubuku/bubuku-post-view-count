@@ -51,7 +51,10 @@ function App() {
 			} )
 			.catch( () => {
 				setError(
-					__( 'No se han podido cargar los ajustes.', 'bubuku-post-view-count' )
+					__(
+						'No se han podido cargar los ajustes.',
+						'bubuku-post-view-count'
+					)
 				);
 				setLoading( false );
 			} );
@@ -112,7 +115,10 @@ function App() {
 					tabs={ tabs }
 					activeTab={ activeTab }
 					onChange={ setActiveTab }
-					ariaLabel={ __( 'Secciones de Post View Count', 'bubuku-post-view-count' ) }
+					ariaLabel={ __(
+						'Secciones de Post View Count',
+						'bubuku-post-view-count'
+					) }
 				/>
 
 				{ loading && (
@@ -121,10 +127,17 @@ function App() {
 					</p>
 				) }
 
-				{ error && <div className="bbk-notice bbk-notice--error">{ error }</div> }
+				{ error && (
+					<div className="bbk-notice bbk-notice--error">
+						{ error }
+					</div>
+				) }
 
 				{ ! loading && ! error && activeTab === TAB_SETTINGS && (
-					<SettingsPanel context={ context } onContextChange={ setContext } />
+					<SettingsPanel
+						context={ context }
+						onContextChange={ setContext }
+					/>
 				) }
 
 				{ ! loading && ! error && activeTab === TAB_STATS && (

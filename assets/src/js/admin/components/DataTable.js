@@ -6,15 +6,11 @@
  * Wraps the table in an `overflow-x: auto` container so it stays usable on
  * narrow viewports.
  *
- * @param {Object}   props
- * @param {Array}    props.columns             - Column definitions (left to right).
- * @param {string}   props.columns[].key       - Row property to read; also the column React key.
- * @param {string}   props.columns[].label     - Header text for the column.
- * @param {boolean}  [props.columns[].numeric] - Right-align header + cells (for counts/amounts).
- * @param {Function} [props.columns[].render]  - Custom cell renderer `( row ) => JSX`. Defaults to `row[key]`.
- * @param {Array}    props.rows                - Array of row objects.
- * @param {Function} [props.rowKey]            - `( row, index ) => string|number` unique key. Defaults to index.
- * @param {string}   [props.emptyLabel]        - Text shown when `rows` is empty. If omitted, renders nothing.
+ * @param {Object}        props
+ * @param {Array<Object>} props.columns      - Column definitions (left to right).
+ * @param {Array<Object>} props.rows         - Array of row objects.
+ * @param {Function}      [props.rowKey]     - `( row, index ) => string|number` unique key. Defaults to index.
+ * @param {string}        [props.emptyLabel] - Text shown when `rows` is empty. If omitted, renders nothing.
  */
 const DataTable = ( { columns, rows, rowKey, emptyLabel } ) => {
 	if ( ! rows || rows.length === 0 ) {

@@ -15,6 +15,9 @@ namespace {
 
 	define( 'ABSPATH', __DIR__ . '/' );
 	define( 'MINUTE_IN_SECONDS', 60 );
+	define( 'BBK_PLUGIN_PATH', dirname( __DIR__ ) );
+	define( 'BBK_PLUGIN_URL', 'https://test.wp.local/wp-content/plugins/bubuku-post-view-count' );
+	define( 'BBK_PLUGIN_VERSION', '1.2.2' );
 	define( 'BBK_PLUGIN_ENDPOINTS_URL', 'bbk_postview/v1' );
 	define( 'ARRAY_A', 'ARRAY_A' );
 
@@ -119,6 +122,44 @@ namespace {
 	}
 
 	function add_filter(): void {
+	}
+
+	function add_options_page( string $page_title, string $menu_title, string $capability, string $menu_slug, callable $callback ): string {
+		TestState::$admin_menu = compact( 'page_title', 'menu_title', 'capability', 'menu_slug', 'callback' );
+
+		return 'settings_page_' . $menu_slug;
+	}
+
+	function wp_enqueue_style( string $handle, string $src, array $dependencies, string $version ): void {
+		TestState::$admin_styles[ $handle ] = compact( 'src', 'dependencies', 'version' );
+	}
+
+	function wp_enqueue_script( string $handle, string $src, array $dependencies, string $version, bool $in_footer ): void {
+		TestState::$admin_scripts[ $handle ] = compact( 'src', 'dependencies', 'version', 'in_footer' );
+	}
+
+	function wp_set_script_translations( string $handle, string $domain ): void {
+		TestState::$script_translations[ $handle ] = $domain;
+	}
+
+	function wp_add_inline_script( string $handle, string $data, string $position ): void {
+		TestState::$inline_scripts[ $handle ] = compact( 'data', 'position' );
+	}
+
+	function rest_url( string $path ): string {
+		return 'https://test.wp.local/wp-json/' . ltrim( $path, '/' );
+	}
+
+	function wp_create_nonce( string $action ): string {
+		return 'nonce-' . $action;
+	}
+
+	function esc_attr( string $text ): string {
+		return htmlspecialchars( $text, ENT_QUOTES );
+	}
+
+	function wp_die( string $message ): void {
+		throw new \RuntimeException( $message );
 	}
 
 	function wp_next_scheduled(): bool {
@@ -452,6 +493,21 @@ namespace Bubuku\Plugins\PostViewCount {
 		/** @var bool Simulated `wp_using_ext_object_cache()` result. */
 		public static $ext_object_cache = false;
 
+		/** @var array<string, mixed> Simulated add_options_page() registration. */
+		public static $admin_menu = array();
+
+		/** @var array<string, array<string, mixed>> Simulated enqueued admin styles. */
+		public static $admin_styles = array();
+
+		/** @var array<string, array<string, mixed>> Simulated enqueued admin scripts. */
+		public static $admin_scripts = array();
+
+		/** @var array<string, string> Simulated script translation registrations. */
+		public static $script_translations = array();
+
+		/** @var array<string, array<string, string>> Simulated inline scripts. */
+		public static $inline_scripts = array();
+
 		public static function reset(): void {
 			self::$meta             = array();
 			self::$views            = array();
@@ -468,6 +524,11 @@ namespace Bubuku\Plugins\PostViewCount {
 			self::$current_user_can = array();
 			self::$now              = '2026-01-01 00:00:00';
 			self::$ext_object_cache = false;
+			self::$admin_menu        = array();
+			self::$admin_styles      = array();
+			self::$admin_scripts     = array();
+			self::$script_translations = array();
+			self::$inline_scripts      = array();
 		}
 	}
 
@@ -643,6 +704,7 @@ namespace Bubuku\Plugins\PostViewCount {
 	require_once dirname( __DIR__ ) . '/src/Core/AiCrawlers.php';
 	require_once dirname( __DIR__ ) . '/src/Core/Db.php';
 	require_once dirname( __DIR__ ) . '/src/Admin/Settings.php';
+	require_once dirname( __DIR__ ) . '/src/Admin/AdminPage.php';
 	require_once dirname( __DIR__ ) . '/src/Core/WriteBuffer.php';
 	require_once dirname( __DIR__ ) . '/src/Api/RestApi.php';
 	require_once dirname( __DIR__ ) . '/src/Api/TrendsApi.php';

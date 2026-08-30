@@ -4,6 +4,11 @@ Todos los cambios relevantes de este proyecto se documentan aquí.
 Formato basado en [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
+### Corregido
+- La aplicación React del admin ya recibe correctamente `BbkPostViewCount` mediante `window`, de modo que usa la URL REST y el nonce inyectados por PHP en vez de intentar cargar `/settings` desde una ruta incorrecta. Se añaden tests del registro de la página, enqueue, configuración inline y mount point.
+- La toolchain JavaScript fija una versión de TypeScript compatible con el ESLint de `@wordpress/scripts`, declara los paquetes WordPress importados y corrige los hallazgos de formato, JSDoc y accesibilidad del admin; `npm run lint:js` vuelve a estar operativo.
+- El requisito mínimo de WordPress queda sincronizado en 6.6 entre el header PHP y `readme.txt`, ya que el bundle generado utiliza `react-jsx-runtime`.
+
 ### Cambiado
 - Página **Ajustes → Post View Count** reconstruida en React + REST, siguiendo por fin los skills `wp-admin`/`wp-frontend` (`docs/PENDING-ADMIN-UI-REACT.md`). `Admin\SettingsPage` (Settings API clásica, `admin-post.php`) se sustituye por `Admin\Admin`/`Admin\AdminPage` + la nueva `Api\SettingsApi` (`GET`/`POST`/`DELETE /bbk_postview/v1/settings[/data]`, capability `manage_options`); `assets/js/admin-stats.js`/`admin-stats.css` se sustituyen por la app en `assets/src/js/admin/` (build con `@wordpress/scripts`). Los 8 campos de ajustes y sus textos de ayuda, y las 4 secciones de estadísticas (evolución, momentum, dimensiones, tráfico de IA — sobre los mismos endpoints de `Api\TrendsApi`, sin backend nuevo), se conservan sin cambios de comportamiento.
 - El bloque `bubuku/post-views` pasa también por el build (`assets/src/blocks/post-views/` con JSX real → `assets/build/blocks/post-views/`); ya no hay `index.asset.php` escrito a mano.

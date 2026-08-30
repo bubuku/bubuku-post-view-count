@@ -110,12 +110,12 @@ class AdminPage {
 
 		wp_add_inline_script(
 			$this->plugin_name . '-admin',
-			'const BbkPostViewCount = ' . wp_json_encode(
+			'window.BbkPostViewCount = ' . wp_json_encode(
 				array(
 					'api_url'    => rest_url( BBK_PLUGIN_ENDPOINTS_URL ),
 					'rest_nonce' => wp_create_nonce( 'wp_rest' ),
 				)
-			),
+			) . ';',
 			'before'
 		);
 	}

@@ -1,10 +1,12 @@
-# PENDIENTE — Migrar la página de admin a los skills `wp-admin` + `wp-frontend`
+# IMPLEMENTADO — Migración de la página de admin a `wp-admin` + `wp-frontend`
 
 > Hoja de ruta por fases para reconstruir **Ajustes → Post View Count** siguiendo los skills
 > `wp-admin` (PHP: menú, enqueue, notices) y `wp-frontend` (React + SCSS con el design system
 > Bubuku DS 2026), que no se aplicaron cuando la página se construyó.
 >
-> **Este documento no modifica código.** Es la hoja de ruta a ejecutar en sesiones posteriores.
+> Plan ejecutado. Se conserva como registro de las decisiones y verificaciones de la migración.
+> La URL canónica de la pantalla registrada con `add_options_page()` es
+> `/wp-admin/options-general.php?page=bubuku-post-view-count`.
 >
 > Estado analizado: rama `feature/v.1.2.2`, versión `1.2.2` (header PHP), con las fases F1–F7 de
 > `docs/ANALYTICS-PLAN.md` ya implementadas.
@@ -20,7 +22,7 @@ resto de plugins del ecosistema:
 | Hoy | Lo que piden los skills |
 |---|---|
 | Settings API clásica (`register_setting` + `options.php`) | React + REST `GET`/`POST` `/settings` |
-| `Admin\SettingsPage`, 441 líneas de `printf` + `add_settings_field` | `Admin\Admin` + `Admin\AdminPage` + `Admin\AdminNotices` |
+| `Admin\SettingsPage`, 441 líneas de `printf` + `add_settings_field` | `Admin\Admin` + `Admin\AdminPage`; los estados se muestran dentro de React |
 | `assets/js/admin-stats.js`, 416 líneas de JS plano | `assets/src/js/admin/` con componentes React |
 | `assets/css/admin-stats.css`, 79 líneas | SCSS con los design tokens (`config/_tokens.scss` + `_aliases.scss`) |
 | Sin build step | `@wordpress/scripts` + webpack → `assets/build/` |
@@ -94,6 +96,9 @@ tropieza:
     `/trends/momentum`, `/trends/dims` y `/trends/ai-traffic`. La UI de estadísticas **no necesita
     backend nuevo**: solo se reescribe el cliente. El único endpoint nuevo de todo el plan es
     `/settings`.
+11. **El nuevo transform de JSX requiere WordPress 6.6.** El manifiesto generado depende de
+    `react-jsx-runtime`, incorporado en Core en esa versión. Por tanto el header PHP y el
+    `Requires at least` de `readme.txt` quedan sincronizados en 6.6.
 
 ---
 
@@ -206,7 +211,7 @@ Seguir el patrón ya existente de `Api\TrendsApi` en `Tests/run.php`: `check_per
 |---|---|
 | `Admin\Admin` | Orquestador: registra los hooks de admin. Instanciado desde `Core\Plugin`. |
 | `Admin\AdminPage` | `add_options_page()`, `render()` (solo el `<div id="bbk-postview-app">`), y `enqueue_assets()` leyendo versión y dependencias de `admin.asset.php`, scopeado por `$hook_suffix`. |
-| `Admin\AdminNotices` | Saca de `render()` el notice de «datos eliminados». |
+| Mensajes de estado React | Muestran el resultado de guardar o eliminar datos sin recargar la página. |
 
 **Se mantiene el namespace del plugin**: `Bubuku\Plugins\PostViewCount\Admin`. El
 `Bubuku\{ClassName}\Admin` del skill es un token de plantilla, y `docs/MIGRATION-PSR4.md` es la
@@ -377,7 +382,7 @@ manual, precisamente para no tener build. Con la decisión 4, eso deja de ser ne
 | Documento | Qué actualizar |
 |---|---|
 | `AGENTS.md` | **La regla del build step** (ver aviso al inicio de este documento). También la tabla de skills activos y la delegación por tipo de tarea. |
-| `docs/ARCHITECTURE.md` | Clases nuevas (`Admin\Admin`, `Admin\AdminPage`, `Admin\AdminNotices`, `Api\SettingsApi`), estructura `assets/src` → `assets/build`, y la sección de assets. |
+| `docs/ARCHITECTURE.md` | Clases nuevas (`Admin\Admin`, `Admin\AdminPage`, `Api\SettingsApi`), estructura `assets/src` → `assets/build`, y la sección de assets. |
 | `docs/CHANGELOG.md` | Entrada en `[Unreleased]`. |
 | `docs/ANALYTICS-PLAN.md` | Nota en F4/F5/F6/F7 apuntando a que su UI se reconstruyó aquí. |
 | `readme.txt` | Solo si se opta por enlazar la fuente en vez de incluir `/assets/src` (Fase 1). |

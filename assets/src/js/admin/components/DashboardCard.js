@@ -1,14 +1,14 @@
 /**
  * DashboardCard — Reusable card for the admin Dashboard.
  *
- * @param {Object}      props
- * @param {JSX.Element} props.icon             - SVG icon element for the card header.
- * @param {string}      [props.iconVariant]    - Icon color variant: 'icon-accent' (default), 'icon-success', 'icon-warning'.
- * @param {string}      props.title            - Card title (rendered as h2).
- * @param {string}      props.claim            - Card subtitle / description.
- * @param {string}      [props.animationDelay] - CSS animation delay (e.g. '.15s').
- * @param {JSX.Element} [props.headerMeta]     - Optional content rendered to the right of the header.
- * @param {JSX.Element} props.children         - Card body content.
+ * @param {Object} props
+ * @param {Object} props.icon             - SVG icon element for the card header.
+ * @param {string} [props.iconVariant]    - Icon color variant: 'icon-accent' (default), 'icon-success', 'icon-warning'.
+ * @param {string} props.title            - Card title (rendered as h2).
+ * @param {string} props.claim            - Card subtitle / description.
+ * @param {string} [props.animationDelay] - CSS animation delay (e.g. '.15s').
+ * @param {Object} [props.headerMeta]     - Optional content rendered to the right of the header.
+ * @param {Object} props.children         - Card body content.
  */
 const DashboardCard = ( {
 	icon,

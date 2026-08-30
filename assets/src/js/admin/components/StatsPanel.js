@@ -8,21 +8,39 @@ import { bbkFetch } from '../App';
 const COMPARISON_PERIOD_DAYS = 30;
 
 const ICON_TREND = (
-	<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+	<svg
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		strokeWidth="2"
+		aria-hidden="true"
+	>
 		<polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
 		<polyline points="17 6 23 6 23 12" />
 	</svg>
 );
 
 const ICON_DEVICE = (
-	<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+	<svg
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		strokeWidth="2"
+		aria-hidden="true"
+	>
 		<rect x="4" y="2" width="16" height="20" rx="2" />
 		<line x1="12" y1="18" x2="12.01" y2="18" />
 	</svg>
 );
 
 const ICON_AI = (
-	<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+	<svg
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		strokeWidth="2"
+		aria-hidden="true"
+	>
 		<circle cx="12" cy="12" r="10" />
 		<path d="M12 8v4l3 3" />
 	</svg>
@@ -51,7 +69,7 @@ const GRANULARITY_OPTIONS = [
  *
  * @param {Object} props
  * @param {Object} props.context GET /settings response — only used here for
- *                                the `ai_crawler_tracking` flag.
+ *                               the `ai_crawler_tracking` flag.
  */
 const StatsPanel = ( { context } ) => {
 	const [ granularity, setGranularity ] = useState( 'day' );
@@ -75,7 +93,9 @@ const StatsPanel = ( { context } ) => {
 		const previousStart = addDays( today, -COMPARISON_PERIOD_DAYS * 2 );
 
 		bbkFetch(
-			`/trends?granularity=day&from=${ toIsoDate( previousStart ) }&to=${ toIsoDate( today ) }`
+			`/trends?granularity=day&from=${ toIsoDate(
+				previousStart
+			) }&to=${ toIsoDate( today ) }`
 		)
 			.then( ( body ) => {
 				const cutoff = toIsoDate( currentStart );
@@ -115,13 +135,21 @@ const StatsPanel = ( { context } ) => {
 		bbkFetch( '/trends/ai-traffic' )
 			.then( ( body ) => setAiTraffic( body ) )
 			.catch( () =>
-				setAiTraffic( { referrals: { views: 0 }, crawlers: [], ai_crawler_tracking_enabled: false } )
+				setAiTraffic( {
+					referrals: { views: 0 },
+					crawlers: [],
+					ai_crawler_tracking_enabled: false,
+				} )
 			);
 	}, [] );
 
 	const dimsColumns = [
 		{ key: 'value', label: __( 'Valor', 'bubuku-post-view-count' ) },
-		{ key: 'views', label: __( 'Vistas', 'bubuku-post-view-count' ), numeric: true },
+		{
+			key: 'views',
+			label: __( 'Vistas', 'bubuku-post-view-count' ),
+			numeric: true,
+		},
 	];
 
 	const momentumColumns = [
@@ -140,7 +168,10 @@ const StatsPanel = ( { context } ) => {
 			numeric: true,
 			render: ( row ) => {
 				const sign = row.delta >= 0 ? '+' : '';
-				const pct = null !== row.delta_pct ? ` (${ sign }${ row.delta_pct }%)` : '';
+				const pct =
+					null !== row.delta_pct
+						? ` (${ sign }${ row.delta_pct }%)`
+						: '';
 				return `${ sign }${ row.delta }${ pct }`;
 			},
 		},
@@ -148,7 +179,11 @@ const StatsPanel = ( { context } ) => {
 
 	const crawlerColumns = [
 		{ key: 'bot', label: __( 'Bot', 'bubuku-post-view-count' ) },
-		{ key: 'views', label: __( 'Vistas', 'bubuku-post-view-count' ), numeric: true },
+		{
+			key: 'views',
+			label: __( 'Vistas', 'bubuku-post-view-count' ),
+			numeric: true,
+		},
 	];
 
 	let comparisonLabel = null;
@@ -161,14 +196,18 @@ const StatsPanel = ( { context } ) => {
 
 		if ( comparison.previous > 0 ) {
 			const change = Math.round(
-				( ( comparison.current - comparison.previous ) / comparison.previous ) * 100
+				( ( comparison.current - comparison.previous ) /
+					comparison.previous ) *
+					100
 			);
 			const sign = change >= 0 ? '+' : '';
-			comparisonLabel += ' ' + sprintf(
-				/* translators: %s: percentage change vs the previous period, e.g. "+12%". */
-				__( '(%s vs. periodo anterior)', 'bubuku-post-view-count' ),
-				`${ sign }${ change }%`
-			);
+			comparisonLabel +=
+				' ' +
+				sprintf(
+					/* translators: %s: percentage change vs the previous period, e.g. "+12%". */
+					__( '(%s vs. periodo anterior)', 'bubuku-post-view-count' ),
+					`${ sign }${ change }%`
+				);
 		}
 	}
 
@@ -177,7 +216,10 @@ const StatsPanel = ( { context } ) => {
 			<DashboardCard
 				icon={ ICON_TREND }
 				title={ __( 'Evolución de vistas', 'bubuku-post-view-count' ) }
-				claim={ __( 'Agrupado por día, semana o mes, con comparativa de los últimos 30 días.', 'bubuku-post-view-count' ) }
+				claim={ __(
+					'Agrupado por día, semana o mes, con comparativa de los últimos 30 días.',
+					'bubuku-post-view-count'
+				) }
 				headerMeta={
 					<select
 						className="bbk-input"
@@ -192,7 +234,11 @@ const StatsPanel = ( { context } ) => {
 					</select>
 				}
 			>
-				{ comparisonLabel && <p className="bbk-trend-chart__comparison">{ comparisonLabel }</p> }
+				{ comparisonLabel && (
+					<p className="bbk-trend-chart__comparison">
+						{ comparisonLabel }
+					</p>
+				) }
 				<div className="bbk-trend-chart">
 					<TrendChart
 						trend={ trend }
@@ -207,7 +253,10 @@ const StatsPanel = ( { context } ) => {
 			<DashboardCard
 				icon={ ICON_TREND }
 				title={ __( 'En alza y en caída', 'bubuku-post-view-count' ) }
-				claim={ __( 'Comparación entre los últimos 30 días y los 30 anteriores.', 'bubuku-post-view-count' ) }
+				claim={ __(
+					'Comparación entre los últimos 30 días y los 30 anteriores.',
+					'bubuku-post-view-count'
+				) }
 				animationDelay=".1s"
 			>
 				<div className="bbk-two-columns">
@@ -217,7 +266,10 @@ const StatsPanel = ( { context } ) => {
 							columns={ momentumColumns }
 							rows={ momentum?.rising || [] }
 							rowKey={ ( row ) => row.url }
-							emptyLabel={ __( 'Sin cambios relevantes en este periodo.', 'bubuku-post-view-count' ) }
+							emptyLabel={ __(
+								'Sin cambios relevantes en este periodo.',
+								'bubuku-post-view-count'
+							) }
 						/>
 					</div>
 					<div>
@@ -226,7 +278,10 @@ const StatsPanel = ( { context } ) => {
 							columns={ momentumColumns }
 							rows={ momentum?.falling || [] }
 							rowKey={ ( row ) => row.url }
-							emptyLabel={ __( 'Sin cambios relevantes en este periodo.', 'bubuku-post-view-count' ) }
+							emptyLabel={ __(
+								'Sin cambios relevantes en este periodo.',
+								'bubuku-post-view-count'
+							) }
 						/>
 					</div>
 				</div>
@@ -234,27 +289,40 @@ const StatsPanel = ( { context } ) => {
 
 			<DashboardCard
 				icon={ ICON_DEVICE }
-				title={ __( 'Dispositivo y procedencia', 'bubuku-post-view-count' ) }
+				title={ __(
+					'Dispositivo y procedencia',
+					'bubuku-post-view-count'
+				) }
 				claim={ __( 'Últimos 3 meses.', 'bubuku-post-view-count' ) }
 				animationDelay=".15s"
 			>
 				<div className="bbk-two-columns">
 					<div>
-						<h3>{ __( 'Dispositivo', 'bubuku-post-view-count' ) }</h3>
+						<h3>
+							{ __( 'Dispositivo', 'bubuku-post-view-count' ) }
+						</h3>
 						<DataTable
 							columns={ dimsColumns }
 							rows={ dimsViewport || [] }
 							rowKey={ ( row ) => row.value }
-							emptyLabel={ __( 'Todavía no hay datos suficientes.', 'bubuku-post-view-count' ) }
+							emptyLabel={ __(
+								'Todavía no hay datos suficientes.',
+								'bubuku-post-view-count'
+							) }
 						/>
 					</div>
 					<div>
-						<h3>{ __( 'Procedencia', 'bubuku-post-view-count' ) }</h3>
+						<h3>
+							{ __( 'Procedencia', 'bubuku-post-view-count' ) }
+						</h3>
 						<DataTable
 							columns={ dimsColumns }
 							rows={ dimsReferrer || [] }
 							rowKey={ ( row ) => row.value }
-							emptyLabel={ __( 'Todavía no hay datos suficientes.', 'bubuku-post-view-count' ) }
+							emptyLabel={ __(
+								'Todavía no hay datos suficientes.',
+								'bubuku-post-view-count'
+							) }
 						/>
 					</div>
 				</div>
@@ -271,27 +339,49 @@ const StatsPanel = ( { context } ) => {
 			>
 				<div className="bbk-two-columns">
 					<div>
-						<h3>{ __( 'Referidos por IA', 'bubuku-post-view-count' ) }</h3>
+						<h3>
+							{ __(
+								'Referidos por IA',
+								'bubuku-post-view-count'
+							) }
+						</h3>
 						<p>
 							{ aiTraffic?.referrals?.views
 								? sprintf(
 										/* translators: %d: number of views referred by an AI assistant */
-										__( '%d vistas', 'bubuku-post-view-count' ),
+										__(
+											'%d vistas',
+											'bubuku-post-view-count'
+										),
 										aiTraffic.referrals.views
 								  )
-								: __( 'Sin visitas procedentes de asistentes de IA en este periodo.', 'bubuku-post-view-count' ) }
+								: __(
+										'Sin visitas procedentes de asistentes de IA en este periodo.',
+										'bubuku-post-view-count'
+								  ) }
 						</p>
 					</div>
 					<div>
-						<h3>{ __( 'Rastreo de bots de IA', 'bubuku-post-view-count' ) }</h3>
+						<h3>
+							{ __(
+								'Rastreo de bots de IA',
+								'bubuku-post-view-count'
+							) }
+						</h3>
 						<DataTable
 							columns={ crawlerColumns }
 							rows={ aiTraffic?.crawlers || [] }
 							rowKey={ ( row ) => row.bot }
 							emptyLabel={
 								context?.ai_crawler_tracking
-									? __( 'Sin rastreo registrado.', 'bubuku-post-view-count' )
-									: __( 'El rastreo de bots de IA está desactivado en los ajustes.', 'bubuku-post-view-count' )
+									? __(
+											'Sin rastreo registrado.',
+											'bubuku-post-view-count'
+									  )
+									: __(
+											'El rastreo de bots de IA está desactivado en los ajustes.',
+											'bubuku-post-view-count'
+									  )
 							}
 						/>
 					</div>

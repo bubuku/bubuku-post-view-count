@@ -4,10 +4,10 @@
  * UI-only: the parent owns the active-tab state and the panel it renders.
  *
  * @param {Object}   props
- * @param {Array}    props.tabs             - `[{ id, label, icon }]`.
- * @param {string}   props.activeTab        - Currently active tab id.
- * @param {Function} props.onChange         - `( id ) => void`, called when a tab is clicked.
- * @param {string}   [props.ariaLabel]      - Accessible label for the tablist.
+ * @param {Array}    props.tabs        - `[{ id, label, icon }]`.
+ * @param {string}   props.activeTab   - Currently active tab id.
+ * @param {Function} props.onChange    - `( id ) => void`, called when a tab is clicked.
+ * @param {string}   [props.ariaLabel] - Accessible label for the tablist.
  */
 const AdminTabs = ( { tabs, activeTab, onChange, ariaLabel } ) => {
 	return (

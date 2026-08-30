@@ -24,7 +24,10 @@ function HeaderMain() {
 				<p className="bk-title">
 					{ createInterpolateElement(
 						/* translators: <span> wraps the secondary word in the title */
-						__( 'Post View Count <span>Ajustes</span>', 'bubuku-post-view-count' ),
+						__(
+							'Post View Count <span>Ajustes</span>',
+							'bubuku-post-view-count'
+						),
 						{ span: <span /> }
 					) }
 				</p>

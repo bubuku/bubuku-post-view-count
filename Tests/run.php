@@ -10,6 +10,7 @@
 declare( strict_types=1 );
 
 use Bubuku\Plugins\PostViewCount\Admin\Settings;
+use Bubuku\Plugins\PostViewCount\Admin\AdminPage;
 use Bubuku\Plugins\PostViewCount\Api\RestApi;
 use Bubuku\Plugins\PostViewCount\Api\SettingsApi;
 use Bubuku\Plugins\PostViewCount\Api\TrendsApi;
@@ -65,6 +66,37 @@ function bbk_test_error_status( $actual, int $status ): void {
 $wpdb = new TestWpdb();
 
 $tests = array(
+	'AdminPage registers the canonical Settings submenu and enqueues the React app contract' => static function (): void {
+		TestState::reset();
+		$page = new AdminPage( 'bubuku-post-view-count', BBK_PLUGIN_VERSION );
+		$page->register_menu();
+		$page->enqueue_assets( 'settings_page_bubuku-post-view-count' );
+
+		bbk_test_same( 'bubuku-post-view-count', TestState::$admin_menu['menu_slug'], 'The Settings submenu must use the plugin slug.' );
+		bbk_test_same( 'manage_options', TestState::$admin_menu['capability'], 'The Settings submenu must require manage_options.' );
+		bbk_test_same(
+			array( 'react-jsx-runtime', 'wp-element', 'wp-i18n' ),
+			TestState::$admin_scripts['bubuku-post-view-count-admin']['dependencies'],
+			'The compiled dependency manifest must be used when the admin bundle is enqueued.'
+		);
+		bbk_test_same( 'bubuku-post-view-count', TestState::$script_translations['bubuku-post-view-count-admin'], 'The admin bundle must register its translations.' );
+		bbk_test_same( 'before', TestState::$inline_scripts['bubuku-post-view-count-admin']['position'], 'The React config must be emitted before the bundle.' );
+
+		$inline = TestState::$inline_scripts['bubuku-post-view-count-admin']['data'];
+		bbk_test_same( true, 0 === strpos( $inline, 'window.BbkPostViewCount = ' ), 'The React config must be exposed on window.' );
+		bbk_test_same( true, false !== strpos( $inline, 'https:\/\/test.wp.local\/wp-json\/bbk_postview\/v1' ), 'The React config must contain the REST namespace URL.' );
+		bbk_test_same( true, false !== strpos( $inline, 'nonce-wp_rest' ), 'The React config must contain the REST nonce.' );
+	},
+	'AdminPage render exposes the React mount point to administrators' => static function (): void {
+		TestState::reset();
+		TestState::$current_user_can['manage_options'] = true;
+
+		ob_start();
+		( new AdminPage( 'bubuku-post-view-count', BBK_PLUGIN_VERSION ) )->render();
+		$output = ob_get_clean();
+
+		bbk_test_same( '<div id="bbk-postview-app"></div>', $output, 'The admin page must render the React mount point.' );
+	},
 	'first view creates the row with views=1 and matching first/last timestamps' => static function (): void {
 		TestState::reset();
 		TestState::$now = '2026-01-01 10:00:00';
