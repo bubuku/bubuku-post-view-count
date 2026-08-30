@@ -345,6 +345,9 @@ namespace Bubuku\Plugins\PostViewCount {
 		/** @var array<string, int> Keyed by "post_id|day|dimension|value". */
 		public static $dims = array();
 
+		/** @var array<string, int> Keyed by "post_id|day|bot". */
+		public static $ai_crawls = array();
+
 		/** @var array<string, int> */
 		public static $transients = array();
 
@@ -377,6 +380,7 @@ namespace Bubuku\Plugins\PostViewCount {
 			self::$views            = array();
 			self::$daily            = array();
 			self::$dims             = array();
+			self::$ai_crawls        = array();
 			self::$transients       = array();
 			self::$options          = array();
 			self::$cache_deletions  = array();
@@ -471,6 +475,19 @@ namespace Bubuku\Plugins\PostViewCount {
 				return 1;
 			}
 
+			if ( preg_match( "/INSERT INTO wp_bbk_post_ai_crawls \\(post_id, day, bot, views\\) VALUES \\((\\d+), '([^']+)', '([^']+)', 1\\)/", $query, $m ) ) {
+				$key                          = $m[1] . '|' . $m[2] . '|' . $m[3];
+				TestState::$ai_crawls[ $key ] = ( TestState::$ai_crawls[ $key ] ?? 0 ) + 1;
+
+				return 1;
+			}
+
+			if ( preg_match( '/^DROP TABLE IF EXISTS wp_bbk_post_ai_crawls/', $query ) ) {
+				TestState::$ai_crawls = array();
+
+				return true;
+			}
+
 			if ( preg_match( '/^DROP TABLE IF EXISTS wp_bbk_post_views_daily/', $query ) ) {
 				TestState::$daily = array();
 
@@ -538,6 +555,7 @@ namespace Bubuku\Plugins\PostViewCount {
 
 	require_once dirname( __DIR__ ) . '/src/Core/Schema.php';
 	require_once dirname( __DIR__ ) . '/src/Core/Dimensions.php';
+	require_once dirname( __DIR__ ) . '/src/Core/AiCrawlers.php';
 	require_once dirname( __DIR__ ) . '/src/Core/Db.php';
 	require_once dirname( __DIR__ ) . '/src/Admin/Settings.php';
 	require_once dirname( __DIR__ ) . '/src/Api/RestApi.php';
@@ -589,4 +607,5 @@ namespace {
 	require_once dirname( __DIR__ ) . '/src/Mcp/Tools/GetContentTrends.php';
 	require_once dirname( __DIR__ ) . '/src/Mcp/Tools/ListMomentum.php';
 	require_once dirname( __DIR__ ) . '/src/Mcp/Tools/GetDimsBreakdown.php';
+	require_once dirname( __DIR__ ) . '/src/Mcp/Tools/GetAiTraffic.php';
 }

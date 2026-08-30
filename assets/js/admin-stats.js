@@ -25,6 +25,7 @@
 		loadComparison();
 		loadMomentum();
 		loadDims();
+		loadAiTraffic();
 
 		select.addEventListener( 'change', function () {
 			loadChart( select.value );
@@ -157,6 +158,68 @@
 			.catch( function () {
 				/* Silently skip this list if the request fails; the other list still loads. */
 			} );
+	}
+
+	/**
+	 * @return {Promise<Object>} Resolves with the `{ referrals, crawlers,
+	 *   ai_crawler_tracking_enabled }` payload from the ai-traffic endpoint.
+	 */
+	function fetchAiTraffic() {
+		return fetchJson( CONFIG.api_ai_traffic, {} );
+	}
+
+	function loadAiTraffic() {
+		var referralsEl = document.getElementById( 'bbk-postview-ai-referrals' );
+		var crawlersEl = document.getElementById( 'bbk-postview-ai-crawlers' );
+
+		if ( ! referralsEl || ! crawlersEl ) {
+			return;
+		}
+
+		fetchAiTraffic()
+			.then( function ( body ) {
+				renderAiReferrals( referralsEl, body.referrals || { views: 0 } );
+				renderAiCrawlers( crawlersEl, body.crawlers || [], !! body.ai_crawler_tracking_enabled );
+			} )
+			.catch( function () {
+				/* Silently skip this section if the request fails; the rest of the page still loads. */
+			} );
+	}
+
+	/**
+	 * @param {HTMLElement} el         <p> to fill.
+	 * @param {Object}      referrals  { views: number }
+	 */
+	function renderAiReferrals( el, referrals ) {
+		if ( ! referrals.views ) {
+			el.textContent = CONFIG.i18n.noAiReferrals;
+			return;
+		}
+
+		el.textContent = referrals.views + ' ' + CONFIG.i18n.views;
+	}
+
+	/**
+	 * @param {HTMLElement} el               <ul> to fill.
+	 * @param {Array}       items            Rows: [{ bot, views }, ...]
+	 * @param {boolean}     trackingEnabled  Whether AI-crawler tracking is on.
+	 */
+	function renderAiCrawlers( el, items, trackingEnabled ) {
+		el.innerHTML = '';
+
+		if ( ! items.length ) {
+			var empty = document.createElement( 'li' );
+			empty.className = 'description';
+			empty.textContent = trackingEnabled ? CONFIG.i18n.noAiCrawlers : CONFIG.i18n.aiTrackingOff;
+			el.appendChild( empty );
+			return;
+		}
+
+		items.forEach( function ( item ) {
+			var li = document.createElement( 'li' );
+			li.textContent = item.bot + ': ' + item.views;
+			el.appendChild( li );
+		} );
 	}
 
 	/**

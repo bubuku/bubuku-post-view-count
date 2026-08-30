@@ -86,6 +86,36 @@ class Db {
 	}
 
 	/**
+	 * Record one hit from a known AI crawler (F6, opt-in, `Frontend\AiCrawlerTracker`).
+	 * Deliberately separate from record_view(): it never touches the aggregate/daily
+	 * tables, the session dimensions or the post meta mirror — mixing bot hits into the
+	 * human view count would contaminate every metric built on top of it.
+	 *
+	 * @param int    $post_id Post ID.
+	 * @param string $bot     Canonical bot name from Core\AiCrawlers::SIGNATURES.
+	 * @return void
+	 */
+	public function record_ai_crawl( int $post_id, string $bot ): void {
+		global $wpdb;
+
+		$now = current_time( 'mysql', true );
+		$day = substr( $now, 0, 10 );
+
+		$table = Schema::table_ai_crawls();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Atomic upsert on the plugin's own AI-crawler table, no equivalent WP API; a running counter must never be served from cache. $table is an internal constant (Schema::table_ai_crawls()), never user input.
+		$wpdb->query(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$table} is an internal constant (Schema::table_ai_crawls()), never user input.
+				"INSERT INTO {$table} (post_id, day, bot, views) VALUES (%d, %s, %s, 1) ON DUPLICATE KEY UPDATE views = views + 1",
+				$post_id,
+				$day,
+				$bot
+			)
+		);
+	}
+
+	/**
 	 * Thin alias of record_view() for backwards compatibility with existing
 	 * consumers that only need the running total.
 	 *
@@ -167,5 +197,7 @@ class Db {
 		$wpdb->query( 'DROP TABLE IF EXISTS ' . Schema::table_views() );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Uninstall-only table drop; DDL can't use placeholders for identifiers, and the name is an internal constant (Schema::table_dims()), never user input.
 		$wpdb->query( 'DROP TABLE IF EXISTS ' . Schema::table_dims() );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Uninstall-only table drop; DDL can't use placeholders for identifiers, and the name is an internal constant (Schema::table_ai_crawls()), never user input.
+		$wpdb->query( 'DROP TABLE IF EXISTS ' . Schema::table_ai_crawls() );
 	}
 }

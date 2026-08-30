@@ -88,18 +88,22 @@ class SettingsPage {
 			'bbk-postview-admin-stats',
 			'bbk_postview_stats',
 			array(
-				'api_trends'   => rest_url( BBK_PLUGIN_ENDPOINTS_URL . '/trends' ),
-				'api_momentum' => rest_url( BBK_PLUGIN_ENDPOINTS_URL . '/trends/momentum' ),
-				'api_dims'     => rest_url( BBK_PLUGIN_ENDPOINTS_URL . '/trends/dims' ),
-				'nonce'        => wp_create_nonce( 'wp_rest' ),
-				'i18n'         => array(
-					'noData'     => __( 'Todavía no hay datos suficientes para dibujar la gráfica.', 'bubuku-post-view-count' ),
-					'thisPeriod' => __( 'Este periodo', 'bubuku-post-view-count' ),
+				'api_trends'     => rest_url( BBK_PLUGIN_ENDPOINTS_URL . '/trends' ),
+				'api_momentum'   => rest_url( BBK_PLUGIN_ENDPOINTS_URL . '/trends/momentum' ),
+				'api_dims'       => rest_url( BBK_PLUGIN_ENDPOINTS_URL . '/trends/dims' ),
+				'api_ai_traffic' => rest_url( BBK_PLUGIN_ENDPOINTS_URL . '/trends/ai-traffic' ),
+				'nonce'          => wp_create_nonce( 'wp_rest' ),
+				'i18n'           => array(
+					'noData'        => __( 'Todavía no hay datos suficientes para dibujar la gráfica.', 'bubuku-post-view-count' ),
+					'thisPeriod'    => __( 'Este periodo', 'bubuku-post-view-count' ),
 					/* translators: %s: percentage change vs the previous period, e.g. "+12%". */
-					'vsPrevious' => __( '%s vs. periodo anterior', 'bubuku-post-view-count' ),
-					'views'      => __( 'vistas', 'bubuku-post-view-count' ),
-					'noMomentum' => __( 'Sin cambios relevantes en este periodo.', 'bubuku-post-view-count' ),
-					'noDims'     => __( 'Todavía no hay datos suficientes.', 'bubuku-post-view-count' ),
+					'vsPrevious'    => __( '%s vs. periodo anterior', 'bubuku-post-view-count' ),
+					'views'         => __( 'vistas', 'bubuku-post-view-count' ),
+					'noMomentum'    => __( 'Sin cambios relevantes en este periodo.', 'bubuku-post-view-count' ),
+					'noDims'        => __( 'Todavía no hay datos suficientes.', 'bubuku-post-view-count' ),
+					'noAiReferrals' => __( 'Sin visitas procedentes de asistentes de IA en este periodo.', 'bubuku-post-view-count' ),
+					'noAiCrawlers'  => __( 'Sin rastreo registrado.', 'bubuku-post-view-count' ),
+					'aiTrackingOff' => __( 'El rastreo de bots de IA está desactivado en los ajustes.', 'bubuku-post-view-count' ),
 				),
 			)
 		);
@@ -124,6 +128,7 @@ class SettingsPage {
 		add_settings_field( 'exclude_bots', __( 'Bots', 'bubuku-post-view-count' ), array( $this, 'field_exclude_bots' ), self::PAGE_SLUG, self::SECTION_ID );
 		add_settings_field( 'retention_days', __( 'Retención del agregado diario', 'bubuku-post-view-count' ), array( $this, 'field_retention_days' ), self::PAGE_SLUG, self::SECTION_ID );
 		add_settings_field( 'delete_data_on_uninstall', __( 'Al desinstalar', 'bubuku-post-view-count' ), array( $this, 'field_delete_on_uninstall' ), self::PAGE_SLUG, self::SECTION_ID );
+		add_settings_field( 'ai_crawler_tracking', __( 'Rastreo de bots de IA', 'bubuku-post-view-count' ), array( $this, 'field_ai_crawler_tracking' ), self::PAGE_SLUG, self::SECTION_ID );
 	}
 
 	/**
@@ -186,6 +191,19 @@ class SettingsPage {
 				<div class="bbk-postview-dims-column">
 					<h3><?php esc_html_e( 'Procedencia', 'bubuku-post-view-count' ); ?></h3>
 					<ul id="bbk-postview-dims-referrer"></ul>
+				</div>
+			</div>
+
+			<h2><?php esc_html_e( 'Tráfico de IA', 'bubuku-post-view-count' ); ?></h2>
+			<p class="description"><?php esc_html_e( 'Últimos 3 meses. Referidos: visitantes humanos llegados desde un asistente de IA (incluidos en el conteo de vistas). Rastreo: peticiones de bots de IA conocidos, contadas aparte.', 'bubuku-post-view-count' ); ?></p>
+			<div id="bbk-postview-ai-traffic" class="bbk-postview-dims">
+				<div class="bbk-postview-dims-column">
+					<h3><?php esc_html_e( 'Referidos por IA', 'bubuku-post-view-count' ); ?></h3>
+					<p id="bbk-postview-ai-referrals"></p>
+				</div>
+				<div class="bbk-postview-dims-column">
+					<h3><?php esc_html_e( 'Rastreo de bots de IA', 'bubuku-post-view-count' ); ?></h3>
+					<ul id="bbk-postview-ai-crawlers"></ul>
 				</div>
 			</div>
 
@@ -321,6 +339,27 @@ class SettingsPage {
 			esc_attr( Settings::OPTION_KEY ),
 			checked( $settings['delete_data_on_uninstall'], true, false ),
 			esc_html__( 'Eliminar todas las tablas, meta y opciones del plugin al desinstalarlo.', 'bubuku-post-view-count' )
+		);
+	}
+
+	/**
+	 * Field: opt-in server-side tracking of known AI crawlers (F6).
+	 *
+	 * @return void
+	 */
+	public function field_ai_crawler_tracking() {
+		$settings = Settings::get_all();
+
+		printf(
+			'<label><input type="checkbox" name="%1$s[ai_crawler_tracking]" value="1" %2$s /> %3$s</label>',
+			esc_attr( Settings::OPTION_KEY ),
+			checked( $settings['ai_crawler_tracking'], true, false ),
+			esc_html__( 'Contar las visitas de bots de IA conocidos (GPTBot, ClaudeBot, PerplexityBot, etc.) en una tabla propia, separada del conteo de visitantes humanos.', 'bubuku-post-view-count' )
+		);
+
+		printf(
+			'<p class="description"><small>%s</small></p>',
+			esc_html__( 'Desactivado por defecto: añade una escritura en cada petición de estos bots, lo que no es despreciable en un sitio con mucho tráfico de crawlers.', 'bubuku-post-view-count' )
 		);
 	}
 

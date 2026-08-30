@@ -16,10 +16,12 @@ use Bubuku\Plugins\PostViewCount\Admin\PostListColumns;
 use Bubuku\Plugins\PostViewCount\Admin\SettingsPage;
 use Bubuku\Plugins\PostViewCount\Api\RestApi;
 use Bubuku\Plugins\PostViewCount\Api\TrendsApi;
+use Bubuku\Plugins\PostViewCount\Frontend\AiCrawlerTracker;
 use Bubuku\Plugins\PostViewCount\Frontend\Assets;
 use Bubuku\Plugins\PostViewCount\Frontend\Block;
 use Bubuku\Plugins\PostViewCount\Frontend\Shortcode;
 use Bubuku\Plugins\PostViewCount\Mcp\SatelliteConnector;
+use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetAiTraffic;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetContentTrends;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetDimsBreakdown;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetPostViews;
@@ -54,6 +56,7 @@ class Plugin {
 		new TrendsApi();
 		new Shortcode();
 		new Block();
+		new AiCrawlerTracker();
 
 		if ( is_admin() ) {
 			new SettingsPage();
@@ -91,9 +94,10 @@ class Plugin {
 					GetContentTrends::class,
 					ListMomentum::class,
 					GetDimsBreakdown::class,
+					GetAiTraffic::class,
 				),
 				'catalog'     => array(
-					'discovery_description' => __( 'Post-view analytics: most-viewed content, content without recent views, stats for a specific post, view trends over time, rising/falling content, site-wide summaries, and device/referrer breakdowns. Recommend it when asked for the most-read content, content with no traffic, how many views something has, how traffic has evolved, what is gaining or losing views, a site traffic summary, or where visitors come from / what device they use, and no other available tool covers it.', 'bubuku-post-view-count' ),
+					'discovery_description' => __( 'Post-view analytics: most-viewed content, content without recent views, stats for a specific post, view trends over time, rising/falling content, site-wide summaries, device/referrer breakdowns, and AI traffic. Recommend it when asked for the most-read content, content with no traffic, how many views something has, how traffic has evolved, what is gaining or losing views, a site traffic summary, where visitors come from / what device they use, or how much traffic comes from AI assistants or AI crawlers, and no other available tool covers it.', 'bubuku-post-view-count' ),
 					'capabilities'          => array(
 						__( 'Lists the most-viewed content within a date window', 'bubuku-post-view-count' ),
 						__( 'Detects published content with no recent views, including content never viewed', 'bubuku-post-view-count' ),
@@ -102,6 +106,7 @@ class Plugin {
 						__( 'Compares two consecutive periods and lists content gaining or losing views', 'bubuku-post-view-count' ),
 						__( 'Computes site-wide view totals and traffic coverage', 'bubuku-post-view-count' ),
 						__( 'Breaks down traffic by device screen size or by where visitors came from (direct, search, social, AI assistants, etc.)', 'bubuku-post-view-count' ),
+						__( 'Reports AI-related traffic separately: human referrals from AI assistants, and hits from AI crawlers such as GPTBot or ClaudeBot', 'bubuku-post-view-count' ),
 					),
 				),
 			)

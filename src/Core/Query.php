@@ -523,6 +523,76 @@ class Query {
 	}
 
 	/**
+	 * AI traffic, split into the two things docs/ANALYTICS-PLAN.md (F6) says must never be
+	 * mixed: human visitors referred by an AI assistant (already captured by the F5
+	 * `referrer` dimension, value 'ai' — reuses dims_breakdown(), no duplicated SQL) and
+	 * non-JS AI crawlers hitting pages directly (opt-in, its own table — see
+	 * Core\AiCrawlers / Frontend\AiCrawlerTracker). Site-wide, same shape/caching pattern
+	 * as dims_breakdown().
+	 *
+	 * @param string[]    $post_types Post types to include; empty means every enabled type.
+	 * @param string|null $since      Inclusive start day (Y-m-d, UTC). Null = 3 months ago.
+	 * @param string|null $until      Inclusive end day (Y-m-d, UTC). Null = today (UTC).
+	 * @return array{referrals:array{views:int},crawlers:array<int,array{bot:string,views:int}>,ai_crawler_tracking_enabled:bool}
+	 */
+	public static function ai_traffic( array $post_types = array(), ?string $since = null, ?string $until = null ): array {
+		global $wpdb;
+
+		$referral_views = 0;
+
+		foreach ( self::dims_breakdown( 'referrer', $post_types, $since, $until ) as $row ) {
+			if ( 'ai' === $row['value'] ) {
+				$referral_views = $row['views'];
+				break;
+			}
+		}
+
+		$resolved_post_types = self::resolve_post_types( $post_types );
+		$crawlers            = array();
+
+		if ( ! empty( $resolved_post_types ) ) {
+			$since = $since ?? gmdate( 'Y-m-d', strtotime( '-3 months' ) );
+			$until = $until ?? current_time( 'Y-m-d', true );
+
+			$cache_key = 'ai_crawlers_' . md5( (string) wp_json_encode( array( $resolved_post_types, $since, $until ) ) );
+			$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
+
+			if ( false !== $cached ) {
+				$crawlers = $cached;
+			} else {
+				$ai_crawls_table   = Schema::table_ai_crawls();
+				$type_placeholders = self::placeholders( $resolved_post_types, '%s' );
+
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Read query over the plugin's own table, no equivalent WP API; short-lived object cache applied above. $ai_crawls_table is an internal constant (Schema::table_ai_crawls()), never user input.
+				$rows = $wpdb->get_results(
+					// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- {$type_placeholders} expands to a dynamic run of %s placeholders at runtime, which this static sniff cannot count.
+					$wpdb->prepare(
+						// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$ai_crawls_table} is an internal constant (Schema::table_ai_crawls()), never user input; {$type_placeholders} is a fixed run of %s placeholders.
+						"SELECT c.bot AS bot, SUM(c.views) AS total_views FROM {$ai_crawls_table} c INNER JOIN {$wpdb->posts} p ON p.ID = c.post_id WHERE p.post_type IN ({$type_placeholders}) AND p.post_status = 'publish' AND c.day BETWEEN %s AND %s GROUP BY c.bot ORDER BY total_views DESC",
+						...array_merge( $resolved_post_types, array( $since, $until ) )
+					),
+					ARRAY_A
+				);
+
+				foreach ( is_array( $rows ) ? $rows : array() as $row ) {
+					$crawlers[] = array(
+						'bot'   => (string) $row['bot'],
+						'views' => (int) $row['total_views'],
+					);
+				}
+
+				wp_cache_set( $cache_key, $crawlers, self::CACHE_GROUP, self::CACHE_TTL );
+			}
+		}
+
+		return array(
+			'referrals'                   => array( 'views' => $referral_views ),
+			'crawlers'                    => $crawlers,
+			'ai_crawler_tracking_enabled' => Settings::ai_crawler_tracking(),
+		);
+	}
+
+	/**
 	 * Requested post types intersected with the enabled ones (§3.1) — never trust a
 	 * caller-supplied list, and never query a type the site has excluded from counting.
 	 * Empty input means "every enabled type".

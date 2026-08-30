@@ -12,11 +12,13 @@ declare( strict_types=1 );
 use Bubuku\Plugins\PostViewCount\Admin\Settings;
 use Bubuku\Plugins\PostViewCount\Api\RestApi;
 use Bubuku\Plugins\PostViewCount\Api\TrendsApi;
+use Bubuku\Plugins\PostViewCount\Core\AiCrawlers;
 use Bubuku\Plugins\PostViewCount\Core\Db;
 use Bubuku\Plugins\PostViewCount\Core\Dimensions;
 use Bubuku\Plugins\PostViewCount\Core\Query;
 use Bubuku\Plugins\PostViewCount\Core\Schema;
 use Bubuku\Plugins\PostViewCount\Frontend\ViewsDisplay;
+use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetAiTraffic;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetContentTrends;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetDimsBreakdown;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetPostViews;
@@ -157,6 +159,35 @@ $tests = array(
 		( new Db() )->record_view( 42 );
 
 		bbk_test_same( array(), TestState::$dims, 'A call with no dims argument must not touch the dims table.' );
+	},
+	'AiCrawlers::detect() identifies a known AI crawler and ignores an unrelated User-Agent' => static function (): void {
+		bbk_test_same( 'ClaudeBot', AiCrawlers::detect( 'Mozilla/5.0 (compatible; ClaudeBot/1.0; +https://www.anthropic.com)' ), 'A known AI crawler signature must be identified.' );
+		bbk_test_same( null, AiCrawlers::detect( 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0' ), 'A regular browser User-Agent must never match an AI crawler.' );
+		bbk_test_same( null, AiCrawlers::detect( '' ), 'An empty User-Agent must never match.' );
+	},
+	'record_ai_crawl() upserts per bot, aggregating repeats and keeping bots separate' => static function (): void {
+		TestState::reset();
+		TestState::$now = '2026-01-01 10:00:00';
+		( new Db() )->record_ai_crawl( 42, 'GPTBot' );
+		( new Db() )->record_ai_crawl( 42, 'GPTBot' );
+		( new Db() )->record_ai_crawl( 42, 'ClaudeBot' );
+
+		bbk_test_same(
+			array(
+				'42|2026-01-01|GPTBot'    => 2,
+				'42|2026-01-01|ClaudeBot' => 1,
+			),
+			TestState::$ai_crawls,
+			'A repeated bot hit on the same day must increment, not duplicate; a different bot must get its own row.'
+		);
+	},
+	'record_ai_crawl() never touches the human view/daily tables' => static function (): void {
+		TestState::reset();
+		TestState::$now = '2026-01-01 10:00:00';
+		( new Db() )->record_ai_crawl( 42, 'GPTBot' );
+
+		bbk_test_same( array(), TestState::$views, 'An AI crawler hit must never be recorded as a human view.' );
+		bbk_test_same( array(), TestState::$daily, 'An AI crawler hit must never be recorded in the daily aggregate.' );
 	},
 	'migrating from postmeta is idempotent'               => static function (): void {
 		TestState::reset();
@@ -330,6 +361,17 @@ $tests = array(
 
 		bbk_test_same( array( 'post' ), $sanitized['post_types'], 'Media must never survive sanitize(), even if submitted directly.' );
 	},
+	'Settings::ai_crawler_tracking() defaults to false, and sanitize() respects the checkbox' => static function (): void {
+		TestState::reset();
+
+		bbk_test_same( false, Settings::ai_crawler_tracking(), 'AI-crawler tracking must be disabled by default (docs/ANALYTICS-PLAN.md §F6).' );
+
+		$sanitized = Settings::sanitize( array( 'ai_crawler_tracking' => '1' ) );
+		bbk_test_same( true, $sanitized['ai_crawler_tracking'], 'A truthy submitted value must sanitize to true.' );
+
+		$sanitized = Settings::sanitize( array() );
+		bbk_test_same( false, $sanitized['ai_crawler_tracking'], 'An absent checkbox must sanitize to false.' );
+	},
 	'known bot user agents are never recorded, but the response still reflects current stats' => static function (): void {
 		TestState::reset();
 		TestState::$now          = '2026-01-01 12:00:00';
@@ -402,6 +444,16 @@ $tests = array(
 		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
 
 		bbk_test_same( array(), Query::dims_breakdown( 'viewport', array( 'page' ) ), 'A disabled post type must never be queried, and must return no rows.' );
+	},
+	'Query::ai_traffic() returns no crawlers for a post type that is not enabled, and reports the tracking flag' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+
+		$result = Query::ai_traffic( array( 'page' ) );
+
+		bbk_test_same( array(), $result['crawlers'], 'A disabled post type must never be queried, and must return no rows.' );
+		bbk_test_same( 0, $result['referrals']['views'], 'With no dims recorded, AI-referral views must be 0.' );
+		bbk_test_same( false, $result['ai_crawler_tracking_enabled'], 'The tracking flag must reflect Settings::ai_crawler_tracking() (default false).' );
 	},
 	'Query::post_stats() reflects the recorded views, title and URL for a post' => static function (): void {
 		TestState::reset();
@@ -502,6 +554,16 @@ $tests = array(
 		bbk_test_same( array(), $result['breakdown'], 'A disabled post type must return no rows, same as Query::dims_breakdown().' );
 		bbk_test_same( true, isset( $result['meta']['computed_at'] ), 'The tool must add a computed_at timestamp.' );
 	},
+	'GetAiTraffic tool delegates to Query::ai_traffic()'  => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+
+		$result = ( new GetAiTraffic() )->execute_callback( array( 'post_types' => array( 'page' ) ) );
+
+		bbk_test_same( array(), $result['crawlers'], 'A disabled post type must return no rows, same as Query::ai_traffic().' );
+		bbk_test_same( 0, $result['referrals']['views'], 'With no dims recorded, AI-referral views must be 0.' );
+		bbk_test_same( true, isset( $result['meta']['computed_at'] ), 'The tool must add a computed_at timestamp.' );
+	},
 	'TrendsApi::check_permission() requires the edit_posts capability' => static function (): void {
 		TestState::reset();
 
@@ -548,6 +610,17 @@ $tests = array(
 		$response = ( new TrendsApi() )->get_dims_breakdown( $request );
 
 		bbk_test_same( array( 'breakdown' => array() ), $response->get_data(), 'A disabled post type must return no rows, same as Query::dims_breakdown().' );
+	},
+	'TrendsApi::get_ai_traffic() delegates to Query::ai_traffic()' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+		$request = new WP_REST_Request( array( 'post_types' => array( 'page' ) ) );
+
+		$response = ( new TrendsApi() )->get_ai_traffic( $request );
+		$data     = $response->get_data();
+
+		bbk_test_same( array(), $data['crawlers'], 'A disabled post type must return no rows, same as Query::ai_traffic().' );
+		bbk_test_same( 0, $data['referrals']['views'], 'With no dims recorded, AI-referral views must be 0.' );
 	},
 	'ViewsDisplay::render() shows the view count, and the last-viewed date when asked' => static function (): void {
 		TestState::reset();

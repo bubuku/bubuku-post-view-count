@@ -4,7 +4,7 @@ Tags: page view count, post views, post count, posts, post view count
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.1
+Stable tag: 1.2.2
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -72,6 +72,11 @@ Yes. Settings → Post View Count includes a chart of views over time (day/week/
 
 
 == Changelog ==
+
+= 1.2.2 =
+* Evolution chart, period comparison, rising/falling content lists, device/referrer breakdown and the shortcode/block for showing view counts on the front end.
+* Session dimensions (F5): traffic broken down by device screen size and by where visitors came from (direct, search, social, AI assistants, etc.), never storing the raw referrer host or exact screen width.
+* AI traffic reporting (F6): a new "AI crawler tracking" setting (off by default) counts hits from known AI crawlers (GPTBot, ClaudeBot, PerplexityBot, CCBot, Google-Extended, Bytespider, Amazonbot, Applebot-Extended) in their own table, kept separate from the human view count; a new "AI traffic" section in Settings → Post View Count shows both AI referrals and crawler hits, also available via `GET /bbk_postview/v1/trends/ai-traffic`.
 
 = 1.2.1 =
 * Read-only query layer (`Core\Query`) powering most-viewed content, stale content, per-post stats, trends and summary — used by the new admin columns, WP-CLI commands.

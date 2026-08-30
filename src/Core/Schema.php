@@ -19,7 +19,7 @@ class Schema {
 	/**
 	 * Current schema version. Bump when the table structure changes.
 	 */
-	const VERSION = 2;
+	const VERSION = 3;
 
 	const OPTION_SCHEMA_VERSION = 'bbk_schema_version';
 
@@ -77,6 +77,17 @@ class Schema {
 		global $wpdb;
 
 		return $wpdb->prefix . 'bbk_post_view_dims';
+	}
+
+	/**
+	 * Table name for the AI-crawler hit aggregate (F6, opt-in, separate from human traffic).
+	 *
+	 * @return string
+	 */
+	public static function table_ai_crawls(): string {
+		global $wpdb;
+
+		return $wpdb->prefix . 'bbk_post_ai_crawls';
 	}
 
 	/**
@@ -187,6 +198,7 @@ class Schema {
 		$views_table     = self::table_views();
 		$daily_table     = self::table_daily();
 		$dims_table      = self::table_dims();
+		$ai_crawls_table = self::table_ai_crawls();
 
 		$sql = "CREATE TABLE {$views_table} (
 			post_id BIGINT UNSIGNED NOT NULL,
@@ -212,6 +224,14 @@ class Schema {
 			views INT UNSIGNED NOT NULL DEFAULT 0,
 			PRIMARY KEY  (post_id, day, dimension, value),
 			KEY day_dimension_value (day, dimension, value)
+		) {$charset_collate};
+		CREATE TABLE {$ai_crawls_table} (
+			post_id BIGINT UNSIGNED NOT NULL,
+			day DATE NOT NULL,
+			bot VARCHAR(50) NOT NULL,
+			views INT UNSIGNED NOT NULL DEFAULT 0,
+			PRIMARY KEY  (post_id, day, bot),
+			KEY day_bot (day, bot)
 		) {$charset_collate};";
 
 		dbDelta( $sql );
@@ -294,10 +314,11 @@ class Schema {
 	public function purge_daily() {
 		global $wpdb;
 
-		$settings       = get_option( 'bbk_postview_settings', array() );
-		$retention_days = isset( $settings['retention_days'] ) ? (int) $settings['retention_days'] : self::DEFAULT_RETENTION_DAYS;
-		$daily_table    = self::table_daily();
-		$dims_table     = self::table_dims();
+		$settings        = get_option( 'bbk_postview_settings', array() );
+		$retention_days  = isset( $settings['retention_days'] ) ? (int) $settings['retention_days'] : self::DEFAULT_RETENTION_DAYS;
+		$daily_table     = self::table_daily();
+		$dims_table      = self::table_dims();
+		$ai_crawls_table = self::table_ai_crawls();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Daily cron purge on the plugin's own table, no equivalent WP API; a purge query must never be served from cache. $daily_table is an internal constant (self::table_daily()), never user input.
 		$wpdb->query(
@@ -313,6 +334,15 @@ class Schema {
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$dims_table} is an internal constant (self::table_dims()), never user input.
 				"DELETE FROM {$dims_table} WHERE day < DATE_SUB(UTC_DATE(), INTERVAL %d DAY)",
+				$retention_days
+			)
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Daily cron purge on the plugin's own table, no equivalent WP API; a purge query must never be served from cache. $ai_crawls_table is an internal constant (self::table_ai_crawls()), never user input.
+		$wpdb->query(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$ai_crawls_table} is an internal constant (self::table_ai_crawls()), never user input.
+				"DELETE FROM {$ai_crawls_table} WHERE day < DATE_SUB(UTC_DATE(), INTERVAL %d DAY)",
 				$retention_days
 			)
 		);

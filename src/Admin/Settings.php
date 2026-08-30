@@ -36,6 +36,7 @@ class Settings {
 			'exclude_bots'             => true,
 			'retention_days'           => 400,
 			'delete_data_on_uninstall' => true,
+			'ai_crawler_tracking'      => false,
 		);
 	}
 
@@ -98,6 +99,17 @@ class Settings {
 	 */
 	public static function exclude_bots(): bool {
 		return (bool) self::get_all()['exclude_bots'];
+	}
+
+	/**
+	 * Whether server-side AI-crawler tracking (F6) is enabled. Disabled by default: it adds
+	 * a write on every matching crawler request, which is not negligible on a site with
+	 * heavy crawler traffic (docs/ANALYTICS-PLAN.md §F6).
+	 *
+	 * @return bool
+	 */
+	public static function ai_crawler_tracking(): bool {
+		return (bool) self::get_all()['ai_crawler_tracking'];
 	}
 
 	/**
@@ -198,6 +210,7 @@ class Settings {
 			'exclude_bots'             => ! empty( $input['exclude_bots'] ),
 			'retention_days'           => max( 1, $retention_days ),
 			'delete_data_on_uninstall' => ! empty( $input['delete_data_on_uninstall'] ),
+			'ai_crawler_tracking'      => ! empty( $input['ai_crawler_tracking'] ),
 		);
 	}
 

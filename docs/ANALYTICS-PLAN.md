@@ -702,6 +702,32 @@ El endpoint valida la dimensión contra una lista blanca cerrada antes de escrib
 
 ### F6 — Tráfico procedente de IAs
 
+> ✅ **Implementada** en la versión `1.2.2`. Los dos fenómenos se resolvieron exactamente
+> como anticipa esta sección: los **referidos por IA** ya estaban cubiertos por la
+> dimensión `referrer=ai` de la F5 (`Core\Dimensions::REFERRER_CLASSES`) — no se ha
+> añadido infraestructura nueva para esa parte, solo se expone junto al rastreo en la
+> misma tool/endpoint. El **rastreo por bots de IA** es la parte nueva: `Core\AiCrawlers`
+> (lista blanca cerrada con los mismos nueve crawlers nombrados más abajo) detecta el
+> User-Agent; `Frontend\AiCrawlerTracker`, enganchado a `template_redirect` (nunca a
+> `Api\RestApi`, que estos bots no llegan a disparar por no ejecutar JavaScript), delega en
+> `Core\Db::record_ai_crawl()`, que escribe en la tabla propia `bbk_post_ai_crawls`
+> (agregada por día y bot), completamente separada de `bbk_post_views`/`bbk_post_views_daily`
+> — nunca contamina el conteo humano, tal como pedía esta sección. **Desactivado por
+> defecto** (`Admin\Settings::ai_crawler_tracking()`, checkbox en Ajustes → Post View
+> Count), por el mismo motivo que anticipaba el documento: una escritura por petición de
+> bot no es despreciable en un sitio con tráfico de crawlers alto. `Core\Query::ai_traffic()`
+> reutiliza `dims_breakdown()` para los referidos (sin duplicar SQL) y agrega
+> `bbk_post_ai_crawls` por bot para el rastreo, devolviendo ambos bloques "claramente
+> separados" como pedía el documento; expuesto en `GET /bbk_postview/v1/trends/ai-traffic`
+> (`Api\TrendsApi`), la tool MCP `bubuku-views/get-ai-traffic` (`src/Mcp/Tools/GetAiTraffic.php`)
+> y una sección «Tráfico de IA» en Ajustes → Post View Count. Tests en `Tests/run.php`
+> cubren `AiCrawlers::detect()`, el upsert de `record_ai_crawl()` (aislado de las tablas
+> humanas), el default/sanitización de `ai_crawler_tracking` y la delegación superficial de
+> `Query::ai_traffic()`/la tool/la ruta REST — la agregación real con `JOIN` no tiene tabla
+> simulada en el harness (mismo precedente que `momentum()`/`dims_breakdown()`), y
+> `Frontend\AiCrawlerTracker` se valida manualmente en `test.wp.local`, igual que
+> `dbDelta()`/WP-Cron en fases anteriores.
+
 El requerimiento mezcla dos fenómenos que técnicamente **no se capturan igual**, y
 planificarlos como uno solo lleva a un callejón sin salida:
 

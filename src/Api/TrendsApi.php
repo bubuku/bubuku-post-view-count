@@ -120,6 +120,28 @@ class TrendsApi {
 				),
 			)
 		);
+
+		register_rest_route(
+			BBK_PLUGIN_ENDPOINTS_URL,
+			'trends/ai-traffic',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'get_ai_traffic' ),
+				'permission_callback' => array( $this, 'check_permission' ),
+				'args'                => array(
+					'post_types' => array(
+						'type'  => 'array',
+						'items' => array( 'type' => 'string' ),
+					),
+					'since'      => array(
+						'type' => 'string',
+					),
+					'until'      => array(
+						'type' => 'string',
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -189,6 +211,26 @@ class TrendsApi {
 		$response = new WP_REST_Response( array( 'breakdown' => $breakdown ), 200 );
 
 		// Object-cached in Core\Query::dims_breakdown() (5 min), same as trend()/momentum().
+		$response->header( 'Cache-Control', 'private, max-age=300' );
+
+		return $response;
+	}
+
+	/**
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response
+	 */
+	public function get_ai_traffic( WP_REST_Request $request ) {
+		$ai_traffic = Query::ai_traffic(
+			(array) ( $request->get_param( 'post_types' ) ?? array() ),
+			$request->get_param( 'since' ),
+			$request->get_param( 'until' )
+		);
+
+		$response = new WP_REST_Response( $ai_traffic, 200 );
+
+		// Object-cached in Core\Query::ai_traffic() (5 min, crawler block only — the
+		// referrals block is cheap, it reuses dims_breakdown()'s own cache).
 		$response->header( 'Cache-Control', 'private, max-age=300' );
 
 		return $response;

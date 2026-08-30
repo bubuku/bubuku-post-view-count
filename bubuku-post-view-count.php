@@ -4,7 +4,7 @@
  * Description: Plugin created by Bubuku to count how many times a post has been viewed
  * Requires at least: 6.2
  * Requires PHP:      7.4
- * Version:     1.2.1
+ * Version:     1.2.2
  * Author:      Bubuku
  * Author URI:  https://www.bubuku.com/
  * Text Domain: bubuku-post-view-count
