@@ -1,0 +1,51 @@
+@use "config/tokens";
+@use "config/aliases";
+@use "base/animations";
+@use "base/buttons";
+@use "base/notices";
+@use "base/field";
+@use "components/app";
+@use "components/admin-tabs";
+@use "components/header-main";
+@use "components/dashboard-card";
+@use "components/data-table";
+@use "components/footer-main";
+@use "components/save-bar";
+@use "components/settings-panel";
+@use "components/stats-panel";
+
+// ── WordPress admin layout resets ──────────────────────────────────
+
+#wpcontent {
+	padding-left: 0;
+}
+
+ul#adminmenu a.wp-has-current-submenu::after,
+ul#adminmenu > li.current > a.current::after {
+	border-right-color: var(--brand-soft);
+}
+
+#wpbody-content {
+	padding-bottom: 0;
+
+	> .wrap {
+		padding: 0;
+		margin: 0;
+	}
+}
+
+// Deliberately NOT hiding .notice/#wpfooter here (unlike the wp-frontend skill
+// template): this is a public WordPress.org plugin, and hiding other plugins'
+// or core's admin notices would be a Plugin Check / directory-review risk, and
+// would also hide this page's own notices.
+
+// ── Plugin app root ────────────────────────────────────────────────
+
+#bbk-postview-app {
+	background: var(--bg-page);
+	color: var(--text-heading);
+	min-height: 100vh;
+	padding: 40px 24px;
+	line-height: 1.5;
+	border-bottom: 4px solid var(--border-card);
+}

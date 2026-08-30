@@ -11,6 +11,7 @@ declare( strict_types=1 );
 
 use Bubuku\Plugins\PostViewCount\Admin\Settings;
 use Bubuku\Plugins\PostViewCount\Api\RestApi;
+use Bubuku\Plugins\PostViewCount\Api\SettingsApi;
 use Bubuku\Plugins\PostViewCount\Api\TrendsApi;
 use Bubuku\Plugins\PostViewCount\Core\AiCrawlers;
 use Bubuku\Plugins\PostViewCount\Core\Db;
@@ -850,6 +851,52 @@ $tests = array(
 
 		bbk_test_same( array(), $data['crawlers'], 'A disabled post type must return no rows, same as Query::ai_traffic().' );
 		bbk_test_same( 0, $data['referrals']['views'], 'With no dims recorded, AI-referral views must be 0.' );
+	},
+	'SettingsApi::check_permission() requires manage_options' => static function (): void {
+		TestState::reset();
+
+		bbk_test_same( false, ( new SettingsApi() )->check_permission(), 'A visitor without manage_options must be denied.' );
+
+		TestState::$current_user_can['manage_options'] = true;
+
+		bbk_test_same( true, ( new SettingsApi() )->check_permission(), 'A user with manage_options must be allowed.' );
+	},
+	'SettingsApi::get_settings() returns the saved settings merged with read-only context' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'retention_days' => 90 ) );
+
+		$response = ( new SettingsApi() )->get_settings();
+		$data     = $response->get_data();
+
+		bbk_test_same( 90, $data['retention_days'], 'get_settings() must reflect the saved option.' );
+		bbk_test_same( true, isset( $data['available_post_types'] ), 'get_settings() must include available_post_types for the form.' );
+		bbk_test_same( true, isset( $data['available_roles'] ), 'get_settings() must include available_roles for the form.' );
+		bbk_test_same( Settings::bot_signature_examples(), $data['bot_signature_examples'], 'get_settings() must include bot_signature_examples verbatim.' );
+	},
+	'SettingsApi::update_settings() sanitizes and persists the submitted settings' => static function (): void {
+		TestState::reset();
+		$request = new WP_REST_Request(
+			array(
+				'retention_days' => 15,
+				'exclude_bots'   => false,
+			)
+		);
+
+		$response = ( new SettingsApi() )->update_settings( $request );
+		$data     = $response->get_data();
+
+		bbk_test_same( 15, $data['retention_days'], 'update_settings() must return the sanitized value it just saved.' );
+		bbk_test_same( 15, Settings::get_all()['retention_days'], 'update_settings() must persist through Settings::sanitize().' );
+		bbk_test_same( false, Settings::get_all()['exclude_bots'], 'update_settings() must persist boolean fields.' );
+	},
+	'SettingsApi::delete_data() drops and recreates the tables' => static function (): void {
+		TestState::reset();
+		( new Db() )->record_view( 42 );
+
+		$response = ( new SettingsApi() )->delete_data();
+
+		bbk_test_same( array( 'deleted' => true ), $response->get_data(), 'delete_data() must confirm the deletion.' );
+		bbk_test_same( 0, ( new Db() )->get_stats( 42 )['views'], 'delete_data() must leave the tables empty after recreating them.' );
 	},
 	'ViewsDisplay::render() shows the view count, and the last-viewed date when asked' => static function (): void {
 		TestState::reset();

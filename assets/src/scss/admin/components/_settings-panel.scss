@@ -1,0 +1,62 @@
+.bbk-field-group {
+	margin-bottom: 20px;
+
+	&:last-child {
+		margin-bottom: 0;
+	}
+}
+
+.bbk-field-group__label {
+	display: block;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--text-heading);
+	margin: 0 0 8px;
+}
+
+.bbk-field-group__help {
+	font-size: 12.5px;
+	color: var(--text-muted);
+	margin: 6px 0 0;
+}
+
+.bbk-checkbox {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	font-size: 13px;
+	color: var(--text-body);
+	padding: 3px 0;
+	cursor: pointer;
+
+	input[type="checkbox"] {
+		margin-top: 2px;
+		flex-shrink: 0;
+	}
+}
+
+.bbk-input-wrap {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+
+	input[type="number"].bbk-input,
+	input[type="text"].bbk-input {
+		width: 90px;
+		border: 1.5px solid var(--border-card);
+		border-radius: var(--radius-button);
+		padding: 6px 10px;
+		box-shadow: none;
+		outline: none;
+
+		&:focus {
+			border-color: var(--brand);
+			box-shadow: var(--focus-ring);
+		}
+	}
+
+	span {
+		font-size: 13px;
+		color: var(--text-muted);
+	}
+}

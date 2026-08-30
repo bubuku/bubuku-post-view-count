@@ -1,0 +1,169 @@
+// Unified pills component
+.bk-pills-group {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+
+	&--vertical {
+		flex-direction: column;
+		padding: 4px 0 8px;
+	}
+}
+
+.bk-pills-group__label {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--text-muted);
+	letter-spacing: 0.05em;
+}
+
+.bk-pill {
+	display: inline-flex;
+	align-items: center;
+	padding: 6px 14px;
+	border-radius: 999px;
+	border: 1.5px solid var(--border-card);
+	background: transparent;
+	color: var(--text-muted);
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: border-color 0.15s, background 0.15s, color 0.15s;
+
+	&:hover {
+		border-color: var(--brand);
+		color: var(--text-heading);
+	}
+
+	&.is-active,
+	&.is-selected {
+		border-color: var(--brand);
+		background: var(--brand-soft);
+		color: var(--brand);
+	}
+}
+
+// ToggleControl (components-form-toggle) — pill style
+.components-form-toggle {
+
+	.components-form-toggle__track {
+		border-radius: 999px;
+		border: 1.5px solid var(--border-strong);
+		background: transparent;
+		transition: border-color 0.15s, background 0.15s;
+		box-shadow: none !important;
+	}
+
+	.components-form-toggle__thumb {
+		border-radius: 50%;
+		background: var(--text-muted);
+		box-shadow: 0 1px 4px rgb(0 0 0 / 0.2);
+		transition: background 0.15s;
+	}
+
+	&:hover .components-form-toggle__track {
+		border-color: var(--brand);
+	}
+
+	&.is-checked {
+
+		.components-form-toggle__track {
+			border-color: var(--brand);
+			background: var(--brand-soft);
+		}
+
+		.components-form-toggle__thumb {
+			background: var(--brand);
+		}
+	}
+}
+
+.components-toggle-control {
+
+	.components-base-control__label {
+		font-weight: 500;
+		color: var(--text-heading);
+	}
+
+	.components-base-control__help {
+		color: var(--text-muted);
+		font-size: 12px;
+		margin-top: 4px;
+	}
+}
+
+// Shared hint text
+.bk-location-hint {
+	margin: 14px 0 0;
+	font-size: 12.5px;
+	color: var(--text-muted);
+}
+
+// Preview styles
+.bk-preview-stage {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.bk-preview-notice {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 14px 18px;
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 1.4;
+	transition:
+		background-color 0.2s ease,
+		color 0.2s ease,
+		border-radius 0.2s ease;
+
+	&--unstyled {
+		background: var(--surface-card);
+		border: 1.5px dashed var(--border-card);
+		border-radius: var(--radius-button);
+		color: var(--text-heading);
+	}
+
+	&__icon {
+		flex-shrink: 0;
+		display: flex;
+		align-items: center;
+
+		svg {
+			width: 16px;
+			height: 16px;
+			opacity: 0.8;
+		}
+	}
+
+	&__text {
+		flex: 1;
+	}
+}
+
+.bk-preview-hint {
+	margin: 0;
+	font-size: 12.5px;
+	color: var(--text-muted);
+	font-style: italic;
+}
+
+// Textarea control
+.card-body .components-textarea-control__input {
+	background: var(--surface-card);
+	border: 1.5px solid var(--border-strong);
+	border-radius: var(--radius-button);
+	padding: 8px 12px;
+	color: var(--text-heading);
+	font-size: 13px;
+	font-family: inherit;
+	transition: border-color 0.15s ease;
+	resize: none;
+
+	&:focus {
+		border-color: var(--brand);
+		outline: none;
+	}
+}

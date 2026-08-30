@@ -1,0 +1,19 @@
+// ── Save bar ───────────────────────────────────────────────────────
+
+.bk-save-bar {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 16px;
+	padding: 16px 0 32px;
+
+	&__actions {
+		display: flex;
+		gap: 10px;
+
+		.bk-btn {
+			min-width: 142px;
+			justify-content: center;
+		}
+	}
+}

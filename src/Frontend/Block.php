@@ -15,10 +15,11 @@ namespace Bubuku\Plugins\PostViewCount\Frontend;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Registers the `bubuku/post-views` block from `assets/blocks/post-views/`.
- * Deliberately no build step (see AGENTS.md): the editor script is hand-written
- * plain JS (no JSX) and the frontend/editor render both go through render.php,
- * which delegates to ViewsDisplay — the same renderer used by Shortcode.
+ * Registers the `bubuku/post-views` block from the compiled
+ * `assets/build/blocks/post-views/` (built from `assets/src/blocks/post-views/`
+ * — see docs/PENDING-ADMIN-UI-REACT.md Fase 7). The frontend/editor render both
+ * go through render.php, which delegates to ViewsDisplay — the same renderer
+ * used by Shortcode.
  */
 class Block {
 
@@ -30,6 +31,12 @@ class Block {
 	 * @return void
 	 */
 	public function register() {
-		register_block_type( BBK_PLUGIN_ASSETS_PATH . '/blocks/post-views' );
+		$path = BBK_PLUGIN_PATH . '/assets/build/blocks/post-views';
+
+		if ( ! file_exists( $path . '/block.json' ) ) {
+			return;
+		}
+
+		register_block_type( $path );
 	}
 }

@@ -1,0 +1,60 @@
+.bbk-admin-tabs {
+	display: flex;
+	border-bottom: 1px solid var(--border-card);
+	margin: 0 0 24px 0;
+}
+
+.bbk-admin-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	appearance: none;
+	background: transparent;
+	border: none;
+	border-bottom: 4px solid transparent;
+	padding: 10px 16px;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--text-muted);
+	cursor: pointer;
+	transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+	margin-bottom: -1px;
+
+	svg {
+		width: 15px;
+		height: 15px;
+		flex-shrink: 0;
+	}
+
+	&:hover {
+		color: var(--text-heading);
+	}
+
+	&.is-active {
+		background: var(--surface-card);
+		color: var(--text-heading);
+		font-weight: 600;
+		border-bottom-color: var(--cta);
+	}
+
+	&.is-active .bbk-admin-tab__badge {
+		background: var(--cta);
+		color: var(--cta-ink);
+	}
+}
+
+/* stylelint-disable-next-line no-descending-specificity */
+.bbk-admin-tab__badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 5px;
+	background: var(--text-muted);
+	color: var(--text-invert);
+	border-radius: 9px;
+	font-size: 11px;
+	font-weight: 700;
+	line-height: 1;
+}

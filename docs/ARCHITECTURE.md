@@ -6,7 +6,7 @@ Detalle arquitectónico del plugin. Este documento complementa `AGENTS.md` con l
 
 El plugin usa autoload PSR-4 vía un autoloader propio (sin Composer en runtime — ver más abajo). Las clases viven en `src/{Core,Api,Frontend,Admin}/`, con namespace `Bubuku\Plugins\PostViewCount\{Core,Api,Frontend,Admin}` y nombres de clase sin prefijo (`Plugin`, `Db`, `RestApi`, `Assets`, `Settings`, `SettingsPage`) — ver `docs/MIGRATION-PSR4.md` para el mapeo histórico aplicado a las 4 clases originales.
 
-Desde la 1.2.0 tiene 5 clases: además de las 4 originales, `Core\Schema` gestiona dos tablas propias y dos eventos de WP-Cron (ver `docs/ANALYTICS-PLAN.md`, Fase 1). La Fase 2 de ese plan añade `Admin\Settings` y `Admin\SettingsPage`: página de ajustes con CPT seleccionables, roles excluidos y filtro de bots. La 1.2.1 completa la Fase 3: `Core\Query` (§4.1) es la capa de consultas puras de solo lectura (más leído, contenido sin visitas recientes, estadísticas de un post, tendencia y resumen del sitio); `Mcp\SatelliteConnector` y las tools bajo `Mcp\Tools\` (§4.2–4.3) exponen esas consultas como satélite opcional del hub `bubuku-mcp-conex` — inerte si el hub no está activo, cero dependencia dura. La misma 1.2.1 añade también los dos extras marcados como opcionales en el plan: `Admin\PostListColumns` (§3.5, columnas ordenables «Views»/«Last view» en los listados admin) y `Cli\ViewsCommand` (§4.4, comandos `wp bbk-views`). También incluye la parte backend de la Fase F4 (tendencias): `Api\TrendsApi` (endpoint REST de lectura `GET /trends`, capability `edit_posts`) y la tool `Mcp\Tools\GetContentTrends`, ambas sobre `Core\Query::trend()` (ya con cache de objeto de 5 min, igual que `most_viewed()`). Una versión posterior sin publicar cierra el resto de F4: la UI (gráfica en el admin, comparativa de periodo, shortcode, bloque Gutenberg) y los listados «en alza»/«en caída» — `Core\Query::momentum()`, la ruta `GET /trends/momentum` y la tool `Mcp\Tools\ListMomentum`. La misma versión implementa la Fase F5 (dimensiones de sesión): tabla `bbk_post_view_dims`, `Core\Dimensions` (lista blanca), `Core\Query::dims_breakdown()`, la ruta `GET /trends/dims`, la tool `Mcp\Tools\GetDimsBreakdown` y la sección «Dispositivo y procedencia» en Ajustes → Post View Count. La 1.2.2 cierra la Fase F6 (tráfico de IA): `Core\AiCrawlers` (lista blanca de crawlers), `Frontend\AiCrawlerTracker` (contador server-side en `template_redirect`, opt-in) y la tabla propia `bbk_post_ai_crawls`, separada de las tablas de vistas humanas; `Core\Query::ai_traffic()`, la ruta `GET /trends/ai-traffic`, la tool `Mcp\Tools\GetAiTraffic` y la sección «Tráfico de IA» en Ajustes → Post View Count. Una versión posterior sin publicar cierra la parte de privacidad de la Fase F7: `Admin\Settings::respect_dnt()` (activado por defecto, a diferencia de `exclude_bots()`/`ai_crawler_tracking()`), consumido en dos capas sin duplicar criterio — `assets/js/common.js` (`hasPrivacySignal()`) omite `viewport`/`referrer` del payload cuando detecta `navigator.doNotTrack`/`navigator.globalPrivacyControl`, y `Api\RestApi::valid_dims()`/`has_privacy_signal()` aplica el mismo criterio server-side leyendo las cabeceras `DNT`/`Sec-GPC` como defensa en profundidad (cubre a un visitante cuyo cliente no llegue a ejecutar el JS, incluido `navigator.sendBeacon()`). Nunca afecta al conteo en sí, solo a si se escriben las dimensiones de sesión. Una versión posterior añade el buffer de escrituras de F7: `Core\WriteBuffer` (opt-in, `Admin\Settings::write_buffer_enabled()`, desactivado por defecto, y solo activo con un object cache persistente) acumula vista + dimensiones por post/día en el object cache y las vuelca en lotes vía un cron propio cada minuto (`Core\Schema::BUFFER_FLUSH_CRON_HOOK`) — sin object cache persistente, el conteo sigue escribiéndose de inmediato como antes — ver `docs/ANALYTICS-PLAN.md` §F6/§F7 y `docs/CHANGELOG.md`.
+Desde la 1.2.0 tiene 5 clases: además de las 4 originales, `Core\Schema` gestiona dos tablas propias y dos eventos de WP-Cron (ver `docs/ANALYTICS-PLAN.md`, Fase 1). La Fase 2 de ese plan añade `Admin\Settings` y `Admin\SettingsPage`: página de ajustes con CPT seleccionables, roles excluidos y filtro de bots. La 1.2.1 completa la Fase 3: `Core\Query` (§4.1) es la capa de consultas puras de solo lectura (más leído, contenido sin visitas recientes, estadísticas de un post, tendencia y resumen del sitio); `Mcp\SatelliteConnector` y las tools bajo `Mcp\Tools\` (§4.2–4.3) exponen esas consultas como satélite opcional del hub `bubuku-mcp-conex` — inerte si el hub no está activo, cero dependencia dura. La misma 1.2.1 añade también los dos extras marcados como opcionales en el plan: `Admin\PostListColumns` (§3.5, columnas ordenables «Views»/«Last view» en los listados admin) y `Cli\ViewsCommand` (§4.4, comandos `wp bbk-views`). También incluye la parte backend de la Fase F4 (tendencias): `Api\TrendsApi` (endpoint REST de lectura `GET /trends`, capability `edit_posts`) y la tool `Mcp\Tools\GetContentTrends`, ambas sobre `Core\Query::trend()` (ya con cache de objeto de 5 min, igual que `most_viewed()`). Una versión posterior sin publicar cierra el resto de F4: la UI (gráfica en el admin, comparativa de periodo, shortcode, bloque Gutenberg) y los listados «en alza»/«en caída» — `Core\Query::momentum()`, la ruta `GET /trends/momentum` y la tool `Mcp\Tools\ListMomentum`. La misma versión implementa la Fase F5 (dimensiones de sesión): tabla `bbk_post_view_dims`, `Core\Dimensions` (lista blanca), `Core\Query::dims_breakdown()`, la ruta `GET /trends/dims`, la tool `Mcp\Tools\GetDimsBreakdown` y la sección «Dispositivo y procedencia» en Ajustes → Post View Count. La 1.2.2 cierra la Fase F6 (tráfico de IA): `Core\AiCrawlers` (lista blanca de crawlers), `Frontend\AiCrawlerTracker` (contador server-side en `template_redirect`, opt-in) y la tabla propia `bbk_post_ai_crawls`, separada de las tablas de vistas humanas; `Core\Query::ai_traffic()`, la ruta `GET /trends/ai-traffic`, la tool `Mcp\Tools\GetAiTraffic` y la sección «Tráfico de IA» en Ajustes → Post View Count. Una versión posterior sin publicar cierra la parte de privacidad de la Fase F7: `Admin\Settings::respect_dnt()` (activado por defecto, a diferencia de `exclude_bots()`/`ai_crawler_tracking()`), consumido en dos capas sin duplicar criterio — `assets/js/common.js` (`hasPrivacySignal()`) omite `viewport`/`referrer` del payload cuando detecta `navigator.doNotTrack`/`navigator.globalPrivacyControl`, y `Api\RestApi::valid_dims()`/`has_privacy_signal()` aplica el mismo criterio server-side leyendo las cabeceras `DNT`/`Sec-GPC` como defensa en profundidad (cubre a un visitante cuyo cliente no llegue a ejecutar el JS, incluido `navigator.sendBeacon()`). Nunca afecta al conteo en sí, solo a si se escriben las dimensiones de sesión. Una versión posterior añade el buffer de escrituras de F7: `Core\WriteBuffer` (opt-in, `Admin\Settings::write_buffer_enabled()`, desactivado por defecto, y solo activo con un object cache persistente) acumula vista + dimensiones por post/día en el object cache y las vuelca en lotes vía un cron propio cada minuto (`Core\Schema::BUFFER_FLUSH_CRON_HOOK`) — sin object cache persistente, el conteo sigue escribiéndose de inmediato como antes — ver `docs/ANALYTICS-PLAN.md` §F6/§F7 y `docs/CHANGELOG.md`. Una versión posterior migra toda la página de ajustes (que había ido creciendo por encima sin aplicar nunca los skills `wp-admin`/`wp-frontend`) a React + REST: `Admin\SettingsPage` (Settings API clásica) se sustituye por `Admin\Admin`/`Admin\AdminPage` + `Api\SettingsApi`, y `assets/js/admin-stats.js`/`admin-stats.css` por la app en `assets/src/js/admin/` (build con `@wordpress/scripts`); el bloque Gutenberg pasa también por el build (`assets/src/blocks/post-views/`, JSX real). El contador público (`assets/js/common.js`) y sus tres capas de seguridad no se tocan — ver `docs/PENDING-ADMIN-UI-REACT.md`.
 
 ## Autoload — sin vendor/ en producción
 
@@ -31,7 +31,9 @@ Composer (`composer.json`) se usa **solo como tooling de desarrollo**: PHPCS, PH
 | `Core\AiCrawlers` | `src/Core/AiCrawlers.php` | Lista blanca cerrada de User-Agents de crawlers de IA conocidos (`GPTBot`, `ClaudeBot`, `Claude-User`, `PerplexityBot`, `CCBot`, `Google-Extended`, `Bytespider`, `Amazonbot`, `Applebot-Extended`) y `detect()` — usada solo por `Frontend\AiCrawlerTracker` (F6, `docs/ANALYTICS-PLAN.md`) |
 | `Core\Query` | `src/Core/Query.php` | Consultas de solo lectura sobre las tablas propias — `most_viewed()`, `stale()`, `post_stats()`, `trend()`, `summary()`, `momentum()`, `dims_breakdown()`, `ai_traffic()`. `post_types` siempre intersectado con `Settings::enabled_post_types()`, `limit` con tope duro de 100 (salvo `dims_breakdown()`/`ai_traffic()`, de cardinalidad fija y pequeña), resultados con cache corta de objeto (5 min) donde aplica. Sin dependencia de MCP — reutilizable por la página de ajustes, WP-CLI o una futura tool (`docs/ANALYTICS-PLAN.md` §4.1). `momentum()` compara dos periodos consecutivos de igual longitud sobre `bbk_post_views_daily` y ordena por variación **absoluta**, no porcentual (§5). `dims_breakdown()` agrega `bbk_post_view_dims` por dimensión/valor, site-wide (F5). `ai_traffic()` (F6) reutiliza `dims_breakdown()` para los referidos de IA y agrega `bbk_post_ai_crawls` por bot para el rastreo, devolviendo ambos bloques por separado |
 | `Admin\Settings` | `src/Admin/Settings.php` | Lectura/sanitización de la option `bbk_postview_settings` — CPT habilitados, roles excluidos, filtro de bots, retención, borrado al desinstalar, rastreo de crawlers de IA (F6, `ai_crawler_tracking()`, desactivado por defecto), señal de privacidad DNT/Sec-GPC (F7, `respect_dnt()`, **activado** por defecto), buffer de escrituras (F7, `write_buffer_enabled()`, **desactivado** por defecto). Única fuente de `enabled_post_types()`, consumida por `Frontend\Assets` y `Api\RestApi` |
-| `Admin\SettingsPage` | `src/Admin/SettingsPage.php` | Página **Ajustes → Post View Count** (Settings API clásica, sin build step) y el botón «Eliminar todos los datos ahora» |
+| `Admin\Admin` | `src/Admin/Admin.php` | Orquestador de la página de ajustes — registra `admin_menu`/`admin_enqueue_scripts` sobre `Admin\AdminPage`. Instanciado desde `Core\Plugin::init()` solo si `is_admin()` |
+| `Admin\AdminPage` | `src/Admin/AdminPage.php` | Página **Ajustes → Post View Count** — `render()` solo imprime `<div id="bbk-postview-app">` (el UI es la app React); `enqueue_assets()` encola `assets/build/admin.js`/`style-admin.css` vía `admin.asset.php`, solo en su propio `$hook_suffix`, inyecta el objeto global `BbkPostViewCount` (`api_url`, `rest_nonce`) y llama a `wp_set_script_translations()`. Sustituye a `Admin\SettingsPage` (Settings API clásica, retirada en la migración a React — `docs/PENDING-ADMIN-UI-REACT.md`) |
+| `Api\SettingsApi` | `src/Api/SettingsApi.php` | Rutas REST `GET`/`POST /bbk_postview/v1/settings` y `DELETE /bbk_postview/v1/settings/data`, capability `manage_options` — backend de la app React. El `GET` añade al `Settings::get_all()` el contexto de solo lectura que el formulario necesita (`available_post_types`, `available_roles`, `bot_signature_examples`, `has_object_cache`, `daily_data_since`); el `POST` reutiliza `Settings::sanitize()`; el `DELETE` reutiliza el mismo flujo que tenía `SettingsPage::handle_reset_data()` (`Db::drop_tables()` + `Db::remove_all_post_meta()` + `Schema::activate(false)`), ahora sin el `admin-post.php`/redirect. Separada de `Api\RestApi` por el mismo precedente que `Api\TrendsApi`: concern de administración con capability, no el contador público anónimo |
 | `Admin\PostListColumns` | `src/Admin/PostListColumns.php` | Columnas «Views»/«Last view» en el listado admin de cada CPT habilitado (`docs/ANALYTICS-PLAN.md` §3.5). Muestra el espejo en post meta (sin queries extra — ya precargado por la lista de WP); ordena con un `LEFT JOIN` directo a `bbk_post_views` vía `posts_join`/`posts_orderby`, no con un `CAST` sobre `postmeta` |
 | `Cli\ViewsCommand` | `src/Cli/ViewsCommand.php` | Comandos `wp bbk-views top/stale/post <id>` (`docs/ANALYTICS-PLAN.md` §4.4) — envoltorios de formato (`WP_CLI\Utils\format_items()`) sobre `Core\Query`, registrados solo si `WP_CLI` está definido |
 | `Mcp\SatelliteConnector` | `src/Mcp/SatelliteConnector.php` | Conector satélite del hub `bubuku-mcp-conex` — detecta el hub (`class_exists('\BubukuConex\Registry')`), declara el satélite, registra las tools (carga perezosa) y aporta la entrada de catálogo. Sin hub activo: no hace nada, ni fatal ni aviso — diverge del skill `wp-mcp-conex` a propósito (plugin público, hub siempre opcional). Se cablea en `Core\Plugin::init_mcp_satellite()`, hookeado a `init` (no a `plugins_loaded`, para no cargar el text domain demasiado pronto) |
@@ -45,7 +47,7 @@ Composer (`composer.json`) se usa **solo como tooling de desarrollo**: PHPCS, PH
 | `Mcp\Tools\GetAiTraffic` | `src/Mcp/Tools/GetAiTraffic.php` | Tool `bubuku-views/get-ai-traffic` — delega en `Core\Query::ai_traffic()` (F6, referidos por IA + rastreo de crawlers de IA, en bloques separados) |
 | `Frontend\ViewsDisplay` | `src/Frontend/ViewsDisplay.php` | Renderizado "N vistas" (+ fecha de última visita opcional) compartido por el shortcode y el bloque — sin hooks propios, un único método estático. Cadena vacía si el CPT no está habilitado o el post no es público |
 | `Frontend\Shortcode` | `src/Frontend/Shortcode.php` | Registra `[bbk_post_views]` (`post_id`, `show_last_viewed`); delega en `Frontend\ViewsDisplay` |
-| `Frontend\Block` | `src/Frontend/Block.php` | Registra el bloque `bubuku/post-views` desde `assets/blocks/post-views/` en `init`; el `render_callback` (en `render.php`) delega en `Frontend\ViewsDisplay` |
+| `Frontend\Block` | `src/Frontend/Block.php` | Registra el bloque `bubuku/post-views` desde `assets/build/blocks/post-views/` (compilado desde `assets/src/blocks/post-views/` — `docs/PENDING-ADMIN-UI-REACT.md` Fase 7) en `init`; el `render_callback` (en `render.php`) delega en `Frontend\ViewsDisplay` |
 | `Frontend\AiCrawlerTracker` | `src/Frontend/AiCrawlerTracker.php` | Contador server-side de crawlers de IA (F6), enganchado a `template_redirect` — opt-in (`Settings::ai_crawler_tracking()`, desactivado por defecto), inspecciona el User-Agent contra `Core\AiCrawlers::detect()` y delega en `Core\Db::record_ai_crawl()`. Nunca toca las tablas de vistas humanas |
 
 Las siete tools extienden `BubukuConex\Abstract_Satellite_Tool` (clase del hub), así que solo pueden cargarse con el hub presente — el autoloader propio del plugin (`bbk_autoload`) ya es perezoso por diseño (`spl_autoload_register`), así que basta con instanciarlas solo dentro de `SatelliteConnector::register_tools()` para cumplir esa regla del contrato, sin mecanismo adicional.
@@ -103,25 +105,32 @@ Migración desde la 1.1.x: `Core\Schema::migrate_batch()` copia `postmeta.views`
 
 Deduplicación de visitas: transients `bbk_view_{md5(post_id|ip|user_agent)}` con TTL de 30 minutos (`Api\RestApi::DEDUPE_TTL`), no post meta ni tabla.
 
-## JavaScript — `assets/js/`
+## JavaScript — `assets/js/` y `assets/src/`
 
-No hay build step ni `assets/src/` — todo el JS del plugin es plano, servido directamente, sin proceso de compilación:
+El contador público sigue sin build step — `assets/js/common.js`, servido directamente, es
+JS plano deliberadamente (en la ruta crítica de Core Web Vitals). El admin y el bloque
+Gutenberg sí tienen build step (`@wordpress/scripts` + `webpack.config.js` en la raíz —
+`docs/PENDING-ADMIN-UI-REACT.md`):
 
 - `assets/js/common.js` — el script de conteo frontend, encolado con `strategy => defer` e `in_footer => true`. Calcula `viewport` (bucket de `window.innerWidth`) y `referrer` (clasificación de `document.referrer` vs `location.host`, F5) antes de enviar el POST — nunca el ancho exacto ni el host/URL en crudo.
-- `assets/js/admin-stats.js` + `assets/css/admin-stats.css` — gráfica de evolución, comparativa de periodo, listados «en alza»/«en caída» y desglose por dispositivo/procedencia en Ajustes → Post View Count (`docs/ANALYTICS-PLAN.md` F4/F5 UI). `fetch()` contra `GET /bbk_postview/v1/trends`, `GET /bbk_postview/v1/trends/momentum` y `GET /bbk_postview/v1/trends/dims` con el nonce de `wp_rest`; el gráfico se pinta a mano con la Canvas 2D API, sin librería externa. Cada sección se carga y falla de forma independiente. Encolados solo en esa página admin.
-- `assets/blocks/post-views/index.js` — editor script del bloque `bubuku/post-views` (ver más abajo).
+- `assets/src/js/admin/` — app React (`index.js`, `App.js`, `components/`) que sustituye a `admin-stats.js`: `AdminTabs` (Ajustes/Estadísticas), `SettingsPanel` (los 8 campos, sobre `Api\SettingsApi`) y `StatsPanel` (evolución, momentum, dims, tráfico de IA, sobre `Api\TrendsApi` — cero backend nuevo; `TrendChart.js` porta el Canvas 2D de `admin-stats.js` verbatim, con `useRef`/`useEffect` en vez de `DOMContentLoaded`). Compila a `assets/build/admin.js` + `style-admin.css` + `admin.asset.php` (`npm run build`).
+- `assets/src/blocks/post-views/` — fuente JSX del bloque (ver más abajo), compila a `assets/build/blocks/post-views/`.
 
-## Bloque de Gutenberg — `assets/blocks/post-views/`
+## Bloque de Gutenberg — `assets/src/blocks/post-views/` → `assets/build/blocks/post-views/`
 
-Bloque `bubuku/post-views`, deliberadamente **sin build step** (decisión tomada junto con el
-usuario al implementar la UI de F4 — ver `docs/ANALYTICS-PLAN.md`):
+Bloque `bubuku/post-views`, con build step desde `docs/PENDING-ADMIN-UI-REACT.md` Fase 7
+(antes era JS plano sin build, ver `docs/CHANGELOG.md` para el historial):
 
-| Archivo | Rol |
+| Archivo (fuente en `assets/src/blocks/post-views/`) | Rol |
 |---|---|
-| `block.json` | Metadatos estáticos; `editorScript: "file:./index.js"`, `render: "file:./render.php"` |
-| `index.js` | JS plano (sin JSX): `wp.blocks.registerBlockType` + `wp.element.createElement`; usa el componente core `ServerSideRender` para previsualizar en el editor el mismo render que ve el frontend |
-| `index.asset.php` | Manifiesto de dependencias escrito a mano (`wp-blocks`, `wp-element`, `wp-block-editor`, `wp-components`, `wp-server-side-render`, `wp-i18n`) — el equivalente manual de lo que generaría `@wordpress/scripts`; WordPress ya sabe leerlo junto a un `editorScript` de tipo `file:` sin configuración adicional |
-| `render.php` | `render_callback` del bloque — delega en `Frontend\ViewsDisplay::render()`, igual que el shortcode |
+| `block.json` | Metadatos estáticos; `editorScript: "file:./index.js"`, `render: "file:./render.php"`. Copiado tal cual al build (`--webpack-copy-php`) |
+| `index.js` | JSX real: `registerBlockType` + `InspectorControls`/`PanelBody`/`ToggleControl` de `@wordpress/components`, y `ServerSideRender` para previsualizar en el editor el mismo render que ve el frontend |
+| `render.php` | `render_callback` del bloque — delega en `Frontend\ViewsDisplay::render()`, igual que el shortcode. Copiado tal cual al build |
+
+`assets/build/blocks/post-views/index.asset.php` lo genera `npm run build:blocks`
+(`wp-scripts build --webpack-copy-php --config node_modules/@wordpress/scripts/config/webpack.config.js --webpack-src-dir=assets/src/blocks --output-path=assets/build/blocks`)
+— ya no se escribe a mano. `Frontend\Block::register()` apunta a la carpeta compilada y no
+registra el bloque si `assets/build/blocks/post-views/block.json` no existe (build pendiente).
 
 ## Tests
 
@@ -177,6 +186,7 @@ bubuku-post-view-count/
 │  ├─ Api/
 │  │  ├─ RestApi.php
 │  │  ├─ TrendsApi.php
+│  │  ├─ SettingsApi.php
 │  │  └─ index.php
 │  ├─ Frontend/
 │  │  ├─ Assets.php
@@ -187,7 +197,8 @@ bubuku-post-view-count/
 │  │  └─ index.php
 │  ├─ Admin/
 │  │  ├─ Settings.php
-│  │  ├─ SettingsPage.php
+│  │  ├─ Admin.php
+│  │  ├─ AdminPage.php
 │  │  ├─ PostListColumns.php
 │  │  └─ index.php
 │  ├─ Mcp/
@@ -209,16 +220,16 @@ bubuku-post-view-count/
 │  └─ index.php
 ├─ assets/
 │  ├─ js/
-│  │  ├─ common.js               Sin build step — JS plano
-│  │  └─ admin-stats.js          Gráfica/comparativa/dims de F4-F5 — JS plano
-│  ├─ css/
-│  │  └─ admin-stats.css
-│  └─ blocks/
-│     └─ post-views/             Bloque bubuku/post-views — sin build step
-│        ├─ block.json
-│        ├─ index.js
-│        ├─ index.asset.php      Manifiesto de dependencias escrito a mano
-│        └─ render.php
+│  │  └─ common.js               Sin build step — JS plano (Core Web Vitals)
+│  ├─ src/                       Fuente humana del admin/bloque — build con npm
+│  │  ├─ js/admin/                index.js, App.js, components/{AdminTabs,
+│  │  │                           HeaderMain,FooterMain,DashboardCard,DataTable,
+│  │  │                           SaveBar,SettingsPanel,StatsPanel,TrendChart}.js
+│  │  ├─ scss/admin/              style.scss, config/, base/, components/
+│  │  └─ blocks/post-views/       block.json, index.js (JSX), render.php
+│  └─ build/                      Generado por `npm run build` — no se edita
+│     ├─ admin.js / style-admin.css / admin.asset.php
+│     └─ blocks/post-views/       block.json, index.js, index.asset.php, render.php
 ├─ Tests/                        Tests dependency-free (sin PHPUnit)
 │  ├─ bootstrap.php               Stubs mínimos de WordPress
 │  ├─ run.php
@@ -242,6 +253,10 @@ bubuku-post-view-count/
 ├─ GEMINI.md                     @AGENTS.md
 ├─ .github/copilot-instructions.md
 ├─ composer.json / composer.lock
+├─ package.json / package-lock.json
+├─ webpack.config.js             Entrada `admin`; el bloque usa el config por
+│                                 defecto de wp-scripts (ver npm run build:blocks)
+├─ node_modules/                 No se distribuye (.distignore)
 ├─ phpcs.xml
 ├─ readme.txt
 ├─ uninstall.php                 Borra el post meta `views` al desinstalar

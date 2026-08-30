@@ -1,0 +1,56 @@
+// Capa 1 — VALORES. Único sitio con hex en todo el admin del plugin.
+// Paleta del brand Bubuku DS 2026 (bk26/theme.json).
+// Regla: si un componente necesita un tono que no está aquí,
+// se añade aquí, no en su .scss.
+// Origen: docs/PENDING_rebrand-admin-bk26.md del plugin Bubuku Media Library
+// (primer plugin migrado a este brand; sirve de referencia si hace falta
+// ampliar esta paleta).
+#bbk-postview-app {
+	// ---- Paleta base (bk26 theme.json → settings.color.palette) ----
+	--primary: #239295;
+	--primary-dark: #1f8288;
+	--accent: #ffc629;
+	--accent-dark: #e8a100;
+	--text: #132633;
+	--text-light: #22394a;
+	--text-muted: #54707e;
+	--border: #dce7f0;
+	--border-strong: #c3d4e0;
+	--background: #eff4f8;
+	--surface: #fff;
+	--bg-cool: #e7f3f3; // preset "cool"
+
+	// ---- Estado (bk26 theme.json → settings.custom.color) ----
+	--green-500: #1f9d6b;
+	--green-600: #177a52; // hover de --green-500, un escalón más oscuro
+	--red-500: #d1503c;
+
+	// ---- Tintes de estado — el DS los congela en 10 colores, no expone tintes.
+	// Se derivan aquí una sola vez (mismo criterio que bk26/_tokens.scss). ----
+	--green-100: #ecfdf5; // fondo de tarjeta/notice "good"
+	--green-300: #a7d9c4; // borde entre --green-100 y --green-500
+	--green-700: #065f46; // texto/etiqueta sobre --green-100 — AA verificado
+	--red-100: #fef2f2; // fondo de tarjeta/notice "bad"
+	--red-300: #f3b4ab; // borde entre --red-100 y --red-500
+	--red-700: #7f1d1d; // texto/etiqueta sobre --red-100 — AA verificado
+	--amber-100: #fff3ce; // preset "warm" — wash cálido de fondo
+	--amber-700: #92400e; // texto/etiqueta sobre fondo cálido — AA verificado.
+	// --accent (#FFC629) no es legible como texto: todo texto/ícono que
+	// antes usaba --warning como color de primer plano pasa a --amber-700,
+	// nunca a --accent.
+
+	// ---- Sombra (bk26 theme.json → settings.shadow.presets) ----
+	--shadow-pluma: 0 1px 2px rgba(19, 38, 51, 0.06), 0 2px 8px rgba(19, 38, 51, 0.05);
+	--shadow-profunda: 0 4px 12px rgba(19, 38, 51, 0.08), 0 32px 64px -16px rgba(31, 130, 136, 0.22);
+	--shadow-panel: 0 0 0 1px rgba(19, 38, 51, 0.06), 0 16px 48px -12px rgba(19, 38, 51, 0.18);
+
+	// ---- Radio, foco, transición (bk26 theme.json → settings.custom) ----
+	--radius-button: 8px;
+	--radius-medium: 10px;
+	--radius-large: 16px;
+	--focus-ring: 0 0 0 3px rgba(35, 146, 149, 0.2);
+	--transition-fast: 150ms cubic-bezier(0.3, 0, 0.2, 1);
+	--transition-base: 280ms cubic-bezier(0.3, 0, 0.2, 1);
+
+	--code-bg: #eaf0f5; // bk26 --ink-100
+}

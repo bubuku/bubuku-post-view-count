@@ -58,8 +58,8 @@ class Settings {
 	 * `attachment` ("Media"): attachments are not standalone content a visitor
 	 * browses to like a post or page, and WordPress core marks them `public`
 	 * regardless, so they would otherwise show up as a selectable content type.
-	 * Single source of truth for both the settings page checkboxes
-	 * (`SettingsPage::field_post_types()`) and the `sanitize()` whitelist below.
+	 * Single source of truth for both the React settings form checkboxes
+	 * (`Api\SettingsApi::get_settings()`) and the `sanitize()` whitelist below.
 	 *
 	 * @return array<string, \WP_Post_Type>
 	 */

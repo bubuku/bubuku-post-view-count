@@ -50,6 +50,19 @@ if [[ ! -f "${DISTIGNORE}" ]]; then
     warn ".distignore not found — all files will be included"
 fi
 
+# ─── Build JS/CSS assets ───────────────────────────────────────────────────────
+info "Installing npm dependencies and building assets..."
+(
+    cd "${PLUGIN_DIR}"
+    npm ci
+    npm run build
+)
+
+if [[ ! -d "${PLUGIN_DIR}/assets/build" ]]; then
+    fail "assets/build/ not found after npm run build — aborting"
+fi
+ok "Assets built"
+
 # ─── Prepare dist/ ────────────────────────────────────────────────────────────
 info "Preparing dist/ directory..."
 mkdir -p "${DIST_DIR}"

@@ -1,0 +1,56 @@
+.bbk-two-columns {
+	display: flex;
+	gap: 32px;
+
+	> div {
+		flex: 1;
+		min-width: 0;
+	}
+
+	h3 {
+		font-size: 13px;
+		font-weight: 600;
+		color: var(--text-heading);
+		margin: 0 0 10px;
+	}
+
+	@media screen and (max-width: 782px) {
+		flex-direction: column;
+		gap: 24px;
+	}
+}
+
+.bbk-trend-chart {
+	max-width: 900px;
+}
+
+.bbk-trend-chart__canvas {
+	display: block;
+	width: 100%;
+	height: auto;
+	background: var(--surface-card);
+	border: 1px solid var(--border-card);
+	border-radius: var(--radius-button);
+}
+
+.bbk-trend-chart__comparison {
+	font-size: 13px;
+	color: var(--text-muted);
+	margin: 0 0 10px;
+}
+
+.card-header-meta {
+
+	select.bbk-input {
+		border: 1.5px solid var(--border-card);
+		border-radius: var(--radius-button);
+		padding: 6px 10px;
+		box-shadow: none;
+		outline: none;
+
+		&:focus {
+			border-color: var(--brand);
+			box-shadow: var(--focus-ring);
+		}
+	}
+}

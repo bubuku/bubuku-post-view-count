@@ -1,0 +1,94 @@
+// Reusable results table — pairs with components/DataTable.js.
+// All colors come from the --bk-* design tokens, so it inherits each
+// plugin's branding.
+
+.bk-data-table {
+	// Allow horizontal scroll on narrow viewports without breaking layout.
+	overflow-x: auto;
+	border: 1px solid var(--border-card);
+	border-radius: var(--radius-button);
+	background: var(--surface-card);
+
+	&__table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 13px;
+
+		th,
+		td {
+			padding: 10px 14px;
+			text-align: left;
+			vertical-align: top;
+		}
+
+		thead th {
+			background: var(--brand-soft);
+			border-bottom: 1px solid var(--separator);
+			font-weight: 600;
+			color: var(--text-heading);
+			white-space: nowrap;
+		}
+
+		tbody tr {
+			border-bottom: 1px solid var(--border-card);
+
+			&:last-child {
+				border-bottom: none;
+			}
+
+			&:hover {
+				background: rgba(35, 146, 149, 0.05);
+			}
+		}
+
+		td {
+			color: var(--text-muted);
+		}
+
+		a {
+			color: var(--brand);
+			text-decoration: none;
+			font-weight: 500;
+
+			&:hover {
+				color: var(--brand-hover);
+				text-decoration: underline;
+			}
+		}
+
+		code {
+			background: var(--code-bg);
+			border-radius: 4px;
+			padding: 2px 6px;
+			font-size: 12px;
+			color: var(--text-heading);
+			word-break: break-word;
+		}
+	}
+
+	// Right-align numeric columns (set `numeric: true` on the column definition).
+	&__num {
+		text-align: right;
+		white-space: nowrap;
+	}
+
+	// Pill badge — use inside a column `render` for tags/types/status.
+	&__badge {
+		display: inline-block;
+		background: var(--brand-soft);
+		color: var(--brand-hover);
+		border: 1px solid var(--separator);
+		border-radius: 10px;
+		padding: 2px 10px;
+		font-size: 11px;
+		font-weight: 600;
+		white-space: nowrap;
+	}
+
+	// Empty-state message (shown when `emptyLabel` is set and there are no rows).
+	&__empty {
+		margin: 0;
+		color: var(--text-muted);
+		font-size: 13px;
+	}
+}

@@ -32,7 +32,11 @@ README.md
 /node_modules/
 /vendor/
 /dist/
-/assets/src
+
+# /assets/src is intentionally NOT excluded here: it ships human-readable
+# source for the minified assets/build/ output, satisfying WordPress.org
+# guideline 3 (no obfuscated/minified-only code) without maintaining an
+# external source link in readme.txt.
 
 # Package managers
 composer.json

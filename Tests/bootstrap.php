@@ -70,6 +70,13 @@ namespace {
 			return $this->params[ $key ] ?? null;
 		}
 
+		/**
+		 * @return array<string, mixed>
+		 */
+		public function get_json_params(): array {
+			return $this->params;
+		}
+
 		public function get_header( string $key ): string {
 			// Mirrors WP_REST_Request::get_header(): header keys are normalized
 			// to underscores, so lookups work regardless of "-" or "_" in $key.
@@ -122,12 +129,36 @@ namespace {
 		return true;
 	}
 
+	function wp_schedule_single_event(): bool {
+		return true;
+	}
+
 	function wp_clear_scheduled_hook(): bool {
 		return true;
 	}
 
 	function wp_using_ext_object_cache(): bool {
 		return TestState::$ext_object_cache;
+	}
+
+	function is_multisite(): bool {
+		return false;
+	}
+
+	/**
+	 * Stand-in for wp-admin/includes/upgrade.php's dbDelta(): schema creation
+	 * isn't exercised by this dependency-free suite (no real database), so it's
+	 * a no-op — Schema::create_tables() still requires ABSPATH . 'wp-admin/
+	 * includes/upgrade.php' (see Tests/wp-admin/includes/upgrade.php), which is
+	 * why this is defined before that require runs.
+	 *
+	 * @param string $sql Unused.
+	 * @return array
+	 */
+	function dbDelta( string $sql ): array {
+		unset( $sql );
+
+		return array();
 	}
 
 	function wp_cache_add( string $key, $value, string $group, int $ttl = 0 ): bool {
@@ -366,6 +397,10 @@ namespace {
 			),
 		);
 	}
+
+	function translate_user_role( string $name ): string {
+		return $name;
+	}
 }
 
 namespace Bubuku\Plugins\PostViewCount {
@@ -466,6 +501,10 @@ namespace Bubuku\Plugins\PostViewCount {
 
 		public function esc_like( string $text ): string {
 			return addcslashes( $text, '_%\\' );
+		}
+
+		public function get_charset_collate(): string {
+			return '';
 		}
 
 		public function query( string $query ) {
@@ -607,6 +646,7 @@ namespace Bubuku\Plugins\PostViewCount {
 	require_once dirname( __DIR__ ) . '/src/Core/WriteBuffer.php';
 	require_once dirname( __DIR__ ) . '/src/Api/RestApi.php';
 	require_once dirname( __DIR__ ) . '/src/Api/TrendsApi.php';
+	require_once dirname( __DIR__ ) . '/src/Api/SettingsApi.php';
 	require_once dirname( __DIR__ ) . '/src/Core/Query.php';
 	require_once dirname( __DIR__ ) . '/src/Frontend/ViewsDisplay.php';
 }

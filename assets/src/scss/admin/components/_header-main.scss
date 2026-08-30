@@ -1,0 +1,42 @@
+.bk-header-main {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	margin-bottom: 36px;
+	animation: bk-fadeDown 0.5s ease both;
+
+	.bk-icon {
+		width: 48px;
+		height: 48px;
+		background: var(--brand);
+		border-radius: var(--radius-button);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		box-shadow: 0 4px 12px rgba(35, 146, 149, 0.3);
+
+		svg {
+			color: var(--text-invert);
+		}
+	}
+
+	.bk-title {
+		font-size: 22px;
+		font-weight: 600;
+		color: var(--text-heading);
+		letter-spacing: -0.3px;
+		margin: 0;
+		padding: 0;
+
+		span {
+			color: var(--brand);
+		}
+	}
+
+	.bk-subtitle {
+		font-size: 13.5px;
+		color: var(--text-muted);
+		margin: 0;
+	}
+}

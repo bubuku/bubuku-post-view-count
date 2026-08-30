@@ -1,0 +1,31 @@
+// Capa 2 — ROLES. Solo renombra la capa 1; no declara ningún valor nuevo.
+// Copiado de la API de bk26/_aliases.scss para que portar SCSS desde el tema
+// sea copiar-pegar. Todo componente de este admin consume SOLO estos nombres.
+#bbk-postview-app {
+	// ---- Marca y CTA ----
+	--brand: var(--primary);
+	--brand-hover: var(--primary-dark);
+	--brand-soft: var(--bg-cool);
+	--cta: var(--accent);
+	--cta-hover: var(--accent-dark);
+	--cta-ink: var(--text);
+
+	// ---- Lienzos ----
+	--bg-page: var(--background);
+	--surface-card: var(--surface);
+	--surface-sunken: var(--background);
+
+	// ---- Texto ----
+	--text-heading: var(--text);
+	--text-body: var(--text-light);
+	--text-invert: var(--surface);
+
+	// ---- Bordes ----
+	--border-card: var(--border);
+
+	// ---- Compatibilidad con el token --separator del boilerplate original
+	// (usado en _data-table.scss para el borde de thead/badge). Mismo valor
+	// que --border-strong: un escalón por debajo de --border, para que se
+	// lea como filete sobre un fondo casi blanco.
+	--separator: var(--border-strong);
+}

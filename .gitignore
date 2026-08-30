@@ -2,8 +2,11 @@
 # Not needed at runtime; never required in the distributed package either.
 /vendor/
 
-# Node dependencies, if the project ever adds an npm-based asset build.
+# Node dependencies.
 /node_modules/
+
+# Compiled JS/CSS assets (npm run build) — built in CI, not committed.
+/assets/build/
 
 # Build output (scripts/build.sh).
 /dist/

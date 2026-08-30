@@ -1,0 +1,25 @@
+.bbk-notice {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 14px;
+	border-radius: var(--radius-button);
+	font-size: 0.85rem;
+	margin: 0;
+
+	svg {
+		flex-shrink: 0;
+	}
+
+	&--green-500 {
+		background: var(--green-100);
+		border: 1.5px solid var(--green-300);
+		color: var(--green-700);
+	}
+
+	&--error {
+		background: var(--red-100);
+		border: 1.5px solid var(--red-300);
+		color: var(--red-700);
+	}
+}

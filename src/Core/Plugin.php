@@ -12,9 +12,10 @@ declare( strict_types=1 );
 
 namespace Bubuku\Plugins\PostViewCount\Core;
 
+use Bubuku\Plugins\PostViewCount\Admin\Admin as AdminController;
 use Bubuku\Plugins\PostViewCount\Admin\PostListColumns;
-use Bubuku\Plugins\PostViewCount\Admin\SettingsPage;
 use Bubuku\Plugins\PostViewCount\Api\RestApi;
+use Bubuku\Plugins\PostViewCount\Api\SettingsApi;
 use Bubuku\Plugins\PostViewCount\Api\TrendsApi;
 use Bubuku\Plugins\PostViewCount\Frontend\AiCrawlerTracker;
 use Bubuku\Plugins\PostViewCount\Frontend\Assets;
@@ -54,12 +55,13 @@ class Plugin {
 		new Assets();
 		new RestApi();
 		new TrendsApi();
+		new SettingsApi();
 		new Shortcode();
 		new Block();
 		new AiCrawlerTracker();
 
 		if ( is_admin() ) {
-			new SettingsPage();
+			( new AdminController( 'bubuku-post-view-count', BBK_PLUGIN_VERSION ) )->register();
 			new PostListColumns();
 		}
 

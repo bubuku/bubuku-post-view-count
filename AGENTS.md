@@ -99,7 +99,7 @@ bash scripts/build.sh                # genera dist/bubuku-post-view-count-{versi
 
 - Itera sobre código existente antes de escribir desde cero — el plugin es intencionalmente pequeño (5 clases); no añadas capas ni abstracciones sin necesidad concreta.
 - Nunca duplicar lógica — comprobar si ya existe en `Core\Db`, `Core\Schema`, `Api\RestApi` o `Frontend\Assets`.
-- No hay build step de JS/CSS: `assets/js/common.js` es JS plano, se edita directamente.
+- El plugin tiene build step (`@wordpress/scripts` + webpack) para el admin React (`assets/src/js/admin` → `assets/build/`) y para el bloque Gutenberg (`assets/src/blocks/post-views` → `assets/build/blocks/post-views`). `assets/js/common.js` (el contador público, en la ruta crítica de Core Web Vitals) sigue siendo JS plano intencionalmente, editado directamente, fuera del build.
 
 ### Seguridad (resumen — detalle en `wp-security`)
 

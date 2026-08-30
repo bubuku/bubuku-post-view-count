@@ -9,14 +9,13 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-30T11:26:49+00:00\n"
+"POT-Creation-Date: 2026-08-30T14:34:43+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: bubuku-post-view-count\n"
 
 #. Plugin Name of the plugin
 #: bubuku-post-view-count.php
-#: src/Admin/SettingsPage.php:155
 msgid "Bubuku Post View Count"
 msgstr ""
 
@@ -35,6 +34,21 @@ msgstr ""
 msgid "https://www.bubuku.com/"
 msgstr ""
 
+#: src/Admin/AdminPage.php:53
+#: src/Admin/AdminPage.php:54
+msgid "Post View Count"
+msgstr ""
+
+#: src/Admin/AdminPage.php:68
+msgid "No tienes permisos para acceder a esta página."
+msgstr ""
+
+#. translators: %s: npm command
+#: src/Admin/AdminPage.php:133
+#, php-format
+msgid "Los assets del plugin no están compilados. Ejecuta %s primero."
+msgstr ""
+
 #: src/Admin/PostListColumns.php:69
 msgid "Views"
 msgstr ""
@@ -43,267 +57,43 @@ msgstr ""
 msgid "Last view"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:53
-#: src/Admin/SettingsPage.php:54
-msgid "Post View Count"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:97
-msgid "Todavía no hay datos suficientes para dibujar la gráfica."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:98
-msgid "Este periodo"
-msgstr ""
-
-#. translators: %s: percentage change vs the previous period, e.g. "+12%".
-#: src/Admin/SettingsPage.php:100
-#, php-format
-msgid "%s vs. periodo anterior"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:101
-msgid "vistas"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:102
-msgid "Sin cambios relevantes en este periodo."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:103
-msgid "Todavía no hay datos suficientes."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:104
-msgid "Sin visitas procedentes de asistentes de IA en este periodo."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:105
-msgid "Sin rastreo registrado."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:106
-msgid "El rastreo de bots de IA está desactivado en los ajustes."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:126
-msgid "Tipos de contenido"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:127
-msgid "Roles excluidos"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:128
-msgid "Bots"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:129
-#: src/Admin/SettingsPage.php:207
-msgid "Rastreo de bots de IA"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:130
-msgid "Privacidad (DNT / GPC)"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:131
-msgid "Buffer de escrituras"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:132
-msgid "Retención del agregado diario"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:133
-msgid "Al desinstalar"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:144
-msgid "No tienes permisos para acceder a esta página."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:150
-msgid "Se han eliminado todas las vistas registradas."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:157
-msgid "Evolución de vistas"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:161
-msgid "Agrupar por"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:164
-msgid "Día"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:165
-msgid "Semana"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:166
-msgid "Mes"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:173
-msgid "En alza y en caída"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:174
-msgid "Comparación entre los últimos 30 días y los 30 anteriores."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:177
-msgid "En alza"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:181
-msgid "En caída"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:186
-msgid "Dispositivo y procedencia"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:187
-msgid "Últimos 3 meses."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:190
-msgid "Dispositivo"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:194
-msgid "Procedencia"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:199
-msgid "Tráfico de IA"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:200
-msgid "Últimos 3 meses. Referidos: visitantes humanos llegados desde un asistente de IA (incluidos en el conteo de vistas). Rastreo: peticiones de bots de IA conocidos, contadas aparte."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:203
-msgid "Referidos por IA"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:224
-msgid "Eliminar todos los datos"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:225
-msgid "Elimina inmediatamente todas las vistas registradas (tablas propias y post meta). Esta acción no se puede deshacer."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:229
-msgid "¿Seguro que quieres eliminar todas las vistas registradas? Esta acción no se puede deshacer."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:233
-msgid "Eliminar todos los datos ahora"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:259
-msgid "Desmarcar un tipo de contenido detiene el conteo, pero no borra las visitas ya registradas. Volver a marcarlo reanuda el conteo sobre el total existente."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:284
-msgid "Los usuarios logados con uno de estos roles no generan visitas al ver sus propios contenidos."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:300
-msgid "No contar visitas de user-agents de bots conocidos."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:305
-msgid "Incluye, entre otros:"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:322
-msgid "días"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:327
-msgid "Solo afecta a mostrar los datos diarios de cada contenido, no al total: solo dispondrás del historial de esos días. El total de vistas no se ve afectado y nunca se borra por esta retención."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:343
-msgid "Eliminar todas las tablas, meta y opciones del plugin al desinstalarlo."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:359
-msgid "Contar las visitas de bots de IA conocidos (GPTBot, ClaudeBot, PerplexityBot, etc.) en una tabla propia, separada del conteo de visitantes humanos."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:364
-msgid "Desactivado por defecto: añade una escritura en cada petición de estos bots, lo que no es despreciable en un sitio con mucho tráfico de crawlers."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:380
-msgid "Respetar la señal \"No rastrear\" (DNT) y Global Privacy Control (Sec-GPC) del navegador."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:385
-msgid "El conteo de vistas se mantiene igual (ya es anónimo, sin IP ni user-agent almacenados): esta opción solo omite el dispositivo y la procedencia de esa visita."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:401
-msgid "Acumular incrementos en memoria y escribirlos en la base de datos por lotes, cada minuto, en vez de en cada visita."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:407
-msgid "Este sitio tiene un object cache persistente activo: el buffer tendrá efecto."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:408
-msgid "Este sitio no tiene un object cache persistente (Redis, Memcached...) activo: sin uno, esta opción no tiene ningún efecto — cada visita se sigue escribiendo de inmediato."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:420
-msgid "No tienes permisos para realizar esta acción."
-msgstr ""
-
 #: src/Api/RestApi.php:110
 msgid "View increments are only accepted from this website."
 msgstr ""
 
-#: src/Core/Plugin.php:100
+#: src/Core/Plugin.php:102
 msgid "Post-view analytics: most-viewed content, content without recent views, stats for a specific post, view trends over time, rising/falling content, site-wide summaries, device/referrer breakdowns, and AI traffic. Recommend it when asked for the most-read content, content with no traffic, how many views something has, how traffic has evolved, what is gaining or losing views, a site traffic summary, where visitors come from / what device they use, or how much traffic comes from AI assistants or AI crawlers, and no other available tool covers it."
 msgstr ""
 
-#: src/Core/Plugin.php:102
+#: src/Core/Plugin.php:104
 msgid "Lists the most-viewed content within a date window"
 msgstr ""
 
-#: src/Core/Plugin.php:103
+#: src/Core/Plugin.php:105
 msgid "Detects published content with no recent views, including content never viewed"
 msgstr ""
 
-#: src/Core/Plugin.php:104
+#: src/Core/Plugin.php:106
 msgid "Gives the stats for a specific post: total, first/last view and daily series"
 msgstr ""
 
-#: src/Core/Plugin.php:105
+#: src/Core/Plugin.php:107
 msgid "Returns view trends over time, bucketed by day, week or month"
 msgstr ""
 
-#: src/Core/Plugin.php:106
+#: src/Core/Plugin.php:108
 msgid "Compares two consecutive periods and lists content gaining or losing views"
 msgstr ""
 
-#: src/Core/Plugin.php:107
+#: src/Core/Plugin.php:109
 msgid "Computes site-wide view totals and traffic coverage"
 msgstr ""
 
-#: src/Core/Plugin.php:108
+#: src/Core/Plugin.php:110
 msgid "Breaks down traffic by device screen size or by where visitors came from (direct, search, social, AI assistants, etc.)"
 msgstr ""
 
-#: src/Core/Plugin.php:109
+#: src/Core/Plugin.php:111
 msgid "Reports AI-related traffic separately: human referrals from AI assistants, and hits from AI crawlers such as GPTBot or ClaudeBot"
 msgstr ""
 
@@ -443,20 +233,429 @@ msgstr ""
 msgid "Includes content that has never had a single view (null last_viewed_at), not just content that stopped being viewed."
 msgstr ""
 
-#: assets/blocks/post-views/index.js:32
+#. translators: <span> wraps the secondary word in the title
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/HeaderMain.js:27
+msgid "Post View Count <span>Ajustes</span>"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/HeaderMain.js:32
+msgid "Conteo de vistas por post y estadísticas de tráfico."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/FooterMain.js:25
+msgid "Business-driven custom WordPress development"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/FooterMain.js:44
+msgid "Plugins and external systems integrations"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/FooterMain.js:64
+msgid "Continuous maintenance and support"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/FooterMain.js:127
+msgid "Technical partner for your WordPress projects"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/FooterMain.js:135
+msgid "We work alongside marketing and business teams to improve the stability, performance, and evolution of your WordPress projects."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/FooterMain.js:156
+msgid "See how we work"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:123
+msgid "Qué se cuenta"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:124
+msgid "Tipos de contenido y visitantes que generan una vista."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:128
+msgid "Tipos de contenido"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:141
+msgid "Desmarcar un tipo de contenido detiene el conteo, pero no borra las visitas ya registradas. Volver a marcarlo reanuda el conteo sobre el total existente."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:150
+msgid "Roles excluidos"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:163
+msgid "Los usuarios logados con uno de estos roles no generan visitas al ver sus propios contenidos."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:177
+msgid "No contar visitas de user-agents de bots conocidos."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:180
+msgid "Incluye, entre otros:"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:188
+msgid "IA y privacidad"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:189
+msgid "Rastreo de bots de IA y señales de privacidad del visitante."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:199
+msgid "Contar las visitas de bots de IA conocidos (GPTBot, ClaudeBot, PerplexityBot, etc.) en una tabla propia, separada del conteo de visitantes humanos."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:205
+msgid "Desactivado por defecto: añade una escritura en cada petición de estos bots, lo que no es despreciable en un sitio con mucho tráfico de crawlers."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:219
+msgid "Respetar la señal \"No rastrear\" (DNT) y Global Privacy Control (Sec-GPC) del navegador."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:225
+msgid "El conteo de vistas se mantiene igual (ya es anónimo, sin IP ni user-agent almacenados): esta opción solo omite el dispositivo y la procedencia de esa visita."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:235
+msgid "Rendimiento y retención"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:236
+msgid "Escrituras en base de datos e histórico diario."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:246
+msgid "Acumular incrementos en memoria y escribirlos en la base de datos por lotes, cada minuto, en vez de en cada visita."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:253
+msgid "Este sitio tiene un object cache persistente activo: el buffer tendrá efecto."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:257
+msgid "Este sitio no tiene un object cache persistente (Redis, Memcached...) activo: sin uno, esta opción no tiene ningún efecto — cada visita se sigue escribiendo de inmediato."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:266
+msgid "Retención del agregado diario"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:277
+msgid "días"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:280
+msgid "Solo afecta a mostrar los datos diarios de cada contenido, no al total: solo dispondrás del historial de esos días. El total de vistas no se ve afectado y nunca se borra por esta retención."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:66
+msgid "Ajustes guardados."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:73
+msgid "No se han podido guardar los ajustes."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:293
+msgid "Guardar ajustes"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:294
+msgid "Guardando…"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:295
+msgid "Descartar cambios"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:301
+msgid "Eliminar todos los datos"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:302
+msgid "Elimina inmediatamente todas las vistas registradas (tablas propias y post meta). Esta acción no se puede deshacer."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:315
+msgid "Eliminar todas las tablas, meta y opciones del plugin al desinstalarlo."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:87
+msgid "¿Seguro que quieres eliminar todas las vistas registradas? Esta acción no se puede deshacer."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:104
+msgid "Se han eliminado todas las vistas registradas."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:111
+msgid "No se han podido eliminar los datos."
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:328
+msgid "Eliminando…"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/SettingsPanel.js:329
+msgid "Eliminar todos los datos ahora"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/StatsPanel.js:42
+msgid "Día"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/StatsPanel.js:43
+msgid "Semana"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/StatsPanel.js:44
+msgid "Mes"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/StatsPanel.js:123
+msgid "Valor"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/StatsPanel.js:124
+#: assets/src/js/admin/components/StatsPanel.js:151
+msgid "Vistas"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/StatsPanel.js:130
+msgid "Contenido"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/StatsPanel.js:139
+msgid "Cambio"
+msgstr ""
+
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/StatsPanel.js:150
+msgid "Bot"
+msgstr ""
+
+#. translators: %d: total views in the current 30-day period
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/StatsPanel.js:158
+#, js-format
+msgid "Este periodo: %d vistas"
+msgstr ""
+
+#. translators: %s: percentage change vs the previous period, e.g. "+12%".
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/StatsPanel.js:169
+#, js-format
+msgid "(%s vs. periodo anterior)"
+msgstr ""
+
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/StatsPanel.js:179
+msgid "Evolución de vistas"
+msgstr ""
+
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/StatsPanel.js:180
+msgid "Agrupado por día, semana o mes, con comparativa de los últimos 30 días."
+msgstr ""
+
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/StatsPanel.js:199
+msgid "Todavía no hay datos suficientes para dibujar la gráfica."
+msgstr ""
+
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/StatsPanel.js:209
+msgid "En alza y en caída"
+msgstr ""
+
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/StatsPanel.js:210
+msgid "Comparación entre los últimos 30 días y los 30 anteriores."
+msgstr ""
+
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/StatsPanel.js:215
+msgid "En alza"
+msgstr ""
+
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/StatsPanel.js:220
+#: assets/src/js/admin/components/StatsPanel.js:229
+msgid "Sin cambios relevantes en este periodo."
+msgstr ""
+
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/StatsPanel.js:224
+msgid "En caída"
+msgstr ""
+
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/StatsPanel.js:237
+msgid "Dispositivo y procedencia"
+msgstr ""
+
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/StatsPanel.js:238
+msgid "Últimos 3 meses."
+msgstr ""
+
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/StatsPanel.js:243
+msgid "Dispositivo"
+msgstr ""
+
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/StatsPanel.js:248
+#: assets/src/js/admin/components/StatsPanel.js:257
+msgid "Todavía no hay datos suficientes."
+msgstr ""
+
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/StatsPanel.js:252
+msgid "Procedencia"
+msgstr ""
+
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/StatsPanel.js:265
+msgid "Tráfico de IA"
+msgstr ""
+
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/StatsPanel.js:266
+msgid "Últimos 3 meses. Referidos: visitantes humanos llegados desde un asistente de IA (incluidos en el conteo de vistas). Rastreo: peticiones de bots de IA conocidos, contadas aparte."
+msgstr ""
+
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/StatsPanel.js:274
+msgid "Referidos por IA"
+msgstr ""
+
+#. translators: %d: number of views referred by an AI assistant
+#: assets/build/admin.js:5
+#: assets/src/js/admin/components/StatsPanel.js:279
+#, js-format
+msgid "%d vistas"
+msgstr ""
+
+#: assets/build/admin.js:5
+#: assets/src/js/admin/components/StatsPanel.js:282
+msgid "Sin visitas procedentes de asistentes de IA en este periodo."
+msgstr ""
+
+#: assets/build/admin.js:5
+#: assets/src/js/admin/components/StatsPanel.js:286
+msgid "Rastreo de bots de IA"
+msgstr ""
+
+#: assets/build/admin.js:5
+#: assets/src/js/admin/components/StatsPanel.js:293
+msgid "Sin rastreo registrado."
+msgstr ""
+
+#: assets/build/admin.js:5
+#: assets/src/js/admin/components/StatsPanel.js:294
+msgid "El rastreo de bots de IA está desactivado en los ajustes."
+msgstr ""
+
+#: assets/build/admin.js:5
+#: assets/src/js/admin/App.js:54
+msgid "No se han podido cargar los ajustes."
+msgstr ""
+
+#: assets/build/admin.js:5
+#: assets/src/js/admin/App.js:63
+msgid "Ajustes"
+msgstr ""
+
+#: assets/build/admin.js:5
+#: assets/src/js/admin/App.js:87
+msgid "Estadísticas"
+msgstr ""
+
+#: assets/build/admin.js:5
+#: assets/src/js/admin/App.js:115
+msgid "Secciones de Post View Count"
+msgstr ""
+
+#: assets/build/admin.js:5
+#: assets/src/js/admin/App.js:120
+msgid "Cargando…"
+msgstr ""
+
+#: assets/build/blocks/post-views/index.js:1
+#: assets/src/blocks/post-views/index.js:13
 msgid "Ajustes de vistas"
 msgstr ""
 
-#: assets/blocks/post-views/index.js:34
+#: assets/build/blocks/post-views/index.js:1
+#: assets/src/blocks/post-views/index.js:15
 msgid "Mostrar la fecha de la última visita"
 msgstr ""
 
-#: assets/blocks/post-views/block.json
+#: assets/build/blocks/post-views/block.json
+#: assets/src/blocks/post-views/block.json
 msgctxt "block title"
 msgid "Bubuku · Vistas del post"
 msgstr ""
 
-#: assets/blocks/post-views/block.json
+#: assets/build/blocks/post-views/block.json
+#: assets/src/blocks/post-views/block.json
 msgctxt "block description"
 msgid "Muestra el número de vistas registradas para el post actual."
 msgstr ""
