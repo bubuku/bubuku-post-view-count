@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-31T17:27:35+00:00\n"
+"POT-Creation-Date: 2026-08-31T18:16:09+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: bubuku-post-view-count\n"
@@ -50,9 +50,9 @@ msgid "Plugin assets are not built. Run %s first."
 msgstr ""
 
 #: src/Admin/PostListColumns.php:69
-#: assets/src/js/admin/components/StatsPanel.js:204
-#: assets/src/js/admin/components/StatsPanel.js:238
-#: assets/src/js/admin/components/StatsPanel.js:254
+#: assets/src/js/admin/components/AiReferralsTable.js:42
+#: assets/src/js/admin/components/StatsPanel.js:205
+#: assets/src/js/admin/components/StatsPanel.js:239
 msgid "Views"
 msgstr ""
 
@@ -60,7 +60,7 @@ msgstr ""
 msgid "Last view"
 msgstr ""
 
-#: src/Api/RestApi.php:110
+#: src/Api/RestApi.php:117
 msgid "View increments are only accepted from this website."
 msgstr ""
 
@@ -264,6 +264,34 @@ msgstr ""
 msgid "Loading…"
 msgstr ""
 
+#: assets/src/js/admin/components/AiReferralsTable.js:5
+msgid "ChatGPT"
+msgstr ""
+
+#: assets/src/js/admin/components/AiReferralsTable.js:6
+msgid "Claude"
+msgstr ""
+
+#: assets/src/js/admin/components/AiReferralsTable.js:7
+msgid "Perplexity"
+msgstr ""
+
+#: assets/src/js/admin/components/AiReferralsTable.js:8
+msgid "Copilot"
+msgstr ""
+
+#: assets/src/js/admin/components/AiReferralsTable.js:9
+msgid "Gemini"
+msgstr ""
+
+#: assets/src/js/admin/components/AiReferralsTable.js:10
+msgid "Other AI assistant"
+msgstr ""
+
+#: assets/src/js/admin/components/AiReferralsTable.js:40
+msgid "AI"
+msgstr ""
+
 #: assets/src/js/admin/components/FooterMain.js:25
 msgid "Business-driven custom WordPress development"
 msgstr ""
@@ -437,43 +465,46 @@ msgstr ""
 msgid "Delete all data now"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:129
+#: assets/src/js/admin/components/StatsPanel.js:130
 msgid "Day"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:130
+#: assets/src/js/admin/components/StatsPanel.js:131
 msgid "Week"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:131
+#: assets/src/js/admin/components/StatsPanel.js:132
 msgid "Month"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:201
+#: assets/src/js/admin/components/StatsPanel.js:202
 msgid "Value"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:212
-#: assets/src/js/admin/components/StatsPanel.js:245
+#: assets/src/js/admin/components/StatsPanel.js:213
 msgid "Content"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:221
+#: assets/src/js/admin/components/StatsPanel.js:222
 msgid "Change"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:235
+#: assets/src/js/admin/components/StatsPanel.js:236
 msgid "Bot"
 msgstr ""
 
+#: assets/src/js/admin/components/StatsPanel.js:243
+msgid "Total"
+msgstr ""
+
 #. translators: 1: first displayed date, 2: last displayed date.
-#: assets/src/js/admin/components/StatsPanel.js:278
+#: assets/src/js/admin/components/StatsPanel.js:264
 #, js-format
 msgid "Period shown: from %1$s to %2$s."
 msgstr ""
 
 #. translators: 1: number of views, 2: first available date, 3: grouping unit.
-#: assets/src/js/admin/components/StatsPanel.js:285
+#: assets/src/js/admin/components/StatsPanel.js:271
 #, js-format
 msgid "%1$d view received since %2$s, grouped by %3$s."
 msgid_plural "%1$d views received since %2$s, grouped by %3$s."
@@ -481,102 +512,92 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: number of views, 2: grouping unit.
-#: assets/src/js/admin/components/StatsPanel.js:297
+#: assets/src/js/admin/components/StatsPanel.js:283
 #, js-format
 msgid "%1$d view received in the last 3 months, grouped by %2$s."
 msgid_plural "%1$d views received in the last 3 months, grouped by %2$s."
 msgstr[0] ""
 msgstr[1] ""
 
-#: assets/src/js/admin/components/StatsPanel.js:312
+#: assets/src/js/admin/components/StatsPanel.js:298
 msgid "Views over time"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:313
+#: assets/src/js/admin/components/StatsPanel.js:299
 msgid "Grouping only changes how the trend is displayed."
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:343
+#: assets/src/js/admin/components/StatsPanel.js:329
 msgid "Not enough data yet to draw the chart."
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:353
+#: assets/src/js/admin/components/StatsPanel.js:339
 msgid "Rising & falling"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:354
+#: assets/src/js/admin/components/StatsPanel.js:340
 msgid "Comparison between the last 30 days and the previous 30."
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:362
+#: assets/src/js/admin/components/StatsPanel.js:348
 msgid "Rising"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:367
-#: assets/src/js/admin/components/StatsPanel.js:379
+#: assets/src/js/admin/components/StatsPanel.js:353
+#: assets/src/js/admin/components/StatsPanel.js:365
 msgid "No relevant changes in this period."
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:374
+#: assets/src/js/admin/components/StatsPanel.js:360
 msgid "Falling"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:390
+#: assets/src/js/admin/components/StatsPanel.js:376
 msgid "Device & referrer"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:391
+#: assets/src/js/admin/components/StatsPanel.js:377
 msgid "Last 3 months."
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:396
+#: assets/src/js/admin/components/StatsPanel.js:382
 msgid "Device"
 msgstr ""
 
+#: assets/src/js/admin/components/StatsPanel.js:387
 #: assets/src/js/admin/components/StatsPanel.js:401
-#: assets/src/js/admin/components/StatsPanel.js:413
 msgid "Not enough data yet."
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:408
+#: assets/src/js/admin/components/StatsPanel.js:396
 msgid "Referrer"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:424
+#: assets/src/js/admin/components/StatsPanel.js:414
 msgid "AI traffic"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:425
+#: assets/src/js/admin/components/StatsPanel.js:415
 msgid "Last 3 months. Referrals: human visitors arriving from an AI assistant (included in the view count). Crawling: requests from known AI bots, counted separately."
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:434
+#: assets/src/js/admin/components/StatsPanel.js:424
 msgid "AI referrals"
 msgstr ""
 
-#. translators: %d: number of views referred by an AI assistant
-#: assets/src/js/admin/components/StatsPanel.js:440
-#, js-format
-msgid "%d views"
-msgstr ""
-
-#: assets/src/js/admin/components/StatsPanel.js:446
+#: assets/src/js/admin/components/StatsPanel.js:429
 msgid "No views from AI assistants in this period."
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:456
-msgid "No pages available for this period."
-msgstr ""
-
-#: assets/src/js/admin/components/StatsPanel.js:465
+#: assets/src/js/admin/components/StatsPanel.js:437
 msgid "AI bot crawling"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:476
+#: assets/src/js/admin/components/StatsPanel.js:448
 msgid "No crawling recorded."
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:480
+#: assets/src/js/admin/components/StatsPanel.js:452
 msgid "AI bot tracking is disabled in settings."
 msgstr ""
 

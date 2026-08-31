@@ -1,3 +1,16 @@
+// Known AI assistants — single source of truth for both the generic 'ai'
+// referrer bucket (getReferrerClass) and the specific assistant behind it
+// (getAiAssistantClass), so the two can never drift apart.
+const BK_AI_ASSISTANTS = [
+	{ slug: 'chatgpt', domains: ['chatgpt.com', 'chat.openai.com'], attribution: ['chatgpt', 'chatgpt.com', 'openai'] },
+	{ slug: 'claude', domains: ['claude.ai'], attribution: ['claude', 'claude.ai'] },
+	{ slug: 'perplexity', domains: ['perplexity.ai'], attribution: ['perplexity', 'perplexity.ai'] },
+	{ slug: 'copilot', domains: ['copilot.microsoft.com'], attribution: ['copilot', 'copilot.microsoft.com'] },
+	{ slug: 'gemini', domains: ['gemini.google.com'], attribution: ['gemini', 'gemini.google.com'] },
+];
+
+const bk_matchesDomain = (host, domain) => host === domain || host.endsWith(`.${domain}`);
+
 const bk_postview_main = {
 	time_delay: 8000,
 	end_point: null,
@@ -20,27 +33,8 @@ const bk_postview_main = {
 	},
 	// Classified referrer — never the raw host or full URL, only one of a fixed set of buckets.
 	getReferrerClass: function () {
-		const AI_DOMAINS = [
-			'chatgpt.com',
-			'chat.openai.com',
-			'claude.ai',
-			'perplexity.ai',
-			'copilot.microsoft.com',
-			'gemini.google.com',
-		];
-		const AI_ATTRIBUTION_VALUES = [
-			'chatgpt',
-			'chatgpt.com',
-			'openai',
-			'claude',
-			'claude.ai',
-			'perplexity',
-			'perplexity.ai',
-			'copilot',
-			'copilot.microsoft.com',
-			'gemini',
-			'gemini.google.com',
-		];
+		const AI_DOMAINS = BK_AI_ASSISTANTS.flatMap((assistant) => assistant.domains);
+		const AI_ATTRIBUTION_VALUES = BK_AI_ASSISTANTS.flatMap((assistant) => assistant.attribution);
 		const SEARCH_DOMAINS = ['bing.com', 'duckduckgo.com', 'yahoo.com', 'baidu.com'];
 		const SOCIAL_DOMAINS = [
 			'facebook.com',
@@ -51,8 +45,7 @@ const bk_postview_main = {
 			'instagram.com',
 			'reddit.com',
 		];
-		const matchesDomain = (host, domain) => host === domain || host.endsWith(`.${domain}`);
-		const matchesAnyDomain = (host, domains) => domains.some((domain) => matchesDomain(host, domain));
+		const matchesAnyDomain = (host, domains) => domains.some((domain) => bk_matchesDomain(host, domain));
 		const attribution = new URLSearchParams(location.search);
 		const attributedSource = (attribution.get('utm_source') || attribution.get('ref') || '').toLowerCase().trim();
 
@@ -77,6 +70,32 @@ const bk_postview_main = {
 		if (matchesAnyDomain(host, SOCIAL_DOMAINS) || /(^|\.)pinterest\.[a-z.]+$/.test(host)) return 'social';
 		return 'other';
 	},
+	// Specific AI assistant behind a getReferrerClass() result of 'ai' — resolved
+	// via the same BK_AI_ASSISTANTS table, so it can only ever agree with it.
+	// Only meaningful (and only ever sent) alongside referrer='ai'.
+	getAiAssistantClass: function () {
+		const attribution = new URLSearchParams(location.search);
+		const attributedSource = (attribution.get('utm_source') || attribution.get('ref') || '').toLowerCase().trim();
+
+		const byAttribution = BK_AI_ASSISTANTS.find((assistant) => assistant.attribution.includes(attributedSource));
+		if (byAttribution) return byAttribution.slug;
+
+		const ref = document.referrer;
+		if (!ref) return '';
+
+		let host;
+		try {
+			host = new URL(ref).hostname.toLowerCase().replace(/\.$/, '');
+		} catch (e) {
+			return '';
+		}
+
+		const byDomain = BK_AI_ASSISTANTS.find((assistant) =>
+			assistant.domains.some((domain) => bk_matchesDomain(host, domain))
+		);
+
+		return byDomain ? byDomain.slug : '';
+	},
 	// DNT is a per-navigator legacy signal; globalPrivacyControl is the modern
 	// successor (Sec-GPC). Either one means the visitor asked not to be tracked.
 	hasPrivacySignal: function () {
@@ -96,6 +115,13 @@ const bk_postview_main = {
 		if (!bbk_post_view.respect_dnt || !this.hasPrivacySignal()) {
 			data.viewport = this.getViewportBucket();
 			data.referrer = this.getReferrerClass();
+
+			if (data.referrer === 'ai') {
+				const aiAssistant = this.getAiAssistantClass();
+				if (aiAssistant) {
+					data.ai_assistant = aiAssistant;
+				}
+			}
 		}
 
 		if (navigator.sendBeacon) {

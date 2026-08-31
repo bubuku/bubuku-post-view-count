@@ -318,6 +318,56 @@ $tests = array(
 			'Only the whitelisted viewport value must be recorded; the invalid referrer value must be dropped silently.'
 		);
 	},
+	'set_post_views() records a valid ai_assistant dim alongside referrer=ai, and drops an unknown assistant' => static function (): void {
+		TestState::reset();
+		TestState::$now          = '2026-01-01 12:00:00';
+		$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+		$api                     = new RestApi();
+		$request                 = new WP_REST_Request(
+			array(
+				'post_id'      => 103,
+				'referrer'     => 'ai',
+				'ai_assistant' => 'chatgpt',
+			),
+			array(
+				'Origin'     => 'https://test.wp.local',
+				'User-Agent' => 'Bubuku test',
+			)
+		);
+
+		$api->set_post_views( $request );
+
+		bbk_test_same(
+			array(
+				'103|2026-01-01|referrer|ai'          => 1,
+				'103|2026-01-01|ai_assistant|chatgpt' => 1,
+			),
+			TestState::$dims,
+			'A whitelisted ai_assistant value must be recorded alongside referrer=ai.'
+		);
+
+		TestState::reset();
+		TestState::$now = '2026-01-01 12:00:00';
+		$request         = new WP_REST_Request(
+			array(
+				'post_id'      => 104,
+				'referrer'     => 'ai',
+				'ai_assistant' => 'not-a-real-assistant',
+			),
+			array(
+				'Origin'     => 'https://test.wp.local',
+				'User-Agent' => 'Bubuku test',
+			)
+		);
+
+		$api->set_post_views( $request );
+
+		bbk_test_same(
+			array( '104|2026-01-01|referrer|ai' => 1 ),
+			TestState::$dims,
+			'An unknown ai_assistant value must be dropped silently, without affecting the referrer dim.'
+		);
+	},
 	'a deduplicated REST view records neither the view nor its dims' => static function (): void {
 		TestState::reset();
 		TestState::$now          = '2026-01-01 12:00:00';
@@ -716,6 +766,7 @@ $tests = array(
 		bbk_test_same( array(), $result['crawlers'], 'A disabled post type must never be queried, and must return no rows.' );
 		bbk_test_same( 0, $result['referrals']['views'], 'With no dims recorded, AI-referral views must be 0.' );
 		bbk_test_same( array(), $result['referrals']['posts'], 'A disabled post type must return no referred posts.' );
+		bbk_test_same( array(), $result['referrals']['by_assistant'], 'A disabled post type must return no per-assistant breakdown.' );
 		bbk_test_same( false, $result['ai_crawler_tracking_enabled'], 'The tracking flag must reflect Settings::ai_crawler_tracking() (default false).' );
 	},
 	'Query::ai_traffic() returns AI referrals grouped by destination post' => static function (): void {
@@ -749,6 +800,68 @@ $tests = array(
 			),
 			$result['referrals']['posts'],
 			'Referred posts must be ordered by AI views and expose only aggregate content data.'
+		);
+	},
+	'Query::ai_traffic() groups AI referrals by assistant, each with its own referred posts' => static function (): void {
+		TestState::reset();
+		TestState::$now             = '2026-01-01 10:00:00';
+		TestState::$post_titles[42] = 'First AI destination';
+		TestState::$post_titles[43] = 'Second AI destination';
+
+		$db = new Db();
+		$db->record_view(
+			42,
+			array(
+				'referrer'     => 'ai',
+				'ai_assistant' => 'chatgpt',
+			)
+		);
+		$db->record_view(
+			42,
+			array(
+				'referrer'     => 'ai',
+				'ai_assistant' => 'chatgpt',
+			)
+		);
+		$db->record_view(
+			43,
+			array(
+				'referrer'     => 'ai',
+				'ai_assistant' => 'claude',
+			)
+		);
+
+		$result = Query::ai_traffic( array(), '2026-01-01', '2026-01-01' );
+
+		bbk_test_same(
+			array(
+				array(
+					'assistant' => 'chatgpt',
+					'views'     => 2,
+					'posts'     => array(
+						array(
+							'id'    => 42,
+							'title' => 'First AI destination',
+							'url'   => 'https://test.wp.local/?p=42',
+							'views' => 2,
+						),
+					),
+				),
+				array(
+					'assistant' => 'claude',
+					'views'     => 1,
+					'posts'     => array(
+						array(
+							'id'    => 43,
+							'title' => 'Second AI destination',
+							'url'   => 'https://test.wp.local/?p=43',
+							'views' => 1,
+						),
+					),
+				),
+			),
+			$result['referrals']['by_assistant'],
+			'Referrals must be grouped by assistant, ordered by total views, each with its own referred posts.'
 		);
 	},
 	'Query::post_stats() reflects the recorded views, title and URL for a post' => static function (): void {

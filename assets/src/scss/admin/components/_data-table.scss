@@ -1,6 +1,6 @@
-// Reusable results table — pairs with components/DataTable.js.
-// All colors come from the --bk-* design tokens, so it inherits each
-// plugin's branding.
+// Reusable results table — pairs with components/DataTable.js and the
+// AiReferralsTable.js accordion variant. All colors come from the --bk-*
+// design tokens, so it inherits each plugin's branding.
 
 .bk-data-table {
 	// Allow horizontal scroll on narrow viewports without breaking layout.
@@ -27,6 +27,11 @@
 			font-weight: 600;
 			color: var(--text-heading);
 			white-space: nowrap;
+		}
+
+		// Footer summary row — `showTotal` on DataTable, or an accordion's total.
+		tfoot tr {
+			border-top: 1px solid var(--border-card);
 		}
 
 		tbody tr {
@@ -66,6 +71,13 @@
 		}
 	}
 
+	// Summed-column footer row.
+	&__total td {
+		font-weight: 600;
+		color: var(--text-heading);
+		background: var(--brand-soft);
+	}
+
 	// Right-align numeric columns (set `numeric: true` on the column definition).
 	&__num {
 		text-align: right;
@@ -90,5 +102,72 @@
 		margin: 0;
 		color: var(--text-muted);
 		font-size: 13px;
+	}
+}
+
+// AI referrals grouped by assistant — expands into the pages behind each one.
+// See components/AiReferralsTable.js.
+.bbk-ai-referrals-table {
+
+	&__toggle {
+		background: none;
+		border: none;
+		padding: 0;
+		font: inherit;
+		font-weight: 500;
+		color: var(--text-heading);
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		cursor: pointer;
+
+		&:disabled {
+			cursor: default;
+			color: inherit;
+		}
+
+		&:hover:not(:disabled) {
+			color: var(--brand);
+		}
+
+		&::before {
+			content: "\25B8"; // ▸
+			font-size: 10px;
+			color: var(--text-muted);
+			transition: transform 0.15s ease;
+		}
+
+		&:disabled::before {
+			visibility: hidden;
+		}
+
+		&[aria-expanded="true"]::before {
+			transform: rotate(90deg);
+		}
+	}
+
+	&__detail {
+		background: var(--brand-soft);
+
+		td {
+			padding: 6px 14px 10px 34px;
+		}
+
+		ul {
+			margin: 0;
+			padding: 0;
+			list-style: none;
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+		}
+
+		li {
+			display: flex;
+			align-items: baseline;
+			justify-content: space-between;
+			gap: 12px;
+			font-size: 12px;
+		}
 	}
 }

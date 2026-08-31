@@ -56,7 +56,7 @@ class RestApi {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'set_post_views' ),
 				'args'                => array(
-					'post_id'  => array(
+					'post_id'      => array(
 						'required'          => true,
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
@@ -66,12 +66,19 @@ class RestApi {
 					// assets/js/common.js. No validate_callback — an unknown/invalid
 					// value must never fail the whole request, only be dropped
 					// silently before it's written (see set_post_views()).
-					'viewport' => array(
+					'viewport'     => array(
 						'required'          => false,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					),
-					'referrer' => array(
+					'referrer'     => array(
+						'required'          => false,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					// Only meaningful (and only ever sent) alongside referrer='ai' —
+					// see assets/js/common.js getAiAssistantClass().
+					'ai_assistant' => array(
 						'required'          => false,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',

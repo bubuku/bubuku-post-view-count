@@ -1,5 +1,5 @@
 {
-    "translation-revision-date": "2026-08-31 19:00+0000",
+    "translation-revision-date": "2026-08-31 20:30+0000",
     "generator": "manual",
     "source": "assets/build/admin.js",
     "domain": "messages",
@@ -219,14 +219,8 @@
             "AI referrals": [
                 "Referidos por IA"
             ],
-            "%d views": [
-                "%d vistas"
-            ],
             "No views from AI assistants in this period.": [
                 "Sin visitas procedentes de asistentes de IA en este periodo."
-            ],
-            "No pages available for this period.": [
-                "No hay páginas disponibles para este periodo."
             ],
             "AI bot crawling": [
                 "Rastreo de bots de IA"
@@ -243,6 +237,30 @@
             "%d view": [
                 "%d visita",
                 "%d visitas"
+            ],
+            "ChatGPT": [
+                "ChatGPT"
+            ],
+            "Claude": [
+                "Claude"
+            ],
+            "Perplexity": [
+                "Perplexity"
+            ],
+            "Copilot": [
+                "Copilot"
+            ],
+            "Gemini": [
+                "Gemini"
+            ],
+            "Other AI assistant": [
+                "Otro asistente de IA"
+            ],
+            "AI": [
+                "IA"
+            ],
+            "Total": [
+                "Total"
             ]
         }
     }

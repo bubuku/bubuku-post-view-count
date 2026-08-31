@@ -1,9 +1,11 @@
 import { useState, useEffect } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
+import AiReferralsTable from './AiReferralsTable';
 import DashboardCard from './DashboardCard';
 import DataTable from './DataTable';
 import TrendChart from './TrendChart';
 import { bbkFetch } from '../App';
+import { formatNumber } from '../format';
 
 const ICON_TREND = (
 	<svg
@@ -226,7 +228,7 @@ const StatsPanel = ( { context } ) => {
 					null !== row.delta_pct
 						? ` (${ sign }${ row.delta_pct }%)`
 						: '';
-				return `${ sign }${ row.delta }${ pct }`;
+				return `${ sign }${ formatNumber( row.delta ) }${ pct }`;
 			},
 		},
 	];
@@ -239,22 +241,7 @@ const StatsPanel = ( { context } ) => {
 			numeric: true,
 		},
 	];
-	const aiReferralColumns = [
-		{
-			key: 'title',
-			label: __( 'Content', 'bubuku-post-view-count' ),
-			render: ( row ) => (
-				<a href={ row.url } target="_blank" rel="noopener noreferrer">
-					{ row.title }
-				</a>
-			),
-		},
-		{
-			key: 'views',
-			label: __( 'Views', 'bubuku-post-view-count' ),
-			numeric: true,
-		},
-	];
+	const totalLabel = __( 'Total', 'bubuku-post-view-count' );
 
 	const trendTotal = trend.reduce(
 		( total, row ) => total + row.total_views,
@@ -402,6 +389,8 @@ const StatsPanel = ( { context } ) => {
 								'Not enough data yet.',
 								'bubuku-post-view-count'
 							) }
+							showTotal
+							totalLabel={ totalLabel }
 						/>
 					</div>
 					<div>
@@ -414,6 +403,8 @@ const StatsPanel = ( { context } ) => {
 								'Not enough data yet.',
 								'bubuku-post-view-count'
 							) }
+							showTotal
+							totalLabel={ totalLabel }
 						/>
 					</div>
 				</div>
@@ -433,32 +424,14 @@ const StatsPanel = ( { context } ) => {
 						<h3>
 							{ __( 'AI referrals', 'bubuku-post-view-count' ) }
 						</h3>
-						<p>
-							{ aiTraffic?.referrals?.views
-								? sprintf(
-										/* translators: %d: number of views referred by an AI assistant */
-										__(
-											'%d views',
-											'bubuku-post-view-count'
-										),
-										aiTraffic.referrals.views
-								  )
-								: __(
-										'No views from AI assistants in this period.',
-										'bubuku-post-view-count'
-								  ) }
-						</p>
-						{ aiTraffic?.referrals?.views > 0 && (
-							<DataTable
-								columns={ aiReferralColumns }
-								rows={ aiTraffic?.referrals?.posts || [] }
-								rowKey={ ( row ) => row.id }
-								emptyLabel={ __(
-									'No pages available for this period.',
-									'bubuku-post-view-count'
-								) }
-							/>
-						) }
+						<AiReferralsTable
+							rows={ aiTraffic?.referrals?.by_assistant || [] }
+							totalLabel={ totalLabel }
+							emptyLabel={ __(
+								'No views from AI assistants in this period.',
+								'bubuku-post-view-count'
+							) }
+						/>
 					</div>
 					<div>
 						<h3>
@@ -482,6 +455,8 @@ const StatsPanel = ( { context } ) => {
 											'bubuku-post-view-count'
 									  )
 							}
+							showTotal
+							totalLabel={ totalLabel }
 						/>
 					</div>
 				</div>

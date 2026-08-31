@@ -25,16 +25,22 @@ class Dimensions {
 	 * Dimension names with a writer implemented. `source` (reserved for F6,
 	 * see docs/ANALYTICS-PLAN.md) intentionally has no entry here yet.
 	 */
-	const DIMENSIONS = array( 'viewport', 'referrer' );
+	const DIMENSIONS = array( 'viewport', 'referrer', 'ai_assistant' );
 
 	const VIEWPORT_BUCKETS = array( '<576', '576-991', '992-1399', '>=1400' );
 
 	const REFERRER_CLASSES = array( 'direct', 'internal', 'search', 'social', 'ai', 'other' );
 
 	/**
+	 * Specific AI assistant behind a `referrer` value of 'ai' — only ever written
+	 * alongside it, never on its own (see assets/js/common.js getAiAssistantClass()).
+	 */
+	const AI_ASSISTANT_CLASSES = array( 'chatgpt', 'claude', 'perplexity', 'copilot', 'gemini', 'other' );
+
+	/**
 	 * Closed whitelist of values for a given dimension name.
 	 *
-	 * @param string $dimension Dimension name ('viewport'|'referrer').
+	 * @param string $dimension Dimension name ('viewport'|'referrer'|'ai_assistant').
 	 * @return string[] Empty array for an unknown dimension.
 	 */
 	public static function values_for( string $dimension ): array {
@@ -44,6 +50,10 @@ class Dimensions {
 
 		if ( 'referrer' === $dimension ) {
 			return self::REFERRER_CLASSES;
+		}
+
+		if ( 'ai_assistant' === $dimension ) {
+			return self::AI_ASSISTANT_CLASSES;
 		}
 
 		return array();

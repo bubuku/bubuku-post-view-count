@@ -11,6 +11,14 @@ globalThis.classifyReferrer = (referrer, pageUrl) => {
 	location.hostname = url.hostname;
 	location.search = url.search;
 	return bk_postview_main.getReferrerClass();
+};
+globalThis.classifyAiAssistant = (referrer, pageUrl) => {
+	document.referrer = referrer;
+	const url = new URL(pageUrl);
+	location.host = url.host;
+	location.hostname = url.hostname;
+	location.search = url.search;
+	return bk_postview_main.getAiAssistantClass();
 };`;
 
 const context = {
@@ -30,6 +38,9 @@ vm.runInNewContext( source, context );
 
 const classify = ( referrer, pageUrl = 'https://example.com/post/' ) =>
 	context.classifyReferrer( referrer, pageUrl );
+
+const classifyAssistant = ( referrer, pageUrl = 'https://example.com/post/' ) =>
+	context.classifyAiAssistant( referrer, pageUrl );
 
 test( 'classifies known AI assistant domains as AI referrals', () => {
 	const referrers = [
@@ -75,4 +86,34 @@ test( 'does not accept partial-domain false positives', () => {
 	assert.equal( classify( 'https://evilchatgpt.com/example' ), 'other' );
 	assert.equal( classify( 'https://microsoft.com/example' ), 'other' );
 	assert.equal( classify( 'https://notgoogle.example/example' ), 'other' );
+} );
+
+test( 'resolves the specific AI assistant behind each known domain', () => {
+	assert.equal( classifyAssistant( 'https://chatgpt.com/c/example' ), 'chatgpt' );
+	assert.equal( classifyAssistant( 'https://chat.openai.com/c/example' ), 'chatgpt' );
+	assert.equal( classifyAssistant( 'https://claude.ai/chat/example' ), 'claude' );
+	assert.equal( classifyAssistant( 'https://www.perplexity.ai/search/example' ), 'perplexity' );
+	assert.equal( classifyAssistant( 'https://copilot.microsoft.com/chats/example' ), 'copilot' );
+	assert.equal( classifyAssistant( 'https://gemini.google.com/app/example' ), 'gemini' );
+} );
+
+test( 'resolves the specific AI assistant from explicit attribution', () => {
+	assert.equal(
+		classifyAssistant( '', 'https://example.com/post/?utm_source=chatgpt.com' ),
+		'chatgpt'
+	);
+	assert.equal(
+		classifyAssistant( '', 'https://example.com/post/?ref=claude' ),
+		'claude'
+	);
+	assert.equal(
+		classifyAssistant( '', 'https://example.com/post/?utm_source=GEMINI' ),
+		'gemini'
+	);
+} );
+
+test( 'returns no AI assistant for non-AI or absent referrers', () => {
+	assert.equal( classifyAssistant( '' ), '' );
+	assert.equal( classifyAssistant( 'https://www.google.com/search?q=example' ), '' );
+	assert.equal( classifyAssistant( 'https://evilchatgpt.com/example' ), '' );
 } );

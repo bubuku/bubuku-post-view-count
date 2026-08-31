@@ -734,6 +734,32 @@ namespace Bubuku\Plugins\PostViewCount {
 					);
 				}
 
+				if ( false !== strpos( $query, "d.dimension = 'ai_assistant'" ) ) {
+					$grouped = array();
+
+					foreach ( TestState::$dims as $key => $views ) {
+						list( $post_id, $day, $dimension, $value ) = explode( '|', $key, 4 );
+
+						if ( 'ai_assistant' === $dimension && $day >= $since && $day <= $until ) {
+							$group_key               = $value . '|' . $post_id;
+							$grouped[ $group_key ]   = array(
+								'assistant'   => $value,
+								'post_id'     => (int) $post_id,
+								'total_views' => ( $grouped[ $group_key ]['total_views'] ?? 0 ) + $views,
+							);
+						}
+					}
+
+					usort(
+						$grouped,
+						static function ( array $a, array $b ): int {
+							return $a['assistant'] <=> $b['assistant'] ?: $b['total_views'] <=> $a['total_views'];
+						}
+					);
+
+					return array_values( $grouped );
+				}
+
 				if ( preg_match( "/d.dimension = '([^']+)'/", $query, $m ) ) {
 					$requested_dimension = $m[1];
 					$grouped             = array();
