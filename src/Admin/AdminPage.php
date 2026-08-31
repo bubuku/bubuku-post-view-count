@@ -65,7 +65,7 @@ class AdminPage {
 	 */
 	public function render() {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'No tienes permisos para acceder a esta página.', 'bubuku-post-view-count' ) );
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'bubuku-post-view-count' ) );
 		}
 
 		echo '<div id="bbk-postview-app"></div>';
@@ -130,7 +130,7 @@ class AdminPage {
 		echo '<div class="notice notice-error"><p>';
 		printf(
 			/* translators: %s: npm command */
-			esc_html__( 'Los assets del plugin no están compilados. Ejecuta %s primero.', 'bubuku-post-view-count' ),
+			esc_html__( 'Plugin assets are not built. Run %s first.', 'bubuku-post-view-count' ),
 			'<code>npm run build</code>'
 		);
 		echo '</p></div>';

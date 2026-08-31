@@ -2,10 +2,10 @@
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
 	"name": "bubuku/post-views",
-	"title": "Bubuku · Vistas del post",
+	"title": "Bubuku · Post Views",
 	"category": "widgets",
 	"icon": "chart-line",
-	"description": "Muestra el número de vistas registradas para el post actual.",
+	"description": "Displays the number of views recorded for the current post.",
 	"textdomain": "bubuku-post-view-count",
 	"attributes": {
 		"showLastViewed": {

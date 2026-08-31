@@ -8,6 +8,7 @@
  * Author:      Bubuku
  * Author URI:  https://www.bubuku.com/
  * Text Domain: bubuku-post-view-count
+ * Domain Path: /languages
  * License:     EUPL v1.2
  * License URI: https://www.eupl.eu/1.2/en/
  *

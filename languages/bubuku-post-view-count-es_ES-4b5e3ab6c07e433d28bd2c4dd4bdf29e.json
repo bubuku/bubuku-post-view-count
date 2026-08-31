@@ -1,0 +1,249 @@
+{
+    "translation-revision-date": "2026-08-31 19:00+0000",
+    "generator": "manual",
+    "source": "assets/build/admin.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "es",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Views": [
+                "Vistas"
+            ],
+            "Settings could not be loaded.": [
+                "No se han podido cargar los ajustes."
+            ],
+            "Settings": [
+                "Ajustes"
+            ],
+            "Statistics": [
+                "Estadísticas"
+            ],
+            "Post View Count sections": [
+                "Secciones de Post View Count"
+            ],
+            "Loading…": [
+                "Cargando…"
+            ],
+            "Post View Count <span>Settings</span>": [
+                "Post View Count <span>Ajustes</span>"
+            ],
+            "Per-post view counts and traffic statistics.": [
+                "Conteo de vistas por post y estadísticas de tráfico."
+            ],
+            "Settings saved.": [
+                "Ajustes guardados."
+            ],
+            "Settings could not be saved.": [
+                "No se han podido guardar los ajustes."
+            ],
+            "Are you sure you want to delete all recorded views? This action cannot be undone.": [
+                "¿Seguro que quieres eliminar todas las vistas registradas? Esta acción no se puede deshacer."
+            ],
+            "All recorded views have been deleted.": [
+                "Se han eliminado todas las vistas registradas."
+            ],
+            "Data could not be deleted.": [
+                "No se han podido eliminar los datos."
+            ],
+            "What gets counted": [
+                "Qué se cuenta"
+            ],
+            "Content types and visitors that generate a view.": [
+                "Tipos de contenido y visitantes que generan una vista."
+            ],
+            "Content types": [
+                "Tipos de contenido"
+            ],
+            "Unchecking a content type stops counting, but does not delete views already recorded. Checking it again resumes counting on top of the existing total.": [
+                "Desmarcar un tipo de contenido detiene el conteo, pero no borra las visitas ya registradas. Volver a marcarlo reanuda el conteo sobre el total existente."
+            ],
+            "Excluded roles": [
+                "Roles excluidos"
+            ],
+            "Logged-in users with one of these roles do not generate views when viewing their own content.": [
+                "Los usuarios logados con uno de estos roles no generan visitas al ver sus propios contenidos."
+            ],
+            "Do not count views from known bot user agents.": [
+                "No contar visitas de user-agents de bots conocidos."
+            ],
+            "Includes, among others:": [
+                "Incluye, entre otros:"
+            ],
+            "AI & privacy": [
+                "IA y privacidad"
+            ],
+            "AI bot tracking and visitor privacy signals.": [
+                "Rastreo de bots de IA y señales de privacidad del visitante."
+            ],
+            "Count visits from known AI bots (GPTBot, ClaudeBot, PerplexityBot, etc.) in their own table, separate from human visitor counts.": [
+                "Contar las visitas de bots de IA conocidos (GPTBot, ClaudeBot, PerplexityBot, etc.) en una tabla propia, separada del conteo de visitantes humanos."
+            ],
+            "Disabled by default: it adds a write on every request from these bots, which is not negligible on a site with heavy crawler traffic.": [
+                "Desactivado por defecto: añade una escritura en cada petición de estos bots, lo que no es despreciable en un sitio con mucho tráfico de crawlers."
+            ],
+            "Respect the browser's \"Do Not Track\" (DNT) and Global Privacy Control (Sec-GPC) signal.": [
+                "Respetar la señal \"No rastrear\" (DNT) y Global Privacy Control (Sec-GPC) del navegador."
+            ],
+            "The view count stays the same (it is already anonymous, with no IP or user agent stored): this option only omits the device and referrer for that visit.": [
+                "El conteo de vistas se mantiene igual (ya es anónimo, sin IP ni user-agent almacenados): esta opción solo omite el dispositivo y la procedencia de esa visita."
+            ],
+            "Performance & retention": [
+                "Rendimiento y retención"
+            ],
+            "Database writes and daily history.": [
+                "Escrituras en base de datos e histórico diario."
+            ],
+            "Accumulate increments in memory and write them to the database in batches, once per minute, instead of on every visit.": [
+                "Acumular incrementos en memoria y escribirlos en la base de datos por lotes, cada minuto, en vez de en cada visita."
+            ],
+            "This site has a persistent object cache active: the buffer will take effect.": [
+                "Este sitio tiene un object cache persistente activo: el buffer tendrá efecto."
+            ],
+            "This site has no persistent object cache (Redis, Memcached…) active: without one, this option has no effect — each visit is still written immediately.": [
+                "Este sitio no tiene un object cache persistente (Redis, Memcached…) activo: sin uno, esta opción no tiene ningún efecto — cada visita se sigue escribiendo de inmediato."
+            ],
+            "Daily aggregate retention": [
+                "Retención del agregado diario"
+            ],
+            "days": [
+                "días"
+            ],
+            "This only affects how many days of daily history are shown for each content item, not the total: you will only have history for that many days. The total view count is unaffected and is never deleted by this retention.": [
+                "Solo afecta a mostrar los datos diarios de cada contenido, no al total: solo dispondrás del historial de esos días. El total de vistas no se ve afectado y nunca se borra por esta retención."
+            ],
+            "Save settings": [
+                "Guardar ajustes"
+            ],
+            "Saving…": [
+                "Guardando…"
+            ],
+            "Discard changes": [
+                "Descartar cambios"
+            ],
+            "Delete all data": [
+                "Eliminar todos los datos"
+            ],
+            "Immediately deletes all recorded views (own tables and post meta). This action cannot be undone.": [
+                "Elimina inmediatamente todas las vistas registradas (tablas propias y post meta). Esta acción no se puede deshacer."
+            ],
+            "Delete all plugin tables, meta, and options on uninstall.": [
+                "Eliminar todas las tablas, meta y opciones del plugin al desinstalarlo."
+            ],
+            "Deleting…": [
+                "Eliminando…"
+            ],
+            "Delete all data now": [
+                "Eliminar todos los datos ahora"
+            ],
+            "Day": [
+                "Día"
+            ],
+            "Week": [
+                "Semana"
+            ],
+            "Month": [
+                "Mes"
+            ],
+            "Value": [
+                "Valor"
+            ],
+            "Content": [
+                "Contenido"
+            ],
+            "Change": [
+                "Cambio"
+            ],
+            "Bot": [
+                "Bot"
+            ],
+            "Period shown: from %1$s to %2$s.": [
+                "Periodo mostrado: del %1$s al %2$s."
+            ],
+            "%1$d view received since %2$s, grouped by %3$s.": [
+                "%1$d visita recibida desde el %2$s, agrupada por %3$s.",
+                "%1$d visitas recibidas desde el %2$s, agrupadas por %3$s."
+            ],
+            "%1$d view received in the last 3 months, grouped by %2$s.": [
+                "%1$d visita recibida en los últimos 3 meses, agrupada por %2$s.",
+                "%1$d visitas recibidas en los últimos 3 meses, agrupadas por %2$s."
+            ],
+            "Views over time": [
+                "Evolución de vistas"
+            ],
+            "Grouping only changes how the trend is displayed.": [
+                "La agrupación solo cambia cómo se representa la evolución."
+            ],
+            "Not enough data yet to draw the chart.": [
+                "Todavía no hay datos suficientes para dibujar la gráfica."
+            ],
+            "Rising & falling": [
+                "En alza y en caída"
+            ],
+            "Comparison between the last 30 days and the previous 30.": [
+                "Comparación entre los últimos 30 días y los 30 anteriores."
+            ],
+            "Rising": [
+                "En alza"
+            ],
+            "No relevant changes in this period.": [
+                "Sin cambios relevantes en este periodo."
+            ],
+            "Falling": [
+                "En caída"
+            ],
+            "Device & referrer": [
+                "Dispositivo y procedencia"
+            ],
+            "Last 3 months.": [
+                "Últimos 3 meses."
+            ],
+            "Device": [
+                "Dispositivo"
+            ],
+            "Not enough data yet.": [
+                "Todavía no hay datos suficientes."
+            ],
+            "Referrer": [
+                "Procedencia"
+            ],
+            "AI traffic": [
+                "Tráfico de IA"
+            ],
+            "Last 3 months. Referrals: human visitors arriving from an AI assistant (included in the view count). Crawling: requests from known AI bots, counted separately.": [
+                "Últimos 3 meses. Referidos: visitantes humanos llegados desde un asistente de IA (incluidos en el conteo de vistas). Rastreo: peticiones de bots de IA conocidos, contadas aparte."
+            ],
+            "AI referrals": [
+                "Referidos por IA"
+            ],
+            "%d views": [
+                "%d vistas"
+            ],
+            "No views from AI assistants in this period.": [
+                "Sin visitas procedentes de asistentes de IA en este periodo."
+            ],
+            "No pages available for this period.": [
+                "No hay páginas disponibles para este periodo."
+            ],
+            "AI bot crawling": [
+                "Rastreo de bots de IA"
+            ],
+            "No crawling recorded.": [
+                "Sin rastreo registrado."
+            ],
+            "AI bot tracking is disabled in settings.": [
+                "El rastreo de bots de IA está desactivado en los ajustes."
+            ],
+            "Week of %s": [
+                "Semana del %s"
+            ],
+            "%d view": [
+                "%d visita",
+                "%d visitas"
+            ]
+        }
+    }
+}

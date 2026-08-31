@@ -4,15 +4,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Bubuku Post View Count 1.2.2\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/bubuku-post-view-count\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"POT-Creation-Date: 2026-08-31T17:27:35+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Luis Ruiz <lruiz@bubuku.com>\n"
+"Language-Team: Spanish <LL@li.org>\n"
+"Language: es_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-31T17:27:35+00:00\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.12.0\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Domain: bubuku-post-view-count\n"
+"X-Generator: manual\n"
 
 #. Plugin Name of the plugin
 #: bubuku-post-view-count.php
@@ -21,7 +23,8 @@ msgstr ""
 
 #. Description of the plugin
 #: bubuku-post-view-count.php
-msgid "Plugin created by Bubuku to count how many times a post has been viewed"
+msgid ""
+"Plugin created by Bubuku to count how many times a post has been viewed"
 msgstr ""
 
 #. Author of the plugin
@@ -34,27 +37,26 @@ msgstr ""
 msgid "https://www.bubuku.com/"
 msgstr ""
 
-#: src/Admin/AdminPage.php:53
-#: src/Admin/AdminPage.php:54
+#: src/Admin/AdminPage.php:53 src/Admin/AdminPage.php:54
 msgid "Post View Count"
 msgstr ""
 
 #: src/Admin/AdminPage.php:68
 msgid "You do not have permission to access this page."
-msgstr ""
+msgstr "No tienes permisos para acceder a esta página."
 
 #. translators: %s: npm command
 #: src/Admin/AdminPage.php:133
 #, php-format
 msgid "Plugin assets are not built. Run %s first."
-msgstr ""
+msgstr "Los assets del plugin no están compilados. Ejecuta %s primero."
 
 #: src/Admin/PostListColumns.php:69
 #: assets/src/js/admin/components/StatsPanel.js:204
 #: assets/src/js/admin/components/StatsPanel.js:238
 #: assets/src/js/admin/components/StatsPanel.js:254
 msgid "Views"
-msgstr ""
+msgstr "Vistas"
 
 #: src/Admin/PostListColumns.php:70
 msgid "Last view"
@@ -65,7 +67,15 @@ msgid "View increments are only accepted from this website."
 msgstr ""
 
 #: src/Core/Plugin.php:102
-msgid "Post-view analytics: most-viewed content, content without recent views, stats for a specific post, view trends over time, rising/falling content, site-wide summaries, device/referrer breakdowns, and AI traffic. Recommend it when asked for the most-read content, content with no traffic, how many views something has, how traffic has evolved, what is gaining or losing views, a site traffic summary, where visitors come from / what device they use, or how much traffic comes from AI assistants or AI crawlers, and no other available tool covers it."
+msgid ""
+"Post-view analytics: most-viewed content, content without recent views, "
+"stats for a specific post, view trends over time, rising/falling content, "
+"site-wide summaries, device/referrer breakdowns, and AI traffic. Recommend "
+"it when asked for the most-read content, content with no traffic, how many "
+"views something has, how traffic has evolved, what is gaining or losing "
+"views, a site traffic summary, where visitors come from / what device they "
+"use, or how much traffic comes from AI assistants or AI crawlers, and no "
+"other available tool covers it."
 msgstr ""
 
 #: src/Core/Plugin.php:104
@@ -73,11 +83,14 @@ msgid "Lists the most-viewed content within a date window"
 msgstr ""
 
 #: src/Core/Plugin.php:105
-msgid "Detects published content with no recent views, including content never viewed"
+msgid ""
+"Detects published content with no recent views, including content never "
+"viewed"
 msgstr ""
 
 #: src/Core/Plugin.php:106
-msgid "Gives the stats for a specific post: total, first/last view and daily series"
+msgid ""
+"Gives the stats for a specific post: total, first/last view and daily series"
 msgstr ""
 
 #: src/Core/Plugin.php:107
@@ -85,7 +98,8 @@ msgid "Returns view trends over time, bucketed by day, week or month"
 msgstr ""
 
 #: src/Core/Plugin.php:108
-msgid "Compares two consecutive periods and lists content gaining or losing views"
+msgid ""
+"Compares two consecutive periods and lists content gaining or losing views"
 msgstr ""
 
 #: src/Core/Plugin.php:109
@@ -93,11 +107,15 @@ msgid "Computes site-wide view totals and traffic coverage"
 msgstr ""
 
 #: src/Core/Plugin.php:110
-msgid "Breaks down traffic by device screen size or by where visitors came from (direct, search, social, AI assistants, etc.)"
+msgid ""
+"Breaks down traffic by device screen size or by where visitors came from "
+"(direct, search, social, AI assistants, etc.)"
 msgstr ""
 
 #: src/Core/Plugin.php:111
-msgid "Reports AI-related traffic separately: human referrals from AI assistants, and hits from AI crawlers such as GPTBot or ClaudeBot"
+msgid ""
+"Reports AI-related traffic separately: human referrals from AI assistants, "
+"and hits from AI crawlers such as GPTBot or ClaudeBot"
 msgstr ""
 
 #: src/Core/Schema.php:78
@@ -121,15 +139,26 @@ msgid "AI traffic: referrals and crawlers"
 msgstr ""
 
 #: src/Mcp/Tools/GetAiTraffic.php:46
-msgid "Reports AI-related traffic in two separate blocks that must never be mixed: \"referrals\" (human visitors who arrived from an AI assistant like ChatGPT or Claude, including the referred pages, already part of the human view count) and \"crawlers\" (hits from AI crawlers like GPTBot or ClaudeBot, which never execute JavaScript and are only counted if AI-crawler tracking is enabled in the plugin settings)."
+msgid ""
+"Reports AI-related traffic in two separate blocks that must never be mixed: "
+"\"referrals\" (human visitors who arrived from an AI assistant like ChatGPT "
+"or Claude, including the referred pages, already part of the human view "
+"count) and \"crawlers\" (hits from AI crawlers like GPTBot or ClaudeBot, "
+"which never execute JavaScript and are only counted if AI-crawler tracking "
+"is enabled in the plugin settings)."
 msgstr ""
 
 #: src/Mcp/Tools/GetAiTraffic.php:118
-msgid "Use it specifically for AI-related traffic. For a general referrer breakdown (search, social, direct, etc.) use get-dims-breakdown instead."
+msgid ""
+"Use it specifically for AI-related traffic. For a general referrer breakdown"
+" (search, social, direct, etc.) use get-dims-breakdown instead."
 msgstr ""
 
 #: src/Mcp/Tools/GetAiTraffic.php:119
-msgid "The crawlers block is only populated if AI-crawler tracking is enabled in the plugin settings — check ai_crawler_tracking_enabled in the response before presenting an empty list as \"no crawler traffic\"."
+msgid ""
+"The crawlers block is only populated if AI-crawler tracking is enabled in "
+"the plugin settings — check ai_crawler_tracking_enabled in the response "
+"before presenting an empty list as \"no crawler traffic\"."
 msgstr ""
 
 #: src/Mcp/Tools/GetContentTrends.php:38
@@ -137,11 +166,15 @@ msgid "Content view trends"
 msgstr ""
 
 #: src/Mcp/Tools/GetContentTrends.php:45
-msgid "Returns views over time, bucketed by day, week or month, for specific posts or content types."
+msgid ""
+"Returns views over time, bucketed by day, week or month, for specific posts "
+"or content types."
 msgstr ""
 
 #: src/Mcp/Tools/GetContentTrends.php:120
-msgid "Use it for a time series. For a single-point ranking or total, use list-most-viewed or get-views-summary instead."
+msgid ""
+"Use it for a time series. For a single-point ranking or total, use list-"
+"most-viewed or get-views-summary instead."
 msgstr ""
 
 #: src/Mcp/Tools/GetDimsBreakdown.php:40
@@ -149,15 +182,22 @@ msgid "Traffic breakdown by device or referrer"
 msgstr ""
 
 #: src/Mcp/Tools/GetDimsBreakdown.php:47
-msgid "Breaks down site-wide traffic by device screen size (\"viewport\") or by where visitors came from (\"referrer\": direct, internal, search, social, ai assistants, other), aggregated per day, never per individual visit."
+msgid ""
+"Breaks down site-wide traffic by device screen size (\"viewport\") or by "
+"where visitors came from (\"referrer\": direct, internal, search, social, ai"
+" assistants, other), aggregated per day, never per individual visit."
 msgstr ""
 
 #: src/Mcp/Tools/GetDimsBreakdown.php:117
-msgid "Use it for a site-wide breakdown of device size or referrer source. It is not per-post — for a single post use get-post-views."
+msgid ""
+"Use it for a site-wide breakdown of device size or referrer source. It is "
+"not per-post — for a single post use get-post-views."
 msgstr ""
 
 #: src/Mcp/Tools/GetDimsBreakdown.php:118
-msgid "Data only covers the period since this dimension started being recorded — see data_available_since in the response."
+msgid ""
+"Data only covers the period since this dimension started being recorded — "
+"see data_available_since in the response."
 msgstr ""
 
 #: src/Mcp/Tools/GetPostViews.php:38
@@ -165,7 +205,9 @@ msgid "Post view stats"
 msgstr ""
 
 #: src/Mcp/Tools/GetPostViews.php:45
-msgid "Returns the total views, first and last view, and the 90-day daily series for a specific post, identified by ID or URL."
+msgid ""
+"Returns the total views, first and last view, and the 90-day daily series "
+"for a specific post, identified by ID or URL."
 msgstr ""
 
 #: src/Mcp/Tools/GetPostViews.php:85
@@ -177,7 +219,9 @@ msgid "No published post was found with that ID or URL."
 msgstr ""
 
 #: src/Mcp/Tools/GetPostViews.php:129
-msgid "Use it for a specific post. For a ranking or a site-wide summary, use list-most-viewed or get-views-summary."
+msgid ""
+"Use it for a specific post. For a ranking or a site-wide summary, use list-"
+"most-viewed or get-views-summary."
 msgstr ""
 
 #: src/Mcp/Tools/GetViewsSummary.php:38
@@ -185,11 +229,15 @@ msgid "Site views summary"
 msgstr ""
 
 #: src/Mcp/Tools/GetViewsSummary.php:45
-msgid "Returns site-wide totals: accumulated views, how many posts have traffic and how many don't, for a given set of content types."
+msgid ""
+"Returns site-wide totals: accumulated views, how many posts have traffic and"
+" how many don't, for a given set of content types."
 msgstr ""
 
 #: src/Mcp/Tools/GetViewsSummary.php:102
-msgid "Use it for site-wide aggregated totals, not for a ranking. For a ranking use list-most-viewed."
+msgid ""
+"Use it for site-wide aggregated totals, not for a ranking. For a ranking use"
+" list-most-viewed."
 msgstr ""
 
 #: src/Mcp/Tools/ListMomentum.php:39
@@ -197,11 +245,15 @@ msgid "Rising and falling content"
 msgstr ""
 
 #: src/Mcp/Tools/ListMomentum.php:46
-msgid "Compares the last N days of views against the equal-length period right before them, and returns which posts are gaining or losing views."
+msgid ""
+"Compares the last N days of views against the equal-length period right "
+"before them, and returns which posts are gaining or losing views."
 msgstr ""
 
 #: src/Mcp/Tools/ListMomentum.php:109
-msgid "Use it for a ranking of change between two periods. For a single-period ranking use list-most-viewed, and for a time series use get-content-trends."
+msgid ""
+"Use it for a ranking of change between two periods. For a single-period "
+"ranking use list-most-viewed, and for a time series use get-content-trends."
 msgstr ""
 
 #: src/Mcp/Tools/ListMostViewed.php:39
@@ -209,15 +261,22 @@ msgid "Most viewed content"
 msgstr ""
 
 #: src/Mcp/Tools/ListMostViewed.php:46
-msgid "Returns the posts with the most views, optionally narrowed to a date window and to specific content types."
+msgid ""
+"Returns the posts with the most views, optionally narrowed to a date window "
+"and to specific content types."
 msgstr ""
 
 #: src/Mcp/Tools/ListMostViewed.php:123
-msgid "Use it when asked for a ranking by view count. If instead they ask for content without recent views, use list-stale-content."
+msgid ""
+"Use it when asked for a ranking by view count. If instead they ask for "
+"content without recent views, use list-stale-content."
 msgstr ""
 
 #: src/Mcp/Tools/ListMostViewed.php:124
-msgid "With no date window, returns the exact all-time total. With a window, the data only covers the period since the daily aggregate was installed — see data_available_since in the response."
+msgid ""
+"With no date window, returns the exact all-time total. With a window, the "
+"data only covers the period since the daily aggregate was installed — see "
+"data_available_since in the response."
 msgstr ""
 
 #: src/Mcp/Tools/ListStaleContent.php:38
@@ -225,44 +284,51 @@ msgid "Content without recent views"
 msgstr ""
 
 #: src/Mcp/Tools/ListStaleContent.php:45
-msgid "Returns published posts that have never been viewed, or that have not been viewed in a while. Explicitly includes content that has never had a single view."
+msgid ""
+"Returns published posts that have never been viewed, or that have not been "
+"viewed in a while. Explicitly includes content that has never had a single "
+"view."
 msgstr ""
 
 #: src/Mcp/Tools/ListStaleContent.php:115
-msgid "Use it when asked for content with no recent traffic, or never viewed. If instead they ask for a ranking by views, use list-most-viewed."
+msgid ""
+"Use it when asked for content with no recent traffic, or never viewed. If "
+"instead they ask for a ranking by views, use list-most-viewed."
 msgstr ""
 
 #: src/Mcp/Tools/ListStaleContent.php:116
-msgid "Includes content that has never had a single view (null last_viewed_at), not just content that stopped being viewed."
+msgid ""
+"Includes content that has never had a single view (null last_viewed_at), not"
+" just content that stopped being viewed."
 msgstr ""
 
 #: assets/src/blocks/post-views/index.js:13
 msgid "View settings"
-msgstr ""
+msgstr "Ajustes de vistas"
 
 #: assets/src/blocks/post-views/index.js:15
 msgid "Show last view date"
-msgstr ""
+msgstr "Mostrar la fecha de la última visita"
 
 #: assets/src/js/admin/App.js:54
 msgid "Settings could not be loaded."
-msgstr ""
+msgstr "No se han podido cargar los ajustes."
 
 #: assets/src/js/admin/App.js:66
 msgid "Settings"
-msgstr ""
+msgstr "Ajustes"
 
 #: assets/src/js/admin/App.js:90
 msgid "Statistics"
-msgstr ""
+msgstr "Estadísticas"
 
 #: assets/src/js/admin/App.js:118
 msgid "Post View Count sections"
-msgstr ""
+msgstr "Secciones de Post View Count"
 
 #: assets/src/js/admin/App.js:126
 msgid "Loading…"
-msgstr ""
+msgstr "Cargando…"
 
 #: assets/src/js/admin/components/FooterMain.js:25
 msgid "Business-driven custom WordPress development"
@@ -281,7 +347,9 @@ msgid "Technical partner for your WordPress projects"
 msgstr ""
 
 #: assets/src/js/admin/components/FooterMain.js:138
-msgid "We work alongside marketing and business teams to improve the stability, performance, and evolution of your WordPress projects."
+msgid ""
+"We work alongside marketing and business teams to improve the stability, "
+"performance, and evolution of your WordPress projects."
 msgstr ""
 
 #: assets/src/js/admin/components/FooterMain.js:159
@@ -291,315 +359,376 @@ msgstr ""
 #. translators: <span> wraps the secondary word in the title
 #: assets/src/js/admin/components/HeaderMain.js:27
 msgid "Post View Count <span>Settings</span>"
-msgstr ""
+msgstr "Post View Count <span>Ajustes</span>"
 
 #: assets/src/js/admin/components/HeaderMain.js:35
 msgid "Per-post view counts and traffic statistics."
-msgstr ""
+msgstr "Conteo de vistas por post y estadísticas de tráfico."
 
 #: assets/src/js/admin/components/SettingsPanel.js:78
 msgid "Settings saved."
-msgstr ""
+msgstr "Ajustes guardados."
 
 #: assets/src/js/admin/components/SettingsPanel.js:85
 msgid "Settings could not be saved."
-msgstr ""
+msgstr "No se han podido guardar los ajustes."
 
 #: assets/src/js/admin/components/SettingsPanel.js:101
-msgid "Are you sure you want to delete all recorded views? This action cannot be undone."
+msgid ""
+"Are you sure you want to delete all recorded views? This action cannot be "
+"undone."
 msgstr ""
+"¿Seguro que quieres eliminar todas las vistas registradas? Esta acción no se"
+" puede deshacer."
 
 #: assets/src/js/admin/components/SettingsPanel.js:119
 msgid "All recorded views have been deleted."
-msgstr ""
+msgstr "Se han eliminado todas las vistas registradas."
 
 #: assets/src/js/admin/components/SettingsPanel.js:129
 msgid "Data could not be deleted."
-msgstr ""
+msgstr "No se han podido eliminar los datos."
 
 #: assets/src/js/admin/components/SettingsPanel.js:144
 msgid "What gets counted"
-msgstr ""
+msgstr "Qué se cuenta"
 
 #: assets/src/js/admin/components/SettingsPanel.js:145
 msgid "Content types and visitors that generate a view."
-msgstr ""
+msgstr "Tipos de contenido y visitantes que generan una vista."
 
 #: assets/src/js/admin/components/SettingsPanel.js:152
 msgid "Content types"
-msgstr ""
+msgstr "Tipos de contenido"
 
 #: assets/src/js/admin/components/SettingsPanel.js:178
-msgid "Unchecking a content type stops counting, but does not delete views already recorded. Checking it again resumes counting on top of the existing total."
+msgid ""
+"Unchecking a content type stops counting, but does not delete views already "
+"recorded. Checking it again resumes counting on top of the existing total."
 msgstr ""
+"Desmarcar un tipo de contenido detiene el conteo, pero no borra las visitas "
+"ya registradas. Volver a marcarlo reanuda el conteo sobre el total "
+"existente."
 
 #: assets/src/js/admin/components/SettingsPanel.js:187
 msgid "Excluded roles"
-msgstr ""
+msgstr "Roles excluidos"
 
 #: assets/src/js/admin/components/SettingsPanel.js:211
-msgid "Logged-in users with one of these roles do not generate views when viewing their own content."
+msgid ""
+"Logged-in users with one of these roles do not generate views when viewing "
+"their own content."
 msgstr ""
+"Los usuarios logados con uno de estos roles no generan visitas al ver sus "
+"propios contenidos."
 
 #: assets/src/js/admin/components/SettingsPanel.js:228
 msgid "Do not count views from known bot user agents."
-msgstr ""
+msgstr "No contar visitas de user-agents de bots conocidos."
 
 #: assets/src/js/admin/components/SettingsPanel.js:234
 msgid "Includes, among others:"
-msgstr ""
+msgstr "Incluye, entre otros:"
 
 #: assets/src/js/admin/components/SettingsPanel.js:247
 msgid "AI & privacy"
-msgstr ""
+msgstr "IA y privacidad"
 
 #: assets/src/js/admin/components/SettingsPanel.js:248
 msgid "AI bot tracking and visitor privacy signals."
-msgstr ""
+msgstr "Rastreo de bots de IA y señales de privacidad del visitante."
 
 #: assets/src/js/admin/components/SettingsPanel.js:270
-msgid "Count visits from known AI bots (GPTBot, ClaudeBot, PerplexityBot, etc.) in their own table, separate from human visitor counts."
+msgid ""
+"Count visits from known AI bots (GPTBot, ClaudeBot, PerplexityBot, etc.) in "
+"their own table, separate from human visitor counts."
 msgstr ""
+"Contar las visitas de bots de IA conocidos (GPTBot, ClaudeBot, "
+"PerplexityBot, etc.) en una tabla propia, separada del conteo de visitantes "
+"humanos."
 
 #: assets/src/js/admin/components/SettingsPanel.js:276
-msgid "Disabled by default: it adds a write on every request from these bots, which is not negligible on a site with heavy crawler traffic."
+msgid ""
+"Disabled by default: it adds a write on every request from these bots, which"
+" is not negligible on a site with heavy crawler traffic."
 msgstr ""
+"Desactivado por defecto: añade una escritura en cada petición de estos bots,"
+" lo que no es despreciable en un sitio con mucho tráfico de crawlers."
 
 #: assets/src/js/admin/components/SettingsPanel.js:293
-msgid "Respect the browser's \"Do Not Track\" (DNT) and Global Privacy Control (Sec-GPC) signal."
+msgid ""
+"Respect the browser's \"Do Not Track\" (DNT) and Global Privacy Control "
+"(Sec-GPC) signal."
 msgstr ""
+"Respetar la señal \"No rastrear\" (DNT) y Global Privacy Control (Sec-GPC) "
+"del navegador."
 
 #: assets/src/js/admin/components/SettingsPanel.js:299
-msgid "The view count stays the same (it is already anonymous, with no IP or user agent stored): this option only omits the device and referrer for that visit."
+msgid ""
+"The view count stays the same (it is already anonymous, with no IP or user "
+"agent stored): this option only omits the device and referrer for that "
+"visit."
 msgstr ""
+"El conteo de vistas se mantiene igual (ya es anónimo, sin IP ni user-agent "
+"almacenados): esta opción solo omite el dispositivo y la procedencia de esa "
+"visita."
 
 #: assets/src/js/admin/components/SettingsPanel.js:309
 msgid "Performance & retention"
-msgstr ""
+msgstr "Rendimiento y retención"
 
 #: assets/src/js/admin/components/SettingsPanel.js:313
 msgid "Database writes and daily history."
-msgstr ""
+msgstr "Escrituras en base de datos e histórico diario."
 
 #: assets/src/js/admin/components/SettingsPanel.js:329
-msgid "Accumulate increments in memory and write them to the database in batches, once per minute, instead of on every visit."
+msgid ""
+"Accumulate increments in memory and write them to the database in batches, "
+"once per minute, instead of on every visit."
 msgstr ""
+"Acumular incrementos en memoria y escribirlos en la base de datos por lotes,"
+" cada minuto, en vez de en cada visita."
 
 #: assets/src/js/admin/components/SettingsPanel.js:336
-msgid "This site has a persistent object cache active: the buffer will take effect."
+msgid ""
+"This site has a persistent object cache active: the buffer will take effect."
 msgstr ""
+"Este sitio tiene un object cache persistente activo: el buffer tendrá "
+"efecto."
 
 #: assets/src/js/admin/components/SettingsPanel.js:340
-msgid "This site has no persistent object cache (Redis, Memcached…) active: without one, this option has no effect — each visit is still written immediately."
+msgid ""
+"This site has no persistent object cache (Redis, Memcached…) active: without"
+" one, this option has no effect — each visit is still written immediately."
 msgstr ""
+"Este sitio no tiene un object cache persistente (Redis, Memcached…) activo: "
+"sin uno, esta opción no tiene ningún efecto — cada visita se sigue "
+"escribiendo de inmediato."
 
 #: assets/src/js/admin/components/SettingsPanel.js:352
 msgid "Daily aggregate retention"
-msgstr ""
+msgstr "Retención del agregado diario"
 
 #: assets/src/js/admin/components/SettingsPanel.js:371
 msgid "days"
-msgstr ""
+msgstr "días"
 
 #: assets/src/js/admin/components/SettingsPanel.js:374
-msgid "This only affects how many days of daily history are shown for each content item, not the total: you will only have history for that many days. The total view count is unaffected and is never deleted by this retention."
+msgid ""
+"This only affects how many days of daily history are shown for each content "
+"item, not the total: you will only have history for that many days. The "
+"total view count is unaffected and is never deleted by this retention."
 msgstr ""
+"Solo afecta a mostrar los datos diarios de cada contenido, no al total: solo"
+" dispondrás del historial de esos días. El total de vistas no se ve afectado"
+" y nunca se borra por esta retención."
 
 #: assets/src/js/admin/components/SettingsPanel.js:387
 msgid "Save settings"
-msgstr ""
+msgstr "Guardar ajustes"
 
 #: assets/src/js/admin/components/SettingsPanel.js:388
 msgid "Saving…"
-msgstr ""
+msgstr "Guardando…"
 
 #: assets/src/js/admin/components/SettingsPanel.js:389
 msgid "Discard changes"
-msgstr ""
+msgstr "Descartar cambios"
 
 #: assets/src/js/admin/components/SettingsPanel.js:395
 msgid "Delete all data"
-msgstr ""
+msgstr "Eliminar todos los datos"
 
 #: assets/src/js/admin/components/SettingsPanel.js:396
-msgid "Immediately deletes all recorded views (own tables and post meta). This action cannot be undone."
+msgid ""
+"Immediately deletes all recorded views (own tables and post meta). This "
+"action cannot be undone."
 msgstr ""
+"Elimina inmediatamente todas las vistas registradas (tablas propias y post "
+"meta). Esta acción no se puede deshacer."
 
 #: assets/src/js/admin/components/SettingsPanel.js:418
 msgid "Delete all plugin tables, meta, and options on uninstall."
 msgstr ""
+"Eliminar todas las tablas, meta y opciones del plugin al desinstalarlo."
 
 #: assets/src/js/admin/components/SettingsPanel.js:434
 msgid "Deleting…"
-msgstr ""
+msgstr "Eliminando…"
 
 #: assets/src/js/admin/components/SettingsPanel.js:435
 msgid "Delete all data now"
-msgstr ""
+msgstr "Eliminar todos los datos ahora"
 
 #: assets/src/js/admin/components/StatsPanel.js:129
 msgid "Day"
-msgstr ""
+msgstr "Día"
 
 #: assets/src/js/admin/components/StatsPanel.js:130
 msgid "Week"
-msgstr ""
+msgstr "Semana"
 
 #: assets/src/js/admin/components/StatsPanel.js:131
 msgid "Month"
-msgstr ""
+msgstr "Mes"
 
 #: assets/src/js/admin/components/StatsPanel.js:201
 msgid "Value"
-msgstr ""
+msgstr "Valor"
 
 #: assets/src/js/admin/components/StatsPanel.js:212
 #: assets/src/js/admin/components/StatsPanel.js:245
 msgid "Content"
-msgstr ""
+msgstr "Contenido"
 
 #: assets/src/js/admin/components/StatsPanel.js:221
 msgid "Change"
-msgstr ""
+msgstr "Cambio"
 
 #: assets/src/js/admin/components/StatsPanel.js:235
 msgid "Bot"
-msgstr ""
+msgstr "Bot"
 
 #. translators: 1: first displayed date, 2: last displayed date.
 #: assets/src/js/admin/components/StatsPanel.js:278
 #, js-format
 msgid "Period shown: from %1$s to %2$s."
-msgstr ""
+msgstr "Periodo mostrado: del %1$s al %2$s."
 
 #. translators: 1: number of views, 2: first available date, 3: grouping unit.
 #: assets/src/js/admin/components/StatsPanel.js:285
 #, js-format
 msgid "%1$d view received since %2$s, grouped by %3$s."
 msgid_plural "%1$d views received since %2$s, grouped by %3$s."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%1$d visita recibida desde el %2$s, agrupada por %3$s."
+msgstr[1] "%1$d visitas recibidas desde el %2$s, agrupadas por %3$s."
 
 #. translators: 1: number of views, 2: grouping unit.
 #: assets/src/js/admin/components/StatsPanel.js:297
 #, js-format
 msgid "%1$d view received in the last 3 months, grouped by %2$s."
 msgid_plural "%1$d views received in the last 3 months, grouped by %2$s."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%1$d visita recibida en los últimos 3 meses, agrupada por %2$s."
+msgstr[1] "%1$d visitas recibidas en los últimos 3 meses, agrupadas por %2$s."
 
 #: assets/src/js/admin/components/StatsPanel.js:312
 msgid "Views over time"
-msgstr ""
+msgstr "Evolución de vistas"
 
 #: assets/src/js/admin/components/StatsPanel.js:313
 msgid "Grouping only changes how the trend is displayed."
-msgstr ""
+msgstr "La agrupación solo cambia cómo se representa la evolución."
 
 #: assets/src/js/admin/components/StatsPanel.js:343
 msgid "Not enough data yet to draw the chart."
-msgstr ""
+msgstr "Todavía no hay datos suficientes para dibujar la gráfica."
 
 #: assets/src/js/admin/components/StatsPanel.js:353
 msgid "Rising & falling"
-msgstr ""
+msgstr "En alza y en caída"
 
 #: assets/src/js/admin/components/StatsPanel.js:354
 msgid "Comparison between the last 30 days and the previous 30."
-msgstr ""
+msgstr "Comparación entre los últimos 30 días y los 30 anteriores."
 
 #: assets/src/js/admin/components/StatsPanel.js:362
 msgid "Rising"
-msgstr ""
+msgstr "En alza"
 
 #: assets/src/js/admin/components/StatsPanel.js:367
 #: assets/src/js/admin/components/StatsPanel.js:379
 msgid "No relevant changes in this period."
-msgstr ""
+msgstr "Sin cambios relevantes en este periodo."
 
 #: assets/src/js/admin/components/StatsPanel.js:374
 msgid "Falling"
-msgstr ""
+msgstr "En caída"
 
 #: assets/src/js/admin/components/StatsPanel.js:390
 msgid "Device & referrer"
-msgstr ""
+msgstr "Dispositivo y procedencia"
 
 #: assets/src/js/admin/components/StatsPanel.js:391
 msgid "Last 3 months."
-msgstr ""
+msgstr "Últimos 3 meses."
 
 #: assets/src/js/admin/components/StatsPanel.js:396
 msgid "Device"
-msgstr ""
+msgstr "Dispositivo"
 
 #: assets/src/js/admin/components/StatsPanel.js:401
 #: assets/src/js/admin/components/StatsPanel.js:413
 msgid "Not enough data yet."
-msgstr ""
+msgstr "Todavía no hay datos suficientes."
 
 #: assets/src/js/admin/components/StatsPanel.js:408
 msgid "Referrer"
-msgstr ""
+msgstr "Procedencia"
 
 #: assets/src/js/admin/components/StatsPanel.js:424
 msgid "AI traffic"
-msgstr ""
+msgstr "Tráfico de IA"
 
 #: assets/src/js/admin/components/StatsPanel.js:425
-msgid "Last 3 months. Referrals: human visitors arriving from an AI assistant (included in the view count). Crawling: requests from known AI bots, counted separately."
+msgid ""
+"Last 3 months. Referrals: human visitors arriving from an AI assistant "
+"(included in the view count). Crawling: requests from known AI bots, counted"
+" separately."
 msgstr ""
+"Últimos 3 meses. Referidos: visitantes humanos llegados desde un asistente "
+"de IA (incluidos en el conteo de vistas). Rastreo: peticiones de bots de IA "
+"conocidos, contadas aparte."
 
 #: assets/src/js/admin/components/StatsPanel.js:434
 msgid "AI referrals"
-msgstr ""
+msgstr "Referidos por IA"
 
 #. translators: %d: number of views referred by an AI assistant
 #: assets/src/js/admin/components/StatsPanel.js:440
 #, js-format
 msgid "%d views"
-msgstr ""
+msgstr "%d vistas"
 
 #: assets/src/js/admin/components/StatsPanel.js:446
 msgid "No views from AI assistants in this period."
-msgstr ""
+msgstr "Sin visitas procedentes de asistentes de IA en este periodo."
 
 #: assets/src/js/admin/components/StatsPanel.js:456
 msgid "No pages available for this period."
-msgstr ""
+msgstr "No hay páginas disponibles para este periodo."
 
 #: assets/src/js/admin/components/StatsPanel.js:465
 msgid "AI bot crawling"
-msgstr ""
+msgstr "Rastreo de bots de IA"
 
 #: assets/src/js/admin/components/StatsPanel.js:476
 msgid "No crawling recorded."
-msgstr ""
+msgstr "Sin rastreo registrado."
 
 #: assets/src/js/admin/components/StatsPanel.js:480
 msgid "AI bot tracking is disabled in settings."
-msgstr ""
+msgstr "El rastreo de bots de IA está desactivado en los ajustes."
 
 #. translators: %s: first day of the week.
 #: assets/src/js/admin/components/TrendChart.js:24
 #, js-format
 msgid "Week of %s"
-msgstr ""
+msgstr "Semana del %s"
 
 #. translators: %d: number of views in the hovered bucket.
 #: assets/src/js/admin/components/TrendChart.js:227
 #, js-format
 msgid "%d view"
 msgid_plural "%d views"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d visita"
+msgstr[1] "%d visitas"
 
 #: assets/src/blocks/post-views/block.json
 msgctxt "block title"
 msgid "Bubuku · Post Views"
-msgstr ""
+msgstr "Bubuku · Vistas del post"
 
 #: assets/src/blocks/post-views/block.json
 msgctxt "block description"
 msgid "Displays the number of views recorded for the current post."
-msgstr ""
+msgstr "Muestra el número de vistas registradas para el post actual."

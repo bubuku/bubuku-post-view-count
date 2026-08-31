@@ -126,9 +126,9 @@ function formatDate( value ) {
 }
 
 const GRANULARITY_OPTIONS = [
-	{ value: 'day', label: __( 'Día', 'bubuku-post-view-count' ) },
-	{ value: 'week', label: __( 'Semana', 'bubuku-post-view-count' ) },
-	{ value: 'month', label: __( 'Mes', 'bubuku-post-view-count' ) },
+	{ value: 'day', label: __( 'Day', 'bubuku-post-view-count' ) },
+	{ value: 'week', label: __( 'Week', 'bubuku-post-view-count' ) },
+	{ value: 'month', label: __( 'Month', 'bubuku-post-view-count' ) },
 ];
 
 /**
@@ -198,10 +198,10 @@ const StatsPanel = ( { context } ) => {
 	}, [] );
 
 	const dimsColumns = [
-		{ key: 'value', label: __( 'Valor', 'bubuku-post-view-count' ) },
+		{ key: 'value', label: __( 'Value', 'bubuku-post-view-count' ) },
 		{
 			key: 'views',
-			label: __( 'Vistas', 'bubuku-post-view-count' ),
+			label: __( 'Views', 'bubuku-post-view-count' ),
 			numeric: true,
 		},
 	];
@@ -209,7 +209,7 @@ const StatsPanel = ( { context } ) => {
 	const momentumColumns = [
 		{
 			key: 'title',
-			label: __( 'Contenido', 'bubuku-post-view-count' ),
+			label: __( 'Content', 'bubuku-post-view-count' ),
 			render: ( row ) => (
 				<a href={ row.url } target="_blank" rel="noopener noreferrer">
 					{ row.title }
@@ -218,7 +218,7 @@ const StatsPanel = ( { context } ) => {
 		},
 		{
 			key: 'delta',
-			label: __( 'Cambio', 'bubuku-post-view-count' ),
+			label: __( 'Change', 'bubuku-post-view-count' ),
 			numeric: true,
 			render: ( row ) => {
 				const sign = row.delta >= 0 ? '+' : '';
@@ -235,14 +235,14 @@ const StatsPanel = ( { context } ) => {
 		{ key: 'bot', label: __( 'Bot', 'bubuku-post-view-count' ) },
 		{
 			key: 'views',
-			label: __( 'Vistas', 'bubuku-post-view-count' ),
+			label: __( 'Views', 'bubuku-post-view-count' ),
 			numeric: true,
 		},
 	];
 	const aiReferralColumns = [
 		{
 			key: 'title',
-			label: __( 'Contenido', 'bubuku-post-view-count' ),
+			label: __( 'Content', 'bubuku-post-view-count' ),
 			render: ( row ) => (
 				<a href={ row.url } target="_blank" rel="noopener noreferrer">
 					{ row.title }
@@ -251,7 +251,7 @@ const StatsPanel = ( { context } ) => {
 		},
 		{
 			key: 'views',
-			label: __( 'Vistas', 'bubuku-post-view-count' ),
+			label: __( 'Views', 'bubuku-post-view-count' ),
 			numeric: true,
 		},
 	];
@@ -275,10 +275,7 @@ const StatsPanel = ( { context } ) => {
 			: trendRange.from;
 		trendRangeLabel = sprintf(
 			/* translators: 1: first displayed date, 2: last displayed date. */
-			__(
-				'Periodo mostrado: del %1$s al %2$s.',
-				'bubuku-post-view-count'
-			),
+			__( 'Period shown: from %1$s to %2$s.', 'bubuku-post-view-count' ),
 			formatDate( displayedFrom ),
 			formatDate( trendRange.to )
 		);
@@ -286,8 +283,8 @@ const StatsPanel = ( { context } ) => {
 			? sprintf(
 					/* translators: 1: number of views, 2: first available date, 3: grouping unit. */
 					_n(
-						'%1$d visita recibida desde el %2$s, agrupada por %3$s.',
-						'%1$d visitas recibidas desde el %2$s, agrupadas por %3$s.',
+						'%1$d view received since %2$s, grouped by %3$s.',
+						'%1$d views received since %2$s, grouped by %3$s.',
 						trendTotal,
 						'bubuku-post-view-count'
 					),
@@ -298,8 +295,8 @@ const StatsPanel = ( { context } ) => {
 			: sprintf(
 					/* translators: 1: number of views, 2: grouping unit. */
 					_n(
-						'%1$d visita recibida en los últimos 3 meses, agrupada por %2$s.',
-						'%1$d visitas recibidas en los últimos 3 meses, agrupadas por %2$s.',
+						'%1$d view received in the last 3 months, grouped by %2$s.',
+						'%1$d views received in the last 3 months, grouped by %2$s.',
 						trendTotal,
 						'bubuku-post-view-count'
 					),
@@ -312,9 +309,9 @@ const StatsPanel = ( { context } ) => {
 		<div className="bbk-stats-panel">
 			<DashboardCard
 				icon={ ICON_TREND }
-				title={ __( 'Evolución de vistas', 'bubuku-post-view-count' ) }
+				title={ __( 'Views over time', 'bubuku-post-view-count' ) }
 				claim={ __(
-					'La agrupación solo cambia cómo se representa la evolución.',
+					'Grouping only changes how the trend is displayed.',
 					'bubuku-post-view-count'
 				) }
 				headerMeta={
@@ -344,7 +341,7 @@ const StatsPanel = ( { context } ) => {
 						trend={ trend }
 						granularity={ granularity }
 						noDataLabel={ __(
-							'Todavía no hay datos suficientes para dibujar la gráfica.',
+							'Not enough data yet to draw the chart.',
 							'bubuku-post-view-count'
 						) }
 					/>
@@ -353,34 +350,34 @@ const StatsPanel = ( { context } ) => {
 
 			<DashboardCard
 				icon={ ICON_TREND }
-				title={ __( 'En alza y en caída', 'bubuku-post-view-count' ) }
+				title={ __( 'Rising & falling', 'bubuku-post-view-count' ) }
 				claim={ __(
-					'Comparación entre los últimos 30 días y los 30 anteriores.',
+					'Comparison between the last 30 days and the previous 30.',
 					'bubuku-post-view-count'
 				) }
 				animationDelay=".1s"
 			>
 				<div className="bbk-two-columns">
 					<div>
-						<h3>{ __( 'En alza', 'bubuku-post-view-count' ) }</h3>
+						<h3>{ __( 'Rising', 'bubuku-post-view-count' ) }</h3>
 						<DataTable
 							columns={ momentumColumns }
 							rows={ momentum?.rising || [] }
 							rowKey={ ( row ) => row.url }
 							emptyLabel={ __(
-								'Sin cambios relevantes en este periodo.',
+								'No relevant changes in this period.',
 								'bubuku-post-view-count'
 							) }
 						/>
 					</div>
 					<div>
-						<h3>{ __( 'En caída', 'bubuku-post-view-count' ) }</h3>
+						<h3>{ __( 'Falling', 'bubuku-post-view-count' ) }</h3>
 						<DataTable
 							columns={ momentumColumns }
 							rows={ momentum?.falling || [] }
 							rowKey={ ( row ) => row.url }
 							emptyLabel={ __(
-								'Sin cambios relevantes en este periodo.',
+								'No relevant changes in this period.',
 								'bubuku-post-view-count'
 							) }
 						/>
@@ -390,38 +387,31 @@ const StatsPanel = ( { context } ) => {
 
 			<DashboardCard
 				icon={ ICON_DEVICE }
-				title={ __(
-					'Dispositivo y procedencia',
-					'bubuku-post-view-count'
-				) }
-				claim={ __( 'Últimos 3 meses.', 'bubuku-post-view-count' ) }
+				title={ __( 'Device & referrer', 'bubuku-post-view-count' ) }
+				claim={ __( 'Last 3 months.', 'bubuku-post-view-count' ) }
 				animationDelay=".15s"
 			>
 				<div className="bbk-two-columns">
 					<div>
-						<h3>
-							{ __( 'Dispositivo', 'bubuku-post-view-count' ) }
-						</h3>
+						<h3>{ __( 'Device', 'bubuku-post-view-count' ) }</h3>
 						<DataTable
 							columns={ dimsColumns }
 							rows={ dimsViewport || [] }
 							rowKey={ ( row ) => row.value }
 							emptyLabel={ __(
-								'Todavía no hay datos suficientes.',
+								'Not enough data yet.',
 								'bubuku-post-view-count'
 							) }
 						/>
 					</div>
 					<div>
-						<h3>
-							{ __( 'Procedencia', 'bubuku-post-view-count' ) }
-						</h3>
+						<h3>{ __( 'Referrer', 'bubuku-post-view-count' ) }</h3>
 						<DataTable
 							columns={ dimsColumns }
 							rows={ dimsReferrer || [] }
 							rowKey={ ( row ) => row.value }
 							emptyLabel={ __(
-								'Todavía no hay datos suficientes.',
+								'Not enough data yet.',
 								'bubuku-post-view-count'
 							) }
 						/>
@@ -431,9 +421,9 @@ const StatsPanel = ( { context } ) => {
 
 			<DashboardCard
 				icon={ ICON_AI }
-				title={ __( 'Tráfico de IA', 'bubuku-post-view-count' ) }
+				title={ __( 'AI traffic', 'bubuku-post-view-count' ) }
 				claim={ __(
-					'Últimos 3 meses. Referidos: visitantes humanos llegados desde un asistente de IA (incluidos en el conteo de vistas). Rastreo: peticiones de bots de IA conocidos, contadas aparte.',
+					'Last 3 months. Referrals: human visitors arriving from an AI assistant (included in the view count). Crawling: requests from known AI bots, counted separately.',
 					'bubuku-post-view-count'
 				) }
 				animationDelay=".2s"
@@ -441,23 +431,20 @@ const StatsPanel = ( { context } ) => {
 				<div className="bbk-two-columns">
 					<div>
 						<h3>
-							{ __(
-								'Referidos por IA',
-								'bubuku-post-view-count'
-							) }
+							{ __( 'AI referrals', 'bubuku-post-view-count' ) }
 						</h3>
 						<p>
 							{ aiTraffic?.referrals?.views
 								? sprintf(
 										/* translators: %d: number of views referred by an AI assistant */
 										__(
-											'%d vistas',
+											'%d views',
 											'bubuku-post-view-count'
 										),
 										aiTraffic.referrals.views
 								  )
 								: __(
-										'Sin visitas procedentes de asistentes de IA en este periodo.',
+										'No views from AI assistants in this period.',
 										'bubuku-post-view-count'
 								  ) }
 						</p>
@@ -467,7 +454,7 @@ const StatsPanel = ( { context } ) => {
 								rows={ aiTraffic?.referrals?.posts || [] }
 								rowKey={ ( row ) => row.id }
 								emptyLabel={ __(
-									'No hay páginas disponibles para este periodo.',
+									'No pages available for this period.',
 									'bubuku-post-view-count'
 								) }
 							/>
@@ -476,7 +463,7 @@ const StatsPanel = ( { context } ) => {
 					<div>
 						<h3>
 							{ __(
-								'Rastreo de bots de IA',
+								'AI bot crawling',
 								'bubuku-post-view-count'
 							) }
 						</h3>
@@ -487,11 +474,11 @@ const StatsPanel = ( { context } ) => {
 							emptyLabel={
 								context?.ai_crawler_tracking
 									? __(
-											'Sin rastreo registrado.',
+											'No crawling recorded.',
 											'bubuku-post-view-count'
 									  )
 									: __(
-											'El rastreo de bots de IA está desactivado en los ajustes.',
+											'AI bot tracking is disabled in settings.',
 											'bubuku-post-view-count'
 									  )
 							}

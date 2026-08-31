@@ -52,7 +52,7 @@ function App() {
 			.catch( () => {
 				setError(
 					__(
-						'No se han podido cargar los ajustes.',
+						'Settings could not be loaded.',
 						'bubuku-post-view-count'
 					)
 				);
@@ -63,7 +63,7 @@ function App() {
 	const tabs = [
 		{
 			id: TAB_SETTINGS,
-			label: __( 'Ajustes', 'bubuku-post-view-count' ),
+			label: __( 'Settings', 'bubuku-post-view-count' ),
 			icon: (
 				<svg
 					aria-hidden="true"
@@ -87,7 +87,7 @@ function App() {
 		},
 		{
 			id: TAB_STATS,
-			label: __( 'Estadísticas', 'bubuku-post-view-count' ),
+			label: __( 'Statistics', 'bubuku-post-view-count' ),
 			icon: (
 				<svg
 					aria-hidden="true"
@@ -116,14 +116,14 @@ function App() {
 					activeTab={ activeTab }
 					onChange={ setActiveTab }
 					ariaLabel={ __(
-						'Secciones de Post View Count',
+						'Post View Count sections',
 						'bubuku-post-view-count'
 					) }
 				/>
 
 				{ loading && (
 					<p className="bk-loading">
-						{ __( 'Cargando…', 'bubuku-post-view-count' ) }
+						{ __( 'Loading…', 'bubuku-post-view-count' ) }
 					</p>
 				) }
 

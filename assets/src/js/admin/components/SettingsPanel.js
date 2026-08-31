@@ -75,10 +75,7 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 				setSaving( false );
 				setStatus( {
 					type: 'green-500',
-					message: __(
-						'Ajustes guardados.',
-						'bubuku-post-view-count'
-					),
+					message: __( 'Settings saved.', 'bubuku-post-view-count' ),
 				} );
 			} )
 			.catch( () => {
@@ -86,7 +83,7 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 				setStatus( {
 					type: 'error',
 					message: __(
-						'No se han podido guardar los ajustes.',
+						'Settings could not be saved.',
 						'bubuku-post-view-count'
 					),
 				} );
@@ -102,7 +99,7 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 		// eslint-disable-next-line no-alert
 		const confirmed = window.confirm(
 			__(
-				'¿Seguro que quieres eliminar todas las vistas registradas? Esta acción no se puede deshacer.',
+				'Are you sure you want to delete all recorded views? This action cannot be undone.',
 				'bubuku-post-view-count'
 			)
 		);
@@ -120,7 +117,7 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 				setStatus( {
 					type: 'green-500',
 					message: __(
-						'Se han eliminado todas las vistas registradas.',
+						'All recorded views have been deleted.',
 						'bubuku-post-view-count'
 					),
 				} );
@@ -130,7 +127,7 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 				setStatus( {
 					type: 'error',
 					message: __(
-						'No se han podido eliminar los datos.',
+						'Data could not be deleted.',
 						'bubuku-post-view-count'
 					),
 				} );
@@ -144,15 +141,15 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 		<div className="bbk-settings-panel">
 			<DashboardCard
 				icon={ ICON_SETTINGS }
-				title={ __( 'Qué se cuenta', 'bubuku-post-view-count' ) }
+				title={ __( 'What gets counted', 'bubuku-post-view-count' ) }
 				claim={ __(
-					'Tipos de contenido y visitantes que generan una vista.',
+					'Content types and visitors that generate a view.',
 					'bubuku-post-view-count'
 				) }
 			>
 				<div className="bbk-field-group">
 					<p className="bbk-field-group__label">
-						{ __( 'Tipos de contenido', 'bubuku-post-view-count' ) }
+						{ __( 'Content types', 'bubuku-post-view-count' ) }
 					</p>
 					<div className="bbk-checkbox-list">
 						{ Object.entries( postTypes ).map(
@@ -179,7 +176,7 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 					</div>
 					<p className="bbk-field-group__help">
 						{ __(
-							'Desmarcar un tipo de contenido detiene el conteo, pero no borra las visitas ya registradas. Volver a marcarlo reanuda el conteo sobre el total existente.',
+							'Unchecking a content type stops counting, but does not delete views already recorded. Checking it again resumes counting on top of the existing total.',
 							'bubuku-post-view-count'
 						) }
 					</p>
@@ -187,7 +184,7 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 
 				<div className="bbk-field-group">
 					<p className="bbk-field-group__label">
-						{ __( 'Roles excluidos', 'bubuku-post-view-count' ) }
+						{ __( 'Excluded roles', 'bubuku-post-view-count' ) }
 					</p>
 					<div className="bbk-checkbox-list">
 						{ Object.entries( roles ).map( ( [ slug, label ] ) => (
@@ -212,7 +209,7 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 					</div>
 					<p className="bbk-field-group__help">
 						{ __(
-							'Los usuarios logados con uno de estos roles no generan visitas al ver sus propios contenidos.',
+							'Logged-in users with one of these roles do not generate views when viewing their own content.',
 							'bubuku-post-view-count'
 						) }
 					</p>
@@ -229,13 +226,13 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 							}
 						/>
 						{ __(
-							'No contar visitas de user-agents de bots conocidos.',
+							'Do not count views from known bot user agents.',
 							'bubuku-post-view-count'
 						) }
 					</label>
 					<p className="bbk-field-group__help">
 						{ __(
-							'Incluye, entre otros:',
+							'Includes, among others:',
 							'bubuku-post-view-count'
 						) }{ ' ' }
 						{ ( context.bot_signature_examples || [] ).join(
@@ -247,9 +244,9 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 
 			<DashboardCard
 				icon={ ICON_SETTINGS }
-				title={ __( 'IA y privacidad', 'bubuku-post-view-count' ) }
+				title={ __( 'AI & privacy', 'bubuku-post-view-count' ) }
 				claim={ __(
-					'Rastreo de bots de IA y señales de privacidad del visitante.',
+					'AI bot tracking and visitor privacy signals.',
 					'bubuku-post-view-count'
 				) }
 				animationDelay=".1s"
@@ -271,13 +268,13 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 							}
 						/>
 						{ __(
-							'Contar las visitas de bots de IA conocidos (GPTBot, ClaudeBot, PerplexityBot, etc.) en una tabla propia, separada del conteo de visitantes humanos.',
+							'Count visits from known AI bots (GPTBot, ClaudeBot, PerplexityBot, etc.) in their own table, separate from human visitor counts.',
 							'bubuku-post-view-count'
 						) }
 					</label>
 					<p className="bbk-field-group__help">
 						{ __(
-							'Desactivado por defecto: añade una escritura en cada petición de estos bots, lo que no es despreciable en un sitio con mucho tráfico de crawlers.',
+							'Disabled by default: it adds a write on every request from these bots, which is not negligible on a site with heavy crawler traffic.',
 							'bubuku-post-view-count'
 						) }
 					</p>
@@ -294,13 +291,13 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 							}
 						/>
 						{ __(
-							'Respetar la señal "No rastrear" (DNT) y Global Privacy Control (Sec-GPC) del navegador.',
+							'Respect the browser\'s "Do Not Track" (DNT) and Global Privacy Control (Sec-GPC) signal.',
 							'bubuku-post-view-count'
 						) }
 					</label>
 					<p className="bbk-field-group__help">
 						{ __(
-							'El conteo de vistas se mantiene igual (ya es anónimo, sin IP ni user-agent almacenados): esta opción solo omite el dispositivo y la procedencia de esa visita.',
+							'The view count stays the same (it is already anonymous, with no IP or user agent stored): this option only omits the device and referrer for that visit.',
 							'bubuku-post-view-count'
 						) }
 					</p>
@@ -310,11 +307,11 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 			<DashboardCard
 				icon={ ICON_SETTINGS }
 				title={ __(
-					'Rendimiento y retención',
+					'Performance & retention',
 					'bubuku-post-view-count'
 				) }
 				claim={ __(
-					'Escrituras en base de datos e histórico diario.',
+					'Database writes and daily history.',
 					'bubuku-post-view-count'
 				) }
 				animationDelay=".15s"
@@ -330,18 +327,18 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 							}
 						/>
 						{ __(
-							'Acumular incrementos en memoria y escribirlos en la base de datos por lotes, cada minuto, en vez de en cada visita.',
+							'Accumulate increments in memory and write them to the database in batches, once per minute, instead of on every visit.',
 							'bubuku-post-view-count'
 						) }
 					</label>
 					<p className="bbk-field-group__help">
 						{ context.has_object_cache
 							? __(
-									'Este sitio tiene un object cache persistente activo: el buffer tendrá efecto.',
+									'This site has a persistent object cache active: the buffer will take effect.',
 									'bubuku-post-view-count'
 							  )
 							: __(
-									'Este sitio no tiene un object cache persistente (Redis, Memcached…) activo: sin uno, esta opción no tiene ningún efecto — cada visita se sigue escribiendo de inmediato.',
+									'This site has no persistent object cache (Redis, Memcached…) active: without one, this option has no effect — each visit is still written immediately.',
 									'bubuku-post-view-count'
 							  ) }
 					</p>
@@ -353,7 +350,7 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 						htmlFor="bbk-retention-days"
 					>
 						{ __(
-							'Retención del agregado diario',
+							'Daily aggregate retention',
 							'bubuku-post-view-count'
 						) }
 					</label>
@@ -371,11 +368,11 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 								)
 							}
 						/>
-						<span>{ __( 'días', 'bubuku-post-view-count' ) }</span>
+						<span>{ __( 'days', 'bubuku-post-view-count' ) }</span>
 					</div>
 					<p className="bbk-field-group__help">
 						{ __(
-							'Solo afecta a mostrar los datos diarios de cada contenido, no al total: solo dispondrás del historial de esos días. El total de vistas no se ve afectado y nunca se borra por esta retención.',
+							'This only affects how many days of daily history are shown for each content item, not the total: you will only have history for that many days. The total view count is unaffected and is never deleted by this retention.',
 							'bubuku-post-view-count'
 						) }
 					</p>
@@ -387,23 +384,17 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 				onReset={ handleReset }
 				saving={ saving }
 				status={ status }
-				labelSave={ __( 'Guardar ajustes', 'bubuku-post-view-count' ) }
-				labelSaving={ __( 'Guardando…', 'bubuku-post-view-count' ) }
-				labelReset={ __(
-					'Descartar cambios',
-					'bubuku-post-view-count'
-				) }
+				labelSave={ __( 'Save settings', 'bubuku-post-view-count' ) }
+				labelSaving={ __( 'Saving…', 'bubuku-post-view-count' ) }
+				labelReset={ __( 'Discard changes', 'bubuku-post-view-count' ) }
 			/>
 
 			<DashboardCard
 				icon={ ICON_DANGER }
 				iconVariant="icon-warning"
-				title={ __(
-					'Eliminar todos los datos',
-					'bubuku-post-view-count'
-				) }
+				title={ __( 'Delete all data', 'bubuku-post-view-count' ) }
 				claim={ __(
-					'Elimina inmediatamente todas las vistas registradas (tablas propias y post meta). Esta acción no se puede deshacer.',
+					'Immediately deletes all recorded views (own tables and post meta). This action cannot be undone.',
 					'bubuku-post-view-count'
 				) }
 				animationDelay=".2s"
@@ -425,7 +416,7 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 							}
 						/>
 						{ __(
-							'Eliminar todas las tablas, meta y opciones del plugin al desinstalarlo.',
+							'Delete all plugin tables, meta, and options on uninstall.',
 							'bubuku-post-view-count'
 						) }
 					</label>
@@ -440,9 +431,9 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 						disabled={ deleting }
 					>
 						{ deleting
-							? __( 'Eliminando…', 'bubuku-post-view-count' )
+							? __( 'Deleting…', 'bubuku-post-view-count' )
 							: __(
-									'Eliminar todos los datos ahora',
+									'Delete all data now',
 									'bubuku-post-view-count'
 							  ) }
 					</button>

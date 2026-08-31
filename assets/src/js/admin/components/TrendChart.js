@@ -21,7 +21,7 @@ function formatBucket( bucket, granularity ) {
 	return granularity === 'week'
 		? sprintf(
 				/* translators: %s: first day of the week. */
-				__( 'Semana del %s', 'bubuku-post-view-count' ),
+				__( 'Week of %s', 'bubuku-post-view-count' ),
 				label
 		  )
 		: label;
@@ -225,8 +225,8 @@ const TrendChart = ( { trend, granularity, noDataLabel } ) => {
 						{ sprintf(
 							/* translators: %d: number of views in the hovered bucket. */
 							_n(
-								'%d visita',
-								'%d visitas',
+								'%d view',
+								'%d views',
 								tooltip.views,
 								'bubuku-post-view-count'
 							),
