@@ -239,6 +239,22 @@ const StatsPanel = ( { context } ) => {
 			numeric: true,
 		},
 	];
+	const aiReferralColumns = [
+		{
+			key: 'title',
+			label: __( 'Contenido', 'bubuku-post-view-count' ),
+			render: ( row ) => (
+				<a href={ row.url } target="_blank" rel="noopener noreferrer">
+					{ row.title }
+				</a>
+			),
+		},
+		{
+			key: 'views',
+			label: __( 'Vistas', 'bubuku-post-view-count' ),
+			numeric: true,
+		},
+	];
 
 	const trendTotal = trend.reduce(
 		( total, row ) => total + row.total_views,
@@ -445,6 +461,17 @@ const StatsPanel = ( { context } ) => {
 										'bubuku-post-view-count'
 								  ) }
 						</p>
+						{ aiTraffic?.referrals?.views > 0 && (
+							<DataTable
+								columns={ aiReferralColumns }
+								rows={ aiTraffic?.referrals?.posts || [] }
+								rowKey={ ( row ) => row.id }
+								emptyLabel={ __(
+									'No hay páginas disponibles para este periodo.',
+									'bubuku-post-view-count'
+								) }
+							/>
+						) }
 					</div>
 					<div>
 						<h3>

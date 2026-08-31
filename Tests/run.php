@@ -715,7 +715,41 @@ $tests = array(
 
 		bbk_test_same( array(), $result['crawlers'], 'A disabled post type must never be queried, and must return no rows.' );
 		bbk_test_same( 0, $result['referrals']['views'], 'With no dims recorded, AI-referral views must be 0.' );
+		bbk_test_same( array(), $result['referrals']['posts'], 'A disabled post type must return no referred posts.' );
 		bbk_test_same( false, $result['ai_crawler_tracking_enabled'], 'The tracking flag must reflect Settings::ai_crawler_tracking() (default false).' );
+	},
+	'Query::ai_traffic() returns AI referrals grouped by destination post' => static function (): void {
+		TestState::reset();
+		TestState::$now             = '2026-01-01 10:00:00';
+		TestState::$post_titles[42] = 'First AI destination';
+		TestState::$post_titles[43] = 'Second AI destination';
+
+		$db = new Db();
+		$db->record_view( 42, array( 'referrer' => 'ai' ) );
+		$db->record_view( 42, array( 'referrer' => 'ai' ) );
+		$db->record_view( 43, array( 'referrer' => 'ai' ) );
+
+		$result = Query::ai_traffic( array(), '2026-01-01', '2026-01-01' );
+
+		bbk_test_same( 3, $result['referrals']['views'], 'The referral total must include every AI-referred view.' );
+		bbk_test_same(
+			array(
+				array(
+					'id'    => 42,
+					'title' => 'First AI destination',
+					'url'   => 'https://test.wp.local/?p=42',
+					'views' => 2,
+				),
+				array(
+					'id'    => 43,
+					'title' => 'Second AI destination',
+					'url'   => 'https://test.wp.local/?p=43',
+					'views' => 1,
+				),
+			),
+			$result['referrals']['posts'],
+			'Referred posts must be ordered by AI views and expose only aggregate content data.'
+		);
 	},
 	'Query::post_stats() reflects the recorded views, title and URL for a post' => static function (): void {
 		TestState::reset();
@@ -824,6 +858,7 @@ $tests = array(
 
 		bbk_test_same( array(), $result['crawlers'], 'A disabled post type must return no rows, same as Query::ai_traffic().' );
 		bbk_test_same( 0, $result['referrals']['views'], 'With no dims recorded, AI-referral views must be 0.' );
+		bbk_test_same( array(), $result['referrals']['posts'], 'With no dims recorded, referred posts must be empty.' );
 		bbk_test_same( true, isset( $result['meta']['computed_at'] ), 'The tool must add a computed_at timestamp.' );
 	},
 	'TrendsApi::check_permission() requires the edit_posts capability' => static function (): void {
@@ -896,6 +931,7 @@ $tests = array(
 
 		bbk_test_same( array(), $data['crawlers'], 'A disabled post type must return no rows, same as Query::ai_traffic().' );
 		bbk_test_same( 0, $data['referrals']['views'], 'With no dims recorded, AI-referral views must be 0.' );
+		bbk_test_same( array(), $data['referrals']['posts'], 'With no dims recorded, referred posts must be empty.' );
 	},
 	'SettingsApi::check_permission() requires manage_options' => static function (): void {
 		TestState::reset();

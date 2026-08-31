@@ -43,7 +43,7 @@ class GetAiTraffic extends Abstract_Satellite_Tool {
 	 * @return string
 	 */
 	public function get_description(): string {
-		return __( 'Reports AI-related traffic in two separate blocks that must never be mixed: "referrals" (human visitors who arrived from an AI assistant like ChatGPT or Claude, already part of the human view count) and "crawlers" (hits from AI crawlers like GPTBot or ClaudeBot, which never execute JavaScript and are only counted if AI-crawler tracking is enabled in the plugin settings).', 'bubuku-post-view-count' );
+		return __( 'Reports AI-related traffic in two separate blocks that must never be mixed: "referrals" (human visitors who arrived from an AI assistant like ChatGPT or Claude, including the referred pages, already part of the human view count) and "crawlers" (hits from AI crawlers like GPTBot or ClaudeBot, which never execute JavaScript and are only counted if AI-crawler tracking is enabled in the plugin settings).', 'bubuku-post-view-count' );
 	}
 
 	/**
@@ -66,6 +66,11 @@ class GetAiTraffic extends Abstract_Satellite_Tool {
 					'type'        => 'string',
 					'description' => 'Inclusive end date (YYYY-MM-DD, UTC). Empty = today.',
 				),
+				'limit'      => array(
+					'type'        => 'integer',
+					'description' => 'Maximum referred pages to return. Default 10, maximum 100.',
+					'default'     => 10,
+				),
 			),
 		);
 	}
@@ -85,7 +90,8 @@ class GetAiTraffic extends Abstract_Satellite_Tool {
 		$ai_traffic = Query::ai_traffic(
 			isset( $args['post_types'] ) ? (array) $args['post_types'] : array(),
 			isset( $args['since'] ) && '' !== $args['since'] ? (string) $args['since'] : null,
-			isset( $args['until'] ) && '' !== $args['until'] ? (string) $args['until'] : null
+			isset( $args['until'] ) && '' !== $args['until'] ? (string) $args['until'] : null,
+			isset( $args['limit'] ) ? (int) $args['limit'] : 10
 		);
 
 		return array_merge(
@@ -106,6 +112,7 @@ class GetAiTraffic extends Abstract_Satellite_Tool {
 		return array(
 			'examples' => array(
 				'How much traffic comes from ChatGPT or Claude?',
+				'Which pages receive visits from AI assistants?',
 				'Are AI crawlers like GPTBot hitting our site?',
 			),
 			'criteria' => __( 'Use it specifically for AI-related traffic. For a general referrer breakdown (search, social, direct, etc.) use get-dims-breakdown instead.', 'bubuku-post-view-count' ),

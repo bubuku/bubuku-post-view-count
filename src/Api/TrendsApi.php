@@ -139,6 +139,10 @@ class TrendsApi {
 					'until'      => array(
 						'type' => 'string',
 					),
+					'limit'      => array(
+						'type'    => 'integer',
+						'default' => 10,
+					),
 				),
 			)
 		);
@@ -236,13 +240,14 @@ class TrendsApi {
 		$ai_traffic = Query::ai_traffic(
 			(array) ( $request->get_param( 'post_types' ) ?? array() ),
 			$request->get_param( 'since' ),
-			$request->get_param( 'until' )
+			$request->get_param( 'until' ),
+			(int) ( $request->get_param( 'limit' ) ?? 10 )
 		);
 
 		$response = new WP_REST_Response( $ai_traffic, 200 );
 
-		// Object-cached in Core\Query::ai_traffic() (5 min, crawler block only — the
-		// referrals block is cheap, it reuses dims_breakdown()'s own cache).
+		// Object-cached in Core\Query::ai_traffic() (5 min for the referral
+		// breakdown and crawler blocks; the total reuses dims_breakdown()'s cache).
 		$response->header( 'Cache-Control', 'private, max-age=300' );
 
 		return $response;

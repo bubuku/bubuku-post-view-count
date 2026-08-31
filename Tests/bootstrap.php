@@ -673,7 +673,9 @@ namespace Bubuku\Plugins\PostViewCount {
 			return 0;
 		}
 
-		public function get_results( string $query ) {
+		public function get_results( string $query, $output = null ) {
+			unset( $output );
+
 			if ( preg_match( "/FROM wp_postmeta WHERE meta_key = 'views'/", $query ) ) {
 				$offset = 0;
 
@@ -695,6 +697,68 @@ namespace Bubuku\Plugins\PostViewCount {
 				ksort( $rows );
 
 				return array_slice( array_values( $rows ), $offset, 500 );
+			}
+
+			if ( false !== strpos( $query, 'FROM wp_bbk_post_view_dims d' ) ) {
+				$since = '1970-01-01';
+				$until = '9999-12-31';
+
+				if ( preg_match( "/d.day BETWEEN '([^']+)' AND '([^']+)'/", $query, $m ) ) {
+					$since = $m[1];
+					$until = $m[2];
+				}
+
+				if ( false !== strpos( $query, "d.dimension = 'referrer' AND d.value = 'ai'" ) ) {
+					$grouped = array();
+
+					foreach ( TestState::$dims as $key => $views ) {
+						list( $post_id, $day, $dimension, $value ) = explode( '|', $key, 4 );
+
+						if ( 'referrer' === $dimension && 'ai' === $value && $day >= $since && $day <= $until ) {
+							$grouped[ (int) $post_id ] = ( $grouped[ (int) $post_id ] ?? 0 ) + $views;
+						}
+					}
+
+					arsort( $grouped );
+					$limit = preg_match( '/LIMIT (\d+)/', $query, $m ) ? (int) $m[1] : 100;
+
+					return array_map(
+						static function ( int $post_id, int $views ): array {
+							return array(
+								'post_id'    => $post_id,
+								'total_views' => $views,
+							);
+						},
+						array_keys( array_slice( $grouped, 0, $limit, true ) ),
+						array_values( array_slice( $grouped, 0, $limit, true ) )
+					);
+				}
+
+				if ( preg_match( "/d.dimension = '([^']+)'/", $query, $m ) ) {
+					$requested_dimension = $m[1];
+					$grouped             = array();
+
+					foreach ( TestState::$dims as $key => $views ) {
+						list( , $day, $dimension, $value ) = explode( '|', $key, 4 );
+
+						if ( $requested_dimension === $dimension && $day >= $since && $day <= $until ) {
+							$grouped[ $value ] = ( $grouped[ $value ] ?? 0 ) + $views;
+						}
+					}
+
+					arsort( $grouped );
+
+					return array_map(
+						static function ( string $value, int $views ): array {
+							return array(
+								'value'       => $value,
+								'total_views' => $views,
+							);
+						},
+						array_keys( $grouped ),
+						array_values( $grouped )
+					);
+				}
 			}
 
 			return array();

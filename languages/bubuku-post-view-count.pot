@@ -118,7 +118,7 @@ msgid "AI traffic: referrals and crawlers"
 msgstr ""
 
 #: src/Mcp/Tools/GetAiTraffic.php:46
-msgid "Reports AI-related traffic in two separate blocks that must never be mixed: \"referrals\" (human visitors who arrived from an AI assistant like ChatGPT or Claude, already part of the human view count) and \"crawlers\" (hits from AI crawlers like GPTBot or ClaudeBot, which never execute JavaScript and are only counted if AI-crawler tracking is enabled in the plugin settings)."
+msgid "Reports AI-related traffic in two separate blocks that must never be mixed: \"referrals\" (human visitors who arrived from an AI assistant like ChatGPT or Claude, including the referred pages, already part of the human view count) and \"crawlers\" (hits from AI crawlers like GPTBot or ClaudeBot, which never execute JavaScript and are only counted if AI-crawler tracking is enabled in the plugin settings)."
 msgstr ""
 
 #: src/Mcp/Tools/GetAiTraffic.php:111
@@ -596,6 +596,11 @@ msgstr ""
 #: assets/build/admin.js:5
 #: assets/src/js/admin/components/StatsPanel.js:282
 msgid "Sin visitas procedentes de asistentes de IA en este periodo."
+msgstr ""
+
+#: assets/build/admin.js:8
+#: assets/src/js/admin/components/StatsPanel.js:470
+msgid "No hay páginas disponibles para este periodo."
 msgstr ""
 
 #: assets/build/admin.js:5
