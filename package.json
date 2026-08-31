@@ -10,6 +10,7 @@
 		"build:admin": "wp-scripts build --config webpack.config.js",
 		"build:blocks": "wp-scripts build --webpack-copy-php --config node_modules/@wordpress/scripts/config/webpack.config.js --webpack-src-dir=assets/src/blocks --output-path=assets/build/blocks",
 		"start": "wp-scripts start --config webpack.config.js",
+		"test:js": "node --test Tests/common-js.test.js",
 		"lint:js": "wp-scripts lint-js assets/src/js",
 		"lint:css": "wp-scripts lint-style assets/src/scss",
 		"packages-update": "wp-scripts packages-update"

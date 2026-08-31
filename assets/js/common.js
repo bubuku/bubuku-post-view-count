@@ -20,25 +20,61 @@ const bk_postview_main = {
 	},
 	// Classified referrer — never the raw host or full URL, only one of a fixed set of buckets.
 	getReferrerClass: function () {
+		const AI_DOMAINS = [
+			'chatgpt.com',
+			'chat.openai.com',
+			'claude.ai',
+			'perplexity.ai',
+			'copilot.microsoft.com',
+			'gemini.google.com',
+		];
+		const AI_ATTRIBUTION_VALUES = [
+			'chatgpt',
+			'chatgpt.com',
+			'openai',
+			'claude',
+			'claude.ai',
+			'perplexity',
+			'perplexity.ai',
+			'copilot',
+			'copilot.microsoft.com',
+			'gemini',
+			'gemini.google.com',
+		];
+		const SEARCH_DOMAINS = ['bing.com', 'duckduckgo.com', 'yahoo.com', 'baidu.com'];
+		const SOCIAL_DOMAINS = [
+			'facebook.com',
+			'twitter.com',
+			'x.com',
+			't.co',
+			'linkedin.com',
+			'instagram.com',
+			'reddit.com',
+		];
+		const matchesDomain = (host, domain) => host === domain || host.endsWith(`.${domain}`);
+		const matchesAnyDomain = (host, domains) => domains.some((domain) => matchesDomain(host, domain));
+		const attribution = new URLSearchParams(location.search);
+		const attributedSource = (attribution.get('utm_source') || attribution.get('ref') || '').toLowerCase().trim();
+
+		if (AI_ATTRIBUTION_VALUES.includes(attributedSource)) return 'ai';
+
 		const ref = document.referrer;
 		if (!ref) return 'direct';
 
 		let host;
 		try {
-			host = new URL(ref).host;
+			host = new URL(ref).hostname.toLowerCase().replace(/\.$/, '');
 		} catch (e) {
 			return 'other';
 		}
 
-		if (host === location.host) return 'internal';
+		const currentHost = location.hostname.toLowerCase().replace(/\.$/, '');
 
-		const SEARCH = ['google.', 'bing.com', 'duckduckgo.com', 'yahoo.com', 'baidu.com', 'yandex.'];
-		const SOCIAL = ['facebook.com', 'twitter.com', 'x.com', 't.co', 'linkedin.com', 'instagram.com', 'pinterest.', 'reddit.com'];
-		const AI = ['chatgpt.com', 'claude.ai', 'perplexity.ai', 'copilot.microsoft.com', 'gemini.google.com'];
+		if (host === currentHost) return 'internal';
 
-		if (SEARCH.some((h) => host.includes(h))) return 'search';
-		if (SOCIAL.some((h) => host.includes(h))) return 'social';
-		if (AI.some((h) => host.includes(h))) return 'ai';
+		if (matchesAnyDomain(host, AI_DOMAINS)) return 'ai';
+		if (matchesAnyDomain(host, SEARCH_DOMAINS) || /(^|\.)google\.[a-z.]+$/.test(host) || /(^|\.)yandex\.[a-z.]+$/.test(host)) return 'search';
+		if (matchesAnyDomain(host, SOCIAL_DOMAINS) || /(^|\.)pinterest\.[a-z.]+$/.test(host)) return 'social';
 		return 'other';
 	},
 	// DNT is a per-navigator legacy signal; globalPrivacyControl is the modern
