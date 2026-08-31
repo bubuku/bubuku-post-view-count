@@ -9,6 +9,9 @@ const AI_ASSISTANT_LABELS = {
 	copilot: __( 'Copilot', 'bubuku-post-view-count' ),
 	gemini: __( 'Gemini', 'bubuku-post-view-count' ),
 	other: __( 'Other AI assistant', 'bubuku-post-view-count' ),
+	// Views recorded before per-assistant tracking existed — the specific
+	// assistant was never stored, so there is nothing to expand into.
+	unknown: __( 'Older views (assistant unknown)', 'bubuku-post-view-count' ),
 };
 
 /**

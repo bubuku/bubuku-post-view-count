@@ -552,6 +552,10 @@ class Query {
 	 * Core\AiCrawlers / Frontend\AiCrawlerTracker). Site-wide, same shape/caching pattern
 	 * as dims_breakdown().
 	 *
+	 * `referrals.by_assistant` may include a synthetic `assistant: 'unknown'` entry (empty
+	 * `posts`) for views recorded before the `ai_assistant` dimension existed — that specific
+	 * assistant was never stored, so it cannot be backfilled, only reconciled against the total.
+	 *
 	 * @param string[]    $post_types Post types to include; empty means every enabled type.
 	 * @param string|null $since      Inclusive start day (Y-m-d, UTC). Null = 3 months ago.
 	 * @param string|null $until      Inclusive end day (Y-m-d, UTC). Null = today (UTC).
@@ -671,6 +675,28 @@ class Query {
 				);
 
 				wp_cache_set( $by_assistant_cache_key, $referral_by_assistant, self::CACHE_GROUP, self::CACHE_TTL );
+			}
+
+			// Views recorded before the `ai_assistant` dimension existed (or with an
+			// unrecognized assistant) only ever wrote `referrer = 'ai'` — there is no
+			// stored data to backfill which assistant they came from. Surfaced as its
+			// own bucket so the per-assistant total still reconciles with $referral_views,
+			// instead of those older views silently disappearing from the breakdown.
+			$untracked_views = $referral_views - array_sum( array_column( $referral_by_assistant, 'views' ) );
+
+			if ( $untracked_views > 0 ) {
+				$referral_by_assistant[] = array(
+					'assistant' => 'unknown',
+					'views'     => $untracked_views,
+					'posts'     => array(),
+				);
+
+				usort(
+					$referral_by_assistant,
+					static function ( array $a, array $b ): int {
+						return $b['views'] <=> $a['views'];
+					}
+				);
 			}
 
 			$cache_key = 'ai_crawlers_' . md5( (string) wp_json_encode( array( $resolved_post_types, $since, $until ) ) );

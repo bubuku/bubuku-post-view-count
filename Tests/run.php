@@ -864,6 +864,73 @@ $tests = array(
 			'Referrals must be grouped by assistant, ordered by total views, each with its own referred posts.'
 		);
 	},
+	'Query::ai_traffic() surfaces pre-existing referrer=ai views with no ai_assistant dim as an "unknown" bucket' => static function (): void {
+		TestState::reset();
+		TestState::$now             = '2026-01-01 10:00:00';
+		TestState::$post_titles[42] = 'First AI destination';
+		TestState::$post_titles[43] = 'Second AI destination';
+
+		$db = new Db();
+		// Older views, recorded before the ai_assistant dimension existed.
+		$db->record_view( 42, array( 'referrer' => 'ai' ) );
+		$db->record_view( 42, array( 'referrer' => 'ai' ) );
+		// A newer, fully tracked view.
+		$db->record_view(
+			43,
+			array(
+				'referrer'     => 'ai',
+				'ai_assistant' => 'claude',
+			)
+		);
+
+		$result = Query::ai_traffic( array(), '2026-01-01', '2026-01-01' );
+
+		bbk_test_same( 3, $result['referrals']['views'], 'The referral total must still include the untracked older views.' );
+		bbk_test_same(
+			array(
+				array(
+					'assistant' => 'unknown',
+					'views'     => 2,
+					'posts'     => array(),
+				),
+				array(
+					'assistant' => 'claude',
+					'views'     => 1,
+					'posts'     => array(
+						array(
+							'id'    => 43,
+							'title' => 'Second AI destination',
+							'url'   => 'https://test.wp.local/?p=43',
+							'views' => 1,
+						),
+					),
+				),
+			),
+			$result['referrals']['by_assistant'],
+			'Views with no recorded ai_assistant must reconcile against the total as an "unknown" bucket, with no posts to expand (the page was never linked to an assistant).'
+		);
+	},
+	'Query::ai_traffic() omits the "unknown" bucket once every AI referral has a tracked assistant' => static function (): void {
+		TestState::reset();
+		TestState::$now             = '2026-01-01 10:00:00';
+		TestState::$post_titles[42] = 'First AI destination';
+
+		( new Db() )->record_view(
+			42,
+			array(
+				'referrer'     => 'ai',
+				'ai_assistant' => 'chatgpt',
+			)
+		);
+
+		$result = Query::ai_traffic( array(), '2026-01-01', '2026-01-01' );
+
+		bbk_test_same(
+			array( 'chatgpt' ),
+			array_column( $result['referrals']['by_assistant'], 'assistant' ),
+			'With every AI referral tracked, no synthetic "unknown" bucket must appear.'
+		);
+	},
 	'Query::post_stats() reflects the recorded views, title and URL for a post' => static function (): void {
 		TestState::reset();
 		TestState::$now                = '2026-01-01 10:00:00';

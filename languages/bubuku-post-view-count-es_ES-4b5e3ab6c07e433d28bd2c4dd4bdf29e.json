@@ -1,5 +1,5 @@
 {
-    "translation-revision-date": "2026-08-31 20:30+0000",
+    "translation-revision-date": "2026-08-31 21:00+0000",
     "generator": "manual",
     "source": "assets/build/admin.js",
     "domain": "messages",
@@ -261,6 +261,9 @@
             ],
             "Total": [
                 "Total"
+            ],
+            "Older views (assistant unknown)": [
+                "Vistas antiguas (asistente desconocido)"
             ]
         }
     }
