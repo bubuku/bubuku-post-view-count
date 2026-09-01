@@ -87,7 +87,7 @@ Yes, by default. When a visitor's browser sends the DNT or Sec-GPC signal, the p
 = 1.2.2 =
 * Evolution chart, period comparison, rising/falling content lists, device/referrer breakdown and the shortcode/block for showing view counts on the front end.
 * Session dimensions: traffic broken down by device screen size and by where visitors came from (direct, search, social, AI assistants, etc.), never storing the raw referrer host or exact screen width.
-* AI traffic reporting: a new "AI crawler tracking" setting (off by default) counts hits from known AI crawlers (GPTBot, ClaudeBot, PerplexityBot, CCBot, Google-Extended, Bytespider, Amazonbot, Applebot-Extended) in their own table, kept separate from the human view count; a new "AI traffic" section in Settings → Post View Count shows both AI referrals and crawler hits, also available via `GET /bbk_postview/v1/trends/ai-traffic`.
+* AI traffic reporting: a new "AI crawler tracking" setting (off by default) counts hits from known AI crawlers (GPTBot, ClaudeBot, PerplexityBot, CCBot, Google-Extended, Bytespider, Amazonbot, Applebot-Extended) in their own table, kept separate from the human view count; a new "AI traffic" section in Settings → Post View Count shows both AI referrals and crawler hits.
 
 = 1.2.1 =
 * Read-only query layer (`Core\Query`) powering most-viewed content, stale content, per-post stats, trends and summary — used by the new admin columns, WP-CLI commands.
