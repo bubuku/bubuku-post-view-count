@@ -519,7 +519,7 @@ Espejo de la demo del doc del hub:
 
 > **Nota:** la UI de admin descrita en F4 (gráfica/comparativa), F5 (dispositivo/procedencia),
 > F6 (tráfico de IA) y F7 (ajustes de privacidad/rendimiento) se reconstruyó en React sobre
-> `Api\TrendsApi`/la nueva `Api\SettingsApi` — ver `docs/PENDING-ADMIN-UI-REACT.md`. El backend
+> `Api\TrendsApi`/la nueva `Api\SettingsApi` — ver `docs/IMPLEMENTED-ADMIN-UI-REACT.md`. El backend
 > descrito en cada fase de esta sección no cambió; solo el cliente que lo consume.
 
 ### F4 — Tendencias y superficie de lectura

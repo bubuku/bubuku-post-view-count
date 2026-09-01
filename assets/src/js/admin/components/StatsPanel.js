@@ -1,11 +1,23 @@
 import { useState, useEffect } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
-import AiReferralsTable from './AiReferralsTable';
+import ExpandableViewsTable from './ExpandableViewsTable';
 import DashboardCard from './DashboardCard';
 import DataTable from './DataTable';
 import TrendChart from './TrendChart';
 import { bbkFetch } from '../App';
 import { formatNumber } from '../format';
+
+const AI_ASSISTANT_LABELS = {
+	chatgpt: __( 'ChatGPT', 'bubuku-post-view-count' ),
+	claude: __( 'Claude', 'bubuku-post-view-count' ),
+	perplexity: __( 'Perplexity', 'bubuku-post-view-count' ),
+	copilot: __( 'Copilot', 'bubuku-post-view-count' ),
+	gemini: __( 'Gemini', 'bubuku-post-view-count' ),
+	other: __( 'Other AI assistant', 'bubuku-post-view-count' ),
+	// Views recorded before per-assistant tracking existed — the specific
+	// assistant was never stored, so there is nothing to expand into.
+	unknown: __( 'Older views (assistant unknown)', 'bubuku-post-view-count' ),
+};
 
 const ICON_TREND = (
 	<svg
@@ -233,14 +245,6 @@ const StatsPanel = ( { context } ) => {
 		},
 	];
 
-	const crawlerColumns = [
-		{ key: 'bot', label: __( 'Bot', 'bubuku-post-view-count' ) },
-		{
-			key: 'views',
-			label: __( 'Views', 'bubuku-post-view-count' ),
-			numeric: true,
-		},
-	];
 	const totalLabel = __( 'Total', 'bubuku-post-view-count' );
 
 	const trendTotal = trend.reduce(
@@ -424,8 +428,14 @@ const StatsPanel = ( { context } ) => {
 						<h3>
 							{ __( 'AI referrals', 'bubuku-post-view-count' ) }
 						</h3>
-						<AiReferralsTable
+						<ExpandableViewsTable
 							rows={ aiTraffic?.referrals?.by_assistant || [] }
+							labelKey="assistant"
+							headerLabel={ __(
+								'AI',
+								'bubuku-post-view-count'
+							) }
+							labels={ AI_ASSISTANT_LABELS }
 							totalLabel={ totalLabel }
 							emptyLabel={ __(
 								'No views from AI assistants in this period.',
@@ -440,10 +450,14 @@ const StatsPanel = ( { context } ) => {
 								'bubuku-post-view-count'
 							) }
 						</h3>
-						<DataTable
-							columns={ crawlerColumns }
+						<ExpandableViewsTable
 							rows={ aiTraffic?.crawlers || [] }
-							rowKey={ ( row ) => row.bot }
+							labelKey="bot"
+							headerLabel={ __(
+								'Bot',
+								'bubuku-post-view-count'
+							) }
+							totalLabel={ totalLabel }
 							emptyLabel={
 								context?.ai_crawler_tracking
 									? __(
@@ -455,8 +469,6 @@ const StatsPanel = ( { context } ) => {
 											'bubuku-post-view-count'
 									  )
 							}
-							showTotal
-							totalLabel={ totalLabel }
 						/>
 					</div>
 				</div>

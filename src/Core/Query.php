@@ -559,14 +559,13 @@ class Query {
 	 * @param string[]    $post_types Post types to include; empty means every enabled type.
 	 * @param string|null $since      Inclusive start day (Y-m-d, UTC). Null = 3 months ago.
 	 * @param string|null $until      Inclusive end day (Y-m-d, UTC). Null = today (UTC).
-	 * @param int         $limit      Max referred posts per assistant/overall, capped at self::MAX_LIMIT.
-	 * @return array{referrals:array{views:int,posts:array<int,array{id:int,title:string,url:string,views:int}>,by_assistant:array<int,array{assistant:string,views:int,posts:array<int,array{id:int,title:string,url:string,views:int}>}>},crawlers:array<int,array{bot:string,views:int}>,ai_crawler_tracking_enabled:bool}
+	 * @param int         $limit      Max referred/crawled posts per assistant/bot, capped at self::MAX_LIMIT.
+	 * @return array{referrals:array{views:int,by_assistant:array<int,array{assistant:string,views:int,posts:array<int,array{id:int,title:string,url:string,views:int}>}>},crawlers:array<int,array{bot:string,views:int,posts:array<int,array{id:int,title:string,url:string,views:int}>}>,ai_crawler_tracking_enabled:bool}
 	 */
 	public static function ai_traffic( array $post_types = array(), ?string $since = null, ?string $until = null, int $limit = 10 ): array {
 		global $wpdb;
 
 		$referral_views        = 0;
-		$referral_posts        = array();
 		$referral_by_assistant = array();
 
 		foreach ( self::dims_breakdown( 'referrer', $post_types, $since, $until ) as $row ) {
@@ -583,39 +582,6 @@ class Query {
 			$since = $since ?? gmdate( 'Y-m-d', strtotime( '-3 months' ) );
 			$until = $until ?? current_time( 'Y-m-d', true );
 			$limit = self::cap_limit( $limit );
-
-			$referral_posts_cache_key = 'ai_referral_posts_' . md5( (string) wp_json_encode( array( $resolved_post_types, $since, $until, $limit ) ) );
-			$cached_referral_posts    = wp_cache_get( $referral_posts_cache_key, self::CACHE_GROUP );
-
-			if ( false !== $cached_referral_posts ) {
-				$referral_posts = $cached_referral_posts;
-			} else {
-				$dims_table        = Schema::table_dims();
-				$type_placeholders = self::placeholders( $resolved_post_types, '%s' );
-
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Read query over the plugin's own table, no equivalent WP API; short-lived object cache applied above. $dims_table is an internal constant (Schema::table_dims()), never user input.
-				$rows = $wpdb->get_results(
-					// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- {$type_placeholders} expands to a dynamic run of %s placeholders at runtime, which this static sniff cannot count.
-					$wpdb->prepare(
-						// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$dims_table} is an internal constant (Schema::table_dims()), never user input; {$type_placeholders} is a fixed run of %s placeholders.
-						"SELECT d.post_id AS post_id, SUM(d.views) AS total_views FROM {$dims_table} d INNER JOIN {$wpdb->posts} p ON p.ID = d.post_id WHERE d.dimension = 'referrer' AND d.value = 'ai' AND p.post_type IN ({$type_placeholders}) AND p.post_status = 'publish' AND d.day BETWEEN %s AND %s GROUP BY d.post_id ORDER BY total_views DESC LIMIT %d",
-						...array_merge( $resolved_post_types, array( $since, $until, $limit ) )
-					),
-					ARRAY_A
-				);
-
-				foreach ( is_array( $rows ) ? $rows : array() as $row ) {
-					$post_id          = (int) $row['post_id'];
-					$referral_posts[] = array(
-						'id'    => $post_id,
-						'title' => get_the_title( $post_id ),
-						'url'   => get_permalink( $post_id ),
-						'views' => (int) $row['total_views'],
-					);
-				}
-
-				wp_cache_set( $referral_posts_cache_key, $referral_posts, self::CACHE_GROUP, self::CACHE_TTL );
-			}
 
 			$by_assistant_cache_key = 'ai_referral_by_assistant_' . md5( (string) wp_json_encode( array( $resolved_post_types, $since, $until, $limit ) ) );
 			$cached_by_assistant    = wp_cache_get( $by_assistant_cache_key, self::CACHE_GROUP );
@@ -699,7 +665,7 @@ class Query {
 				);
 			}
 
-			$cache_key = 'ai_crawlers_' . md5( (string) wp_json_encode( array( $resolved_post_types, $since, $until ) ) );
+			$cache_key = 'ai_crawler_posts_' . md5( (string) wp_json_encode( array( $resolved_post_types, $since, $until, $limit ) ) );
 			$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
 
 			if ( false !== $cached ) {
@@ -713,18 +679,48 @@ class Query {
 					// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- {$type_placeholders} expands to a dynamic run of %s placeholders at runtime, which this static sniff cannot count.
 					$wpdb->prepare(
 						// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$ai_crawls_table} is an internal constant (Schema::table_ai_crawls()), never user input; {$type_placeholders} is a fixed run of %s placeholders.
-						"SELECT c.bot AS bot, SUM(c.views) AS total_views FROM {$ai_crawls_table} c INNER JOIN {$wpdb->posts} p ON p.ID = c.post_id WHERE p.post_type IN ({$type_placeholders}) AND p.post_status = 'publish' AND c.day BETWEEN %s AND %s GROUP BY c.bot ORDER BY total_views DESC",
+						"SELECT c.bot AS bot, c.post_id AS post_id, SUM(c.views) AS total_views FROM {$ai_crawls_table} c INNER JOIN {$wpdb->posts} p ON p.ID = c.post_id WHERE p.post_type IN ({$type_placeholders}) AND p.post_status = 'publish' AND c.day BETWEEN %s AND %s GROUP BY c.bot, c.post_id ORDER BY c.bot ASC, total_views DESC",
 						...array_merge( $resolved_post_types, array( $since, $until ) )
 					),
 					ARRAY_A
 				);
 
+				$grouped_crawlers = array();
+
 				foreach ( is_array( $rows ) ? $rows : array() as $row ) {
-					$crawlers[] = array(
-						'bot'   => (string) $row['bot'],
-						'views' => (int) $row['total_views'],
-					);
+					$bot     = (string) $row['bot'];
+					$post_id = (int) $row['post_id'];
+					$views   = (int) $row['total_views'];
+
+					if ( ! isset( $grouped_crawlers[ $bot ] ) ) {
+						$grouped_crawlers[ $bot ] = array(
+							'bot'   => $bot,
+							'views' => 0,
+							'posts' => array(),
+						);
+					}
+
+					$grouped_crawlers[ $bot ]['views'] += $views;
+
+					// Rows already arrive sorted by views DESC within each bot.
+					if ( count( $grouped_crawlers[ $bot ]['posts'] ) < $limit ) {
+						$grouped_crawlers[ $bot ]['posts'][] = array(
+							'id'    => $post_id,
+							'title' => get_the_title( $post_id ),
+							'url'   => get_permalink( $post_id ),
+							'views' => $views,
+						);
+					}
 				}
+
+				$crawlers = array_values( $grouped_crawlers );
+
+				usort(
+					$crawlers,
+					static function ( array $a, array $b ): int {
+						return $b['views'] <=> $a['views'];
+					}
+				);
 
 				wp_cache_set( $cache_key, $crawlers, self::CACHE_GROUP, self::CACHE_TTL );
 			}
@@ -733,7 +729,6 @@ class Query {
 		return array(
 			'referrals'                   => array(
 				'views'        => $referral_views,
-				'posts'        => $referral_posts,
 				'by_assistant' => $referral_by_assistant,
 			),
 			'crawlers'                    => $crawlers,

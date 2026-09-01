@@ -2,30 +2,27 @@ import { Fragment, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { formatNumber } from '../format';
 
-const AI_ASSISTANT_LABELS = {
-	chatgpt: __( 'ChatGPT', 'bubuku-post-view-count' ),
-	claude: __( 'Claude', 'bubuku-post-view-count' ),
-	perplexity: __( 'Perplexity', 'bubuku-post-view-count' ),
-	copilot: __( 'Copilot', 'bubuku-post-view-count' ),
-	gemini: __( 'Gemini', 'bubuku-post-view-count' ),
-	other: __( 'Other AI assistant', 'bubuku-post-view-count' ),
-	// Views recorded before per-assistant tracking existed — the specific
-	// assistant was never stored, so there is nothing to expand into.
-	unknown: __( 'Older views (assistant unknown)', 'bubuku-post-view-count' ),
-};
-
 /**
- * AiReferralsTable — AI referrals grouped by assistant (ChatGPT, Claude, ...)
- * instead of by page. Each row expands into the pages that received those
- * referrals — the page is still recorded and available, just not shown by
- * default, mirroring the "AI bot crawling" table next to it.
+ * ExpandableViewsTable — rows grouped by a label (AI assistant, crawler bot, ...)
+ * instead of by page. Each row expands into the pages that contributed to it —
+ * the page is still recorded and available, just not shown by default.
  *
- * @param {Object}        props
- * @param {Array<Object>} props.rows         - `[{ assistant, views, posts: [{ id, title, url, views }] }]`.
- * @param {string}        [props.emptyLabel] - Text shown when `rows` is empty. If omitted, renders nothing.
- * @param {string}        [props.totalLabel] - Label shown in the footer row's first cell.
+ * @param {Object}          props
+ * @param {Array<Object>}   props.rows         - `[{ [labelKey]: string, views, posts: [{ id, title, url, views }] }]`.
+ * @param {string}          props.labelKey     - Property name identifying each row (e.g. `'assistant'` or `'bot'`).
+ * @param {string}          props.headerLabel  - Text for the first column header.
+ * @param {Object<string,string>} [props.labels] - Optional slug -> display label map. Falls back to the raw value.
+ * @param {string}          [props.emptyLabel] - Text shown when `rows` is empty. If omitted, renders nothing.
+ * @param {string}          [props.totalLabel] - Label shown in the footer row's first cell.
  */
-const AiReferralsTable = ( { rows, emptyLabel, totalLabel } ) => {
+const ExpandableViewsTable = ( {
+	rows,
+	labelKey,
+	headerLabel,
+	labels = {},
+	emptyLabel,
+	totalLabel,
+} ) => {
 	const [ expanded, setExpanded ] = useState( null );
 
 	if ( ! rows || rows.length === 0 ) {
@@ -37,11 +34,11 @@ const AiReferralsTable = ( { rows, emptyLabel, totalLabel } ) => {
 	const total = rows.reduce( ( sum, row ) => sum + row.views, 0 );
 
 	return (
-		<div className="bk-data-table bbk-ai-referrals-table">
+		<div className="bk-data-table bbk-expandable-views-table">
 			<table className="bk-data-table__table">
 				<thead>
 					<tr>
-						<th>{ __( 'AI', 'bubuku-post-view-count' ) }</th>
+						<th>{ headerLabel }</th>
 						<th className="bk-data-table__num">
 							{ __( 'Views', 'bubuku-post-view-count' ) }
 						</th>
@@ -49,29 +46,26 @@ const AiReferralsTable = ( { rows, emptyLabel, totalLabel } ) => {
 				</thead>
 				<tbody>
 					{ rows.map( ( row ) => {
-						const isOpen = expanded === row.assistant;
+						const key = row[ labelKey ];
+						const isOpen = expanded === key;
 						const hasPosts = row.posts && row.posts.length > 0;
 
 						return (
-							<Fragment key={ row.assistant }>
+							<Fragment key={ key }>
 								<tr>
 									<td>
 										<button
 											type="button"
-											className="bbk-ai-referrals-table__toggle"
+											className="bbk-expandable-views-table__toggle"
 											aria-expanded={ isOpen }
 											disabled={ ! hasPosts }
 											onClick={ () =>
 												setExpanded(
-													isOpen
-														? null
-														: row.assistant
+													isOpen ? null : key
 												)
 											}
 										>
-											{ AI_ASSISTANT_LABELS[
-												row.assistant
-											] || row.assistant }
+											{ labels[ key ] || key }
 										</button>
 									</td>
 									<td className="bk-data-table__num">
@@ -79,7 +73,7 @@ const AiReferralsTable = ( { rows, emptyLabel, totalLabel } ) => {
 									</td>
 								</tr>
 								{ isOpen && hasPosts && (
-									<tr className="bbk-ai-referrals-table__detail">
+									<tr className="bbk-expandable-views-table__detail">
 										<td colSpan={ 2 }>
 											<ul>
 												{ row.posts.map( ( post ) => (
@@ -119,4 +113,4 @@ const AiReferralsTable = ( { rows, emptyLabel, totalLabel } ) => {
 	);
 };
 
-export default AiReferralsTable;
+export default ExpandableViewsTable;

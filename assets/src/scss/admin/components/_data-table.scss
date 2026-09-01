@@ -1,5 +1,5 @@
 // Reusable results table — pairs with components/DataTable.js and the
-// AiReferralsTable.js accordion variant. All colors come from the --bk-*
+// ExpandableViewsTable.js accordion variant. All colors come from the --bk-*
 // design tokens, so it inherits each plugin's branding.
 
 .bk-data-table {
@@ -105,9 +105,9 @@
 	}
 }
 
-// AI referrals grouped by assistant — expands into the pages behind each one.
-// See components/AiReferralsTable.js.
-.bbk-ai-referrals-table {
+// Rows grouped by a label (AI assistant, crawler bot, ...) — expands into the
+// pages behind each one. See components/ExpandableViewsTable.js.
+.bbk-expandable-views-table {
 
 	&__toggle {
 		background: none;
@@ -160,6 +160,8 @@
 			display: flex;
 			flex-direction: column;
 			gap: 4px;
+			max-height: 180px; // ~6 rows visible at this font-size before scrolling.
+			overflow-y: auto;
 		}
 
 		li {

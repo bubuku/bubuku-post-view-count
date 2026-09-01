@@ -787,6 +787,42 @@ namespace Bubuku\Plugins\PostViewCount {
 				}
 			}
 
+			if ( false !== strpos( $query, 'FROM wp_bbk_post_ai_crawls c' ) ) {
+				$since = '1970-01-01';
+				$until = '9999-12-31';
+
+				if ( preg_match( "/c.day BETWEEN '([^']+)' AND '([^']+)'/", $query, $m ) ) {
+					$since = $m[1];
+					$until = $m[2];
+				}
+
+				$grouped = array();
+
+				foreach ( TestState::$ai_crawls as $key => $views ) {
+					list( $post_id, $day, $bot ) = explode( '|', $key, 3 );
+
+					if ( $day < $since || $day > $until ) {
+						continue;
+					}
+
+					$group_key             = $bot . '|' . $post_id;
+					$grouped[ $group_key ] = array(
+						'bot'         => $bot,
+						'post_id'     => (int) $post_id,
+						'total_views' => ( $grouped[ $group_key ]['total_views'] ?? 0 ) + $views,
+					);
+				}
+
+				usort(
+					$grouped,
+					static function ( array $a, array $b ): int {
+						return $a['bot'] <=> $b['bot'] ?: $b['total_views'] <=> $a['total_views'];
+					}
+				);
+
+				return array_values( $grouped );
+			}
+
 			return array();
 		}
 	}

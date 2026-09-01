@@ -329,7 +329,7 @@ nuevo.
 | Evolución de vistas (día/semana/mes) + comparativa | `/trends` | Componente Canvas propio |
 | En alza / En caída | `/trends/momentum` | `DataTable` ×2 |
 | Dispositivo y procedencia | `/trends/dims` | `DataTable` ×2 |
-| Tráfico de IA (referidos + rastreo) | `/trends/ai-traffic` | `DataTable` + dato suelto |
+| Tráfico de IA (referidos + rastreo) | `/trends/ai-traffic` | `ExpandableViewsTable` ×2 (acordeón por asistente/bot, con las páginas detrás de cada uno) |
 
 ### La gráfica
 
