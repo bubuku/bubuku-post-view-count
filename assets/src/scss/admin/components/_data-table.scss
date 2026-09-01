@@ -150,18 +150,39 @@
 		background: var(--brand-soft);
 
 		td {
-			padding: 6px 14px 10px 34px;
+			padding: 6px 8px 10px 34px;
 		}
 
 		ul {
 			margin: 0;
-			padding: 0;
+			padding-right: 12px;
 			list-style: none;
 			display: flex;
 			flex-direction: column;
 			gap: 4px;
 			max-height: 180px; // ~6 rows visible at this font-size before scrolling.
 			overflow-y: auto;
+
+			// Thin branded scrollbar instead of the bulky OS default.
+			scrollbar-width: thin;
+			scrollbar-color: var(--border-strong) transparent;
+
+			&::-webkit-scrollbar {
+				width: 6px;
+			}
+
+			&::-webkit-scrollbar-track {
+				background: transparent;
+			}
+
+			&::-webkit-scrollbar-thumb {
+				background: var(--border-strong);
+				border-radius: 4px;
+
+				&:hover {
+					background: var(--text-muted);
+				}
+			}
 		}
 
 		li {
@@ -169,6 +190,7 @@
 			align-items: baseline;
 			justify-content: space-between;
 			gap: 12px;
+			padding-right: 6px;
 			font-size: 12px;
 		}
 	}
