@@ -9,13 +9,13 @@
  * Author URI:  https://www.bubuku.com/
  * Text Domain: bubuku-post-view-count
  * Domain Path: /languages
- * License:     EUPL v1.2
- * License URI: https://www.eupl.eu/1.2/en/
+ * License:     GPL-3.0-or-later
+ * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  *
  * @package     WordPress
  * @author      Bubuku
  * @copyright   2022 Bubuku
- * @license     GPL-2.0+
+ * @license     GPL-3.0-or-later
  *
  * @wordpress-plugin
  *

@@ -3,7 +3,7 @@
 	"version": "1.2.2",
 	"description": "Plugin created by Bubuku to count how many times a post has been viewed",
 	"author": "Bubuku",
-	"license": "EUPL-1.2",
+	"license": "GPL-3.0-or-later",
 	"private": true,
 	"scripts": {
 		"build": "npm run build:admin && npm run build:blocks",

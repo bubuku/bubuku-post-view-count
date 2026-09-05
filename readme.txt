@@ -1,12 +1,12 @@
-=== Bubuku post view count ===
+=== Bubuku Post View Count ===
 Contributors: lruizcode, bubuku
 Tags: page view count, post views, post count, posts, post view count
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
 Stable tag: 1.2.2
-License: GPLv3 or later
-License URI: http://www.gnu.org/licenses/gpl-3.0.html
+License: GPL-3.0-or-later
+License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
 Complement to know how many times a Post has been seen
 

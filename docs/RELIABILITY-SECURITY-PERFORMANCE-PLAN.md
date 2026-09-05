@@ -10,18 +10,18 @@ Actualizado durante la sesión de 2026-09-05:
 
 | Fase | Estado | Completado / pendiente |
 |---|---|---|
-| 0 | 🟡 En curso | Contrato de 5 segundos y versión de medida implementados. Baseline real y `EXPLAIN` pendientes porque Apache/MySQL de `test.wp.local` no responden. |
+| 0 | 🟡 En curso | Contrato de 5 segundos y versión de medida implementados. Entorno real accesible; baseline repetible y `EXPLAIN` sobre MySQL/MariaDB siguen pendientes porque Studio usa SQLite. |
 | 1 | ✅ Implementada | Escrituras transaccionales comprobadas, errores 503 estables, espejo posterior al commit y reset con pausa de ingesta, limpieza e invalidación de cache. |
-| 2 | 🟡 En curso | Tabla dedupe v4, HMAC sin IP/UA en claro, claim atómico, purga y rate limits filtrables; queda validar concurrencia y proxies contra MySQL real. |
+| 2 | 🟡 En curso | Tabla dedupe v4, HMAC sin IP/UA en claro, claim atómico portable, purga y rate limits filtrables. Dedupe secuencial validado en Studio; quedan concurrencia y proxies contra MySQL/MariaDB real. |
 | 3 | ✅ Implementada | Buffer volátil retirado del runtime, ajustes, cron, tests y distribución; escritura directa fiable conservada. |
 | 4 | 🟡 En curso | 5 segundos visibles acumulados, estado explícito, lifecycle/BFCache, fallback/reintento, cobertura y versión de medida implementados; falta historial formal de taxonomía e ID de diagnóstico. |
 | 5 | 🟡 En curso | Límites REST/retención, cache versionada y purga por lotes implementados; optimizaciones de consultas requieren baseline/`EXPLAIN`. |
 | 6 | 🟡 En curso | Cursor `meta_id`, estado/watchdog de migración y verificación de tablas implementados; ampliación WP-CLI y Site Health pendientes. |
-| 7 | ⏸ Bloqueada | PHPCS, 74 tests PHP, 11 JS, lint JS/CSS y zip final están en verde; integración, carga y Plugin Check esperan que el entorno WordPress responda. |
+| 7 | 🟡 En curso | PHPCS, 74 tests PHP, 11 JS, build, esquema v4 y REST validados en Studio. Plugin Check del ZIP no informa de `Schema.php` ni consultas directas; quedan hallazgos de distribución anteriores y la prueba de carga/concurrencia. |
 
 Último artefacto verificado: `dist/bubuku-post-view-count-1.2.2.zip` (168 KiB). No se ha
-modificado la versión pública. `curl` a `https://test.wp.local/` y al dominio Local
-detectado devuelve conexión rechazada; WP-CLI puede leer Core, pero no conectar con la BD.
+modificado la versión pública. `https://test.wp.local/` responde mediante WordPress Studio
+(WordPress 7.1, SQLite); WP-CLI confirma el esquema v4 y las cinco tablas del plugin.
 
 ## 1. Objetivo y relación con los planes existentes
 
@@ -50,11 +50,14 @@ Comprobaciones ejecutadas durante la auditoría:
 | `composer run-script lint` | Correcto, 15 archivos comprobados |
 | `php Tests/run.php` | Correcto antes (75); implementación actual: 74 tests reforzados |
 | `npm run test:js` | Correcto antes (7); implementación actual: 11 tests |
-| `https://test.wp.local/` | No disponible; conexión rechazada |
+| `https://test.wp.local/` | Disponible; HTTP 200 y REST ejercitado en WordPress Studio |
+| Esquema real | Versión 4; presentes las cinco tablas propias |
+| Dedupe REST real | Primera petición aceptada; repetición idéntica rechazada sin incrementar |
+| Plugin Check del ZIP | Sin hallazgos en `Schema.php`, consultas directas, guardas de acceso, nombre o licencia. Pendientes únicamente avisos de prefijo `bbk` que requieren política/supresión documentada. |
 
-Por tanto, los costes y riesgos deducidos del código son hallazgos válidos, pero todavía
-no existe una línea base real de latencia, consultas por petición, concurrencia, tamaño de
-tablas ni planes `EXPLAIN`. Ninguna fase debe afirmar una mejora porcentual hasta medirla
+La integración funcional ya tiene evidencia real, pero todavía no existe una línea base
+repetible de latencia, consultas por petición, concurrencia, tamaño de tablas ni planes
+`EXPLAIN` sobre MySQL/MariaDB. Ninguna fase debe afirmar una mejora porcentual hasta medirla
 en el mismo entorno y con el mismo conjunto de datos antes y después.
 
 ## 3. Fortalezas que deben conservarse
@@ -77,8 +80,8 @@ rendimiento.
 
 ## 4. Definición acordada: qué es una “vista”
 
-El comportamiento actual no mide una carga de página: mide una visita que sigue visible
-cuando vence un temporizador de ocho segundos. Si la pestaña está oculta justo en ese
+El comportamiento auditado originalmente no medía una carga de página: medía una visita
+que seguía visible cuando vencía un temporizador de ocho segundos. Si la pestaña estaba oculta justo en ese
 instante, no se registra aunque después vuelva a estar visible. Si el usuario abandona antes,
 tampoco se registra. Bloqueadores, CSP, REST deshabilitado o fallos de red producen más
 subconteo.

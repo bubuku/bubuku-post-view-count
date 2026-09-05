@@ -1,5 +1,5 @@
 # Copyright (C) 2026 Bubuku
-# This file is distributed under the EUPL v1.2.
+# This file is distributed under the GPL-3.0-or-later.
 msgid ""
 msgstr ""
 "Project-Id-Version: Bubuku Post View Count 1.2.2\n"

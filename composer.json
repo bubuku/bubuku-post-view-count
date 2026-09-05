@@ -1,7 +1,7 @@
 {
     "name": "bubuku/post-view-count",
     "description": "Bubuku Post View Count WordPress Plugin",
-	"license": "GPL-3.0+",
+	"license": "GPL-3.0-or-later",
 	"keywords": [
 		"wordpress",
 		"plugin"

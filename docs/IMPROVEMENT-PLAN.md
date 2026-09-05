@@ -153,7 +153,8 @@ de los 8 s, la petición se cancela y la vista se pierde.
 - **P3-1.** Sin tests automatizados (ni PHPUnit ni `wp-env`).
 - **P3-2.** `readme.txt` `Tested up to: 6.5.3` — desactualizado frente a las versiones
   actuales de WordPress; `License` del readme (GPLv3) contradice el header (EUPL v1.2) y
-  el `composer.json` (GPL-3.0+).
+  el `composer.json` (GPL-3.0+). **Resuelto:** metadatos y texto incluidos unificados como
+  `GPL-3.0-or-later` el 2026-09-05.
 - **P3-3.** `composer.json` declara `"php": ">=5.4.0"` frente al `Requires PHP: 7.2` del
   header. Debe alinearse (y subirse a 7.4/8.0 como mínimo realista).
 - **P3-4.** El CI sólo corre PHPCS sobre PHP 7.4; falta matriz de versiones PHP y el
@@ -335,9 +336,9 @@ que jQuery ya no se carga por causa del plugin, y medir que el LCP no se ve afec
 1. Columna "Vistas" ordenable en el listado de entradas del admin.
 2. Shortcode `[bbk_post_views]` y bloque de Gutenberg equivalente.
 3. Endpoint REST `GET` de lectura, cacheable, con `permission_callback` explícito.
-4. Actualizar `readme.txt`: `Tested up to`, changelog, y **resolver la contradicción de
-   licencia** entre header (EUPL v1.2), readme (GPLv3) y `composer.json` (GPL-3.0+) —
-   elegir una y propagarla a `license.txt`.
+4. ✅ Actualizar `readme.txt`: `Tested up to`, changelog y licencia. La contradicción
+   histórica entre header, readme y Composer quedó resuelta con
+   `GPL-3.0-or-later`; `license.txt` contiene el texto íntegro de GPLv3.
 5. Añadir `Update URI` al header y los `index.php` de silencio que faltan.
 
 **Riesgo:** bajo (todo aditivo). **Entregable:** `2.1.0`.
