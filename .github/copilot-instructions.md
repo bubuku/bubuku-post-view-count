@@ -50,7 +50,7 @@ Snapshot actual. Si cambia el enlace de skills, refrescar con `bash scripts/setu
 | `wp-admin` | Páginas de ajustes, menús del admin, notices y assets del dashboard |
 | `wp-build` | Build, versionado, packaging, release y CI/CD del plugin |
 | `wp-coding` | Cualquier cambio en `src/` — WPCS, formato, IIFE, i18n |
-| `wp-frontend` | Cambios en `assets/js/common.js` u otros assets frontend |
+| `wp-frontend` | Cambios en `assets/src/js/public/common.js` u otros assets frontend |
 | `wp-mcp-conex` | Integración del plugin como satélite del hub `bubuku-mcp-conex` y registro de tools |
 | `wp-performance` | Optimización de rendimiento y diagnóstico de consultas/cron/HTTP |
 | `wp-php` | Lógica PHP, hooks, post meta, consultas y clases del plugin |
@@ -69,7 +69,7 @@ Snapshot actual. Si cambia el enlace de skills, refrescar con `bash scripts/setu
 | Endpoint REST (`Api\RestApi`) / permisos / deduplicación | `wp-php` + `wp-security` + `wp-rest-api` |
 | Definir o registrar abilities (API de capacidades) | `wp-abilities-api` + `wp-rest-api` + `wp-security` |
 | Auditar/verificar abilities ya implementadas | `wp-abilities-audit` o `wp-abilities-verify` |
-| Script frontend (`assets/js/common.js`) | `wp-frontend` + `wp-security` |
+| Script frontend (`assets/src/js/public/common.js`) | `wp-frontend` + `wp-security` |
 | Rendimiento / consultas a `$wpdb` / transients | `wp-performance` + `wp-php` |
 | Integrar tools MCP del plugin con el hub | `wp-mcp-conex` + `wp-tools-architect` + `wp-php` |
 | Build, empaquetado, release | `wp-build` |
@@ -99,7 +99,7 @@ bash scripts/build.sh                # genera dist/bubuku-post-view-count-{versi
 
 - Itera sobre código existente antes de escribir desde cero — el plugin es intencionalmente pequeño (5 clases); no añadas capas ni abstracciones sin necesidad concreta.
 - Nunca duplicar lógica — comprobar si ya existe en `Core\Db`, `Core\Schema`, `Api\RestApi` o `Frontend\Assets`.
-- No hay build step de JS/CSS: `assets/js/common.js` es JS plano, se edita directamente.
+- El plugin tiene build step (`@wordpress/scripts` + webpack) para el admin React (`assets/src/js/admin` → `assets/build/`) y para el bloque Gutenberg (`assets/src/blocks/post-views` → `assets/build/blocks/post-views`). `assets/src/js/public/common.js` (el contador público, en la ruta crítica de Core Web Vitals) sigue siendo JS plano intencionalmente: no pasa por webpack, `npm run build:public` lo copia literal a `assets/build/common.js`. Se edita siempre en `assets/src/`; `assets/build/` solo contiene artefactos y está git-ignorado.
 
 ### Seguridad (resumen — detalle en `wp-security`)
 
@@ -130,7 +130,8 @@ bash scripts/build.sh                # genera dist/bubuku-post-view-count-{versi
 - Subir la versión del plugin sin que el usuario lo pida explícitamente (ver «Versionado del plugin»).
 - Añadir autenticación/nonce al endpoint REST público sin acordarlo antes — rompería el conteo de visitantes deslogueados detrás de caché.
 - Almacenar secretos en el repositorio.
-- Introducir un build step (webpack, npm) para `assets/js/common.js` sin que el usuario lo pida — hoy es JS plano intencionalmente.
+- Meter `assets/src/js/public/common.js` en webpack (transpilar, minificar, bundlear) sin que el usuario lo pida — hoy solo se copia literal al build, intencionalmente.
+- Editar `assets/build/` a mano — es output generado y git-ignorado; la fuente es `assets/src/`.
 - Reintroducir `vendor/autoload.php` como dependencia runtime — el autoload de producción es el autoloader manual (`bbk_autoload`) en `bubuku-post-view-count.php`.
 
 ### Gestión de skills (obligatorio)

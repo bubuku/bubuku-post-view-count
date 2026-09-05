@@ -33,7 +33,7 @@ class Dimensions {
 
 	/**
 	 * Specific AI assistant behind a `referrer` value of 'ai' — only ever written
-	 * alongside it, never on its own (see assets/js/common.js getAiAssistantClass()).
+	 * alongside it, never on its own (see assets/src/js/public/common.js getAiAssistantClass()).
 	 */
 	const AI_ASSISTANT_CLASSES = array( 'chatgpt', 'claude', 'perplexity', 'copilot', 'gemini', 'other' );
 

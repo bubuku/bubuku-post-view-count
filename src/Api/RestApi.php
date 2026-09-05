@@ -63,7 +63,7 @@ class RestApi {
 						'validate_callback' => array( $this, 'validate_post_id' ),
 					),
 					// Optional (F5): already-classified session dimensions sent by
-					// assets/js/common.js. No validate_callback — an unknown/invalid
+					// assets/src/js/public/common.js. No validate_callback — an unknown/invalid
 					// value must never fail the whole request, only be dropped
 					// silently before it's written (see set_post_views()).
 					'viewport'            => array(
@@ -77,7 +77,7 @@ class RestApi {
 						'sanitize_callback' => 'sanitize_text_field',
 					),
 					// Only meaningful (and only ever sent) alongside referrer='ai' —
-					// see assets/js/common.js getAiAssistantClass().
+					// see assets/src/js/public/common.js getAiAssistantClass().
 					'ai_assistant'        => array(
 						'required'          => false,
 						'type'              => 'string',
@@ -249,7 +249,7 @@ class RestApi {
 
 	/**
 	 * Whether the browser sent a DNT or Sec-GPC privacy signal with this
-	 * request. `assets/js/common.js` already omits `viewport`/`referrer`
+	 * request. `assets/src/js/public/common.js` already omits `viewport`/`referrer`
 	 * client-side when it detects one, so this is a server-side defense in
 	 * depth: both headers are attached by the browser itself to every
 	 * outgoing request (including `navigator.sendBeacon()`), so they reach

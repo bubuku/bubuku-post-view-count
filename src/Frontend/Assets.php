@@ -45,9 +45,15 @@ class Assets {
 			return;
 		}
 
+		// Copied verbatim from assets/src/js/public/common.js by `npm run build:public`;
+		// bail out silently rather than enqueue a 404 when the build is missing.
+		if ( ! file_exists( BBK_PLUGIN_ASSETS_PATH . '/build/common.js' ) ) {
+			return;
+		}
+
 		wp_enqueue_script(
 			'bk-post-view-js',
-			BBK_PLUGIN_ASSETS_URL . '/js/common.js',
+			BBK_PLUGIN_ASSETS_URL . '/build/common.js',
 			array(),
 			BBK_PLUGIN_VERSION,
 			array(

@@ -21,7 +21,7 @@ Composer (`composer.json`) se usa **solo como tooling de desarrollo**: PHPCS, PH
 | Clase | Archivo | Responsabilidad |
 |---|---|---|
 | `Core\Plugin` | `src/Core/Plugin.php` | Punto de entrada — registra `plugins_loaded`, activación/desactivación (delega en `Core\Schema`), arranca `Frontend\Assets` y `Api\RestApi` |
-| `Frontend\Assets` | `src/Frontend/Assets.php` | Encola `assets/js/common.js` solo en `single` de tipo `post`, para visitantes sin `edit_posts`; localiza `bbk_post_view` con la URL REST y el `post_id` |
+| `Frontend\Assets` | `src/Frontend/Assets.php` | Encola `assets/build/common.js` solo en `single` de tipo `post`, para visitantes sin `edit_posts`; localiza `bbk_post_view` con la URL REST y el `post_id` |
 | `Api\RestApi` | `src/Api/RestApi.php` | Ruta REST anónima `POST /bbk_postview/v1/set-post-views` — valida `post_id`, origen, JSON y tamaño; excluye bots, respeta DNT/GPC para dimensiones y delega la deduplicación durable/atómica en `Core\Db` |
 | `Api\TrendsApi` | `src/Api/TrendsApi.php` | Rutas REST `GET /bbk_postview/v1/trends`, `GET /bbk_postview/v1/trends/momentum`, `GET /bbk_postview/v1/trends/dims` y `GET /bbk_postview/v1/trends/ai-traffic`, capability `edit_posts` (`docs/ANALYTICS-PLAN.md` §4, F4/§5/F6) — delegan en `Core\Query::trend()`, `Core\Query::momentum()`, `Core\Query::dims_breakdown()` y `Core\Query::ai_traffic()` respectivamente. Separada de `Api\RestApi` a propósito: esa clase es el contador público anónimo con su propio modelo de seguridad; esta es de lectura y con capability, un concern distinto |
 | `Core\Db` | `src/Core/Db.php` | Acceso a datos — claim de dedupe y upserts de agregado/diario/dimensiones dentro de una transacción, rate limits por red/sitio y red/post, espejo postmeta solo después del commit y errores `WP_Error` recuperables |
@@ -56,7 +56,7 @@ No hay carpeta `includes/` — toda la lógica cabe en `src/`, incluida la capa 
 ## Flujo de una vista
 
 1. `Frontend\Assets::enqueue_front_assets()` decide si encolar el script (solo en `single` de un CPT habilitado — `Admin\Settings::enabled_post_types()`, visitante que no pertenece a un rol excluido — `Settings::is_current_user_excluded()`) y localiza `post_id` + URL del endpoint.
-2. `assets/js/common.js` acumula cinco segundos visibles con reloj monotónico; pausa/reanuda en `visibilitychange`, `pagehide` y `pageshow`, y envía una sola vez con `sendBeacon` o `fetch keepalive` si Beacon rechaza el payload.
+2. `assets/src/js/public/common.js` (servido desde `assets/build/common.js`) acumula cinco segundos visibles con reloj monotónico; pausa/reanuda en `visibilitychange`, `pagehide` y `pageshow`, y envía una sola vez con `sendBeacon` o `fetch keepalive` si Beacon rechaza el payload.
 3. `Api\RestApi::register_routes()` valida `post_id` (`validate_post_id` — debe pertenecer a un CPT habilitado y ser publicado y visible) y comprueba el `permission_callback` (`check_request_origin`). `viewport`/`referrer` son args opcionales sin `validate_callback` — un valor inválido no tumba la petición, se descarta más tarde.
 4. `check_request_origin()` compara el origin/host normalizado de la petición con `home_url()` — solo acepta peticiones same-site; es intencionalmente anónimo (sin nonce) para funcionar detrás de full-page caching con visitantes deslogueados.
 5. `set_post_views()` descarta bots y construye solo dimensiones de lista blanca; DNT/Sec-GPC las omite sin impedir el conteo.
@@ -105,14 +105,18 @@ Migración desde la 1.1.x: `Core\Schema::migrate_batch()` copia `postmeta.views`
 
 Deduplicación de visitas: filas HMAC con TTL de 30 minutos en `bbk_post_view_dedupe`. Se purgan por lotes y no crean transients de alta cardinalidad en `wp_options`.
 
-## JavaScript — `assets/js/` y `assets/src/`
+## JavaScript — `assets/src/` → `assets/build/`
 
-El contador público sigue sin build step — `assets/js/common.js`, servido directamente, es
-JS plano deliberadamente (en la ruta crítica de Core Web Vitals). El admin y el bloque
-Gutenberg sí tienen build step (`@wordpress/scripts` + `webpack.config.js` en la raíz —
-`docs/IMPLEMENTED-ADMIN-UI-REACT.md`):
+Toda fuente de assets vive bajo `assets/src/` y todo lo que se sirve sale de `assets/build/`
+(git-ignorado, generado por `npm run build` y por `scripts/build.sh`; `.distignore` excluye
+`assets/src` del zip distribuido). El admin y el bloque Gutenberg pasan por webpack
+(`@wordpress/scripts` + `webpack.config.js` en la raíz — `docs/IMPLEMENTED-ADMIN-UI-REACT.md`);
+el contador público **no**: sigue siendo JS plano deliberadamente por estar en la ruta crítica
+de Core Web Vitals, y `npm run build:public` se limita a copiarlo literal, sin transpilar ni
+minificar. Hasta la reorganización de assets vivía en `assets/js/common.js`, fuera de esta
+convención.
 
-- `assets/js/common.js` — el script de conteo frontend, encolado con `strategy => defer` e `in_footer => true`. Calcula `viewport` (bucket de `window.innerWidth`) y `referrer` (clasificación de `document.referrer` vs `location.host`, F5) antes de enviar el POST — nunca el ancho exacto ni el host/URL en crudo.
+- `assets/src/js/public/common.js` → `assets/build/common.js` — el script de conteo frontend, encolado con `strategy => defer` e `in_footer => true` (`Frontend\Assets` no lo encola si falta el build). Calcula `viewport` (bucket de `window.innerWidth`) y `referrer` (clasificación de `document.referrer` vs `location.host`, F5) antes de enviar el POST — nunca el ancho exacto ni el host/URL en crudo.
 - `assets/src/js/admin/` — app React (`index.js`, `App.js`, `components/`) que sustituye a `admin-stats.js`: `AdminTabs` (Ajustes/Estadísticas), `SettingsPanel` (los 8 campos, sobre `Api\SettingsApi`) y `StatsPanel` (evolución, momentum, dims, tráfico de IA, sobre `Api\TrendsApi` — cero backend nuevo; `TrendChart.js` porta el Canvas 2D de `admin-stats.js` verbatim, con `useRef`/`useEffect` en vez de `DOMContentLoaded`). Compila a `assets/build/admin.js` + `style-admin.css` + `admin.asset.php` (`npm run build`).
 - `assets/src/blocks/post-views/` — fuente JSX del bloque (ver más abajo), compila a `assets/build/blocks/post-views/`.
 
@@ -224,15 +228,15 @@ bubuku-post-view-count/
 │  │  └─ index.php
 │  └─ index.php
 ├─ assets/
-│  ├─ js/
-│  │  └─ common.js               Sin build step — JS plano (Core Web Vitals)
-│  ├─ src/                       Fuente humana del admin/bloque — build con npm
+│  ├─ src/                       Fuente humana — se edita aquí. Fuera del zip (.distignore)
+│  │  ├─ js/public/               common.js — JS plano, sin webpack (Core Web Vitals)
 │  │  ├─ js/admin/                index.js, App.js, components/{AdminTabs,
 │  │  │                           HeaderMain,FooterMain,DashboardCard,DataTable,
 │  │  │                           SaveBar,SettingsPanel,StatsPanel,TrendChart}.js
 │  │  ├─ scss/admin/              style.scss, config/, base/, components/
 │  │  └─ blocks/post-views/       block.json, index.js (JSX), render.php
-│  └─ build/                      Generado por `npm run build` — no se edita
+│  └─ build/                      Generado por `npm run build` — no se edita, git-ignorado
+│     ├─ common.js                Copia literal de src/js/public/common.js (build:public)
 │     ├─ admin.js / style-admin.css / admin.asset.php
 │     └─ blocks/post-views/       block.json, index.js, index.asset.php, render.php
 ├─ Tests/                        Tests dependency-free (sin PHPUnit)

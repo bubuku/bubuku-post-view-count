@@ -33,10 +33,9 @@ README.md
 /vendor/
 /dist/
 
-# /assets/src is intentionally NOT excluded here: it ships human-readable
-# source for the minified assets/build/ output, satisfying WordPress.org
-# guideline 3 (no obfuscated/minified-only code) without maintaining an
-# external source link in readme.txt.
+# Asset sources: only the compiled output in assets/build/ ships. The public
+# counter (assets/src/js/public/common.js) is copied there verbatim, unminified.
+/assets/src
 
 # Package managers
 composer.json

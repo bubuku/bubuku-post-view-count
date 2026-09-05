@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Server-side AI-crawler counter (docs/ANALYTICS-PLAN.md, F6 "Rastreo por IA"). These
- * crawlers don't execute JavaScript, so `Api\RestApi` (fired by assets/js/common.js after
+ * crawlers don't execute JavaScript, so `Api\RestApi` (fired by assets/src/js/public/common.js after
  * page load) never sees them — this class inspects the User-Agent directly on
  * `template_redirect` instead. Opt-in and disabled by default
  * (`Admin\Settings::ai_crawler_tracking()`): it adds a write on every matching crawler

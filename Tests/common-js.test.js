@@ -3,7 +3,7 @@ const fs = require( 'node:fs' );
 const test = require( 'node:test' );
 const vm = require( 'node:vm' );
 
-const source = `${ fs.readFileSync( 'assets/js/common.js', 'utf8' ) }
+const source = `${ fs.readFileSync( 'assets/src/js/public/common.js', 'utf8' ) }
 globalThis.classifyReferrer = (referrer, pageUrl) => {
 	document.referrer = referrer;
 	const url = new URL(pageUrl);
