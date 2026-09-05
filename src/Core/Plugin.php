@@ -66,6 +66,8 @@ class Plugin {
 		}
 
 		add_action( 'init', array( $this, 'init_mcp_satellite' ) );
+		add_action( 'save_post', array( Query::class, 'invalidate_cache' ) );
+		add_action( 'deleted_post', array( Query::class, 'invalidate_cache' ) );
 	}
 
 	/**

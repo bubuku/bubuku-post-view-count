@@ -121,6 +121,9 @@ namespace {
 	function add_action(): void {
 	}
 
+	function do_action(): void {
+	}
+
 	function add_filter(): void {
 	}
 
@@ -152,6 +155,14 @@ namespace {
 
 	function wp_create_nonce( string $action ): string {
 		return 'nonce-' . $action;
+	}
+
+	function wp_salt( string $scheme = 'auth' ): string {
+		return 'test-salt-' . $scheme;
+	}
+
+	function is_wp_error( $thing ): bool {
+		return $thing instanceof WP_Error;
 	}
 
 	function esc_attr( string $text ): string {
@@ -294,13 +305,15 @@ namespace {
 		return TestState::$options[ $key ] ?? $default;
 	}
 
-	function update_option( string $key, $value ): bool {
+	function update_option( string $key, $value, $autoload = null ): bool {
+		unset( $autoload );
 		TestState::$options[ $key ] = $value;
 
 		return true;
 	}
 
-	function add_option( string $key, $value ): bool {
+	function add_option( string $key, $value, string $deprecated = '', $autoload = null ): bool {
+		unset( $deprecated, $autoload );
 		if ( isset( TestState::$options[ $key ] ) ) {
 			return false;
 		}
@@ -407,6 +420,10 @@ namespace {
 		return 'https://test.wp.local/?p=' . $post_id;
 	}
 
+	function _prime_post_caches( array $post_ids, bool $update_term_cache = true, bool $update_meta_cache = true ): void {
+		unset( $post_ids, $update_term_cache, $update_meta_cache );
+	}
+
 	function wp_json_encode( $value ) {
 		return json_encode( $value );
 	}
@@ -465,6 +482,15 @@ namespace Bubuku\Plugins\PostViewCount {
 		/** @var array<string, int> Keyed by "post_id|day|bot". */
 		public static $ai_crawls = array();
 
+		/** @var array<string, array<string, mixed>> Keyed by token hash. */
+		public static $dedupe = array();
+
+		/** @var array<string, mixed>|null Transaction snapshot. */
+		public static $transaction_snapshot = null;
+
+		/** @var string Query substring that should fail once. */
+		public static $fail_query = '';
+
 		/** @var array<string, int> */
 		public static $transients = array();
 
@@ -516,6 +542,9 @@ namespace Bubuku\Plugins\PostViewCount {
 			self::$daily            = array();
 			self::$dims             = array();
 			self::$ai_crawls        = array();
+			self::$dedupe           = array();
+			self::$transaction_snapshot = null;
+			self::$fail_query       = '';
 			self::$transients       = array();
 			self::$options          = array();
 			self::$cache_deletions  = array();
@@ -537,6 +566,9 @@ namespace Bubuku\Plugins\PostViewCount {
 	final class TestWpdb {
 
 		/** @var string */
+		public $last_error = '';
+
+		/** @var string */
 		public $postmeta = 'wp_postmeta';
 
 		/** @var string */
@@ -552,11 +584,19 @@ namespace Bubuku\Plugins\PostViewCount {
 			$i = 0;
 
 			return preg_replace_callback(
-				'/%[ds]/',
+				'/%[dis]/',
 				static function ( array $matches ) use ( $args, &$i ) {
 					$value = $args[ $i++ ] ?? '';
 
-					return '%d' === $matches[0] ? (string) (int) $value : "'" . addslashes( (string) $value ) . "'";
+					if ( '%d' === $matches[0] ) {
+						return (string) (int) $value;
+					}
+
+					if ( '%i' === $matches[0] ) {
+						return '`' . str_replace( '`', '``', (string) $value ) . '`';
+					}
+
+					return "'" . addslashes( (string) $value ) . "'";
 				},
 				$query
 			);
@@ -571,6 +611,68 @@ namespace Bubuku\Plugins\PostViewCount {
 		}
 
 		public function query( string $query ) {
+			if ( '' !== TestState::$fail_query && false !== strpos( $query, TestState::$fail_query ) ) {
+				TestState::$fail_query = '';
+				$this->last_error      = 'Simulated database failure';
+
+				return false;
+			}
+
+			if ( 'START TRANSACTION' === $query ) {
+				TestState::$transaction_snapshot = array(
+					'views'  => TestState::$views,
+					'daily'  => TestState::$daily,
+					'dims'   => TestState::$dims,
+					'dedupe' => TestState::$dedupe,
+				);
+
+				return 0;
+			}
+
+			if ( 'ROLLBACK' === $query ) {
+				if ( null !== TestState::$transaction_snapshot ) {
+					TestState::$views  = TestState::$transaction_snapshot['views'];
+					TestState::$daily  = TestState::$transaction_snapshot['daily'];
+					TestState::$dims   = TestState::$transaction_snapshot['dims'];
+					TestState::$dedupe = TestState::$transaction_snapshot['dedupe'];
+				}
+				TestState::$transaction_snapshot = null;
+
+				return 0;
+			}
+
+			if ( 'COMMIT' === $query ) {
+				TestState::$transaction_snapshot = null;
+
+				return 0;
+			}
+
+			if ( preg_match( "/DELETE FROM `?wp_bbk_post_view_dedupe`? WHERE token_hash = '([^']+)' AND expires_at <= '([^']+)'/", $query, $m ) ) {
+				$token = $m[1];
+				if ( isset( TestState::$dedupe[ $token ] ) && TestState::$dedupe[ $token ]['expires_at'] <= $m[2] ) {
+					unset( TestState::$dedupe[ $token ] );
+
+					return 1;
+				}
+
+				return 0;
+			}
+
+			if ( preg_match( "/INSERT IGNORE INTO `?wp_bbk_post_view_dedupe`? .* VALUES \\('([^']+)', '([^']+)', (\\d+), '([^']+)', '([^']+)'\\)/", $query, $m ) ) {
+				$token = $m[1];
+				if ( isset( TestState::$dedupe[ $token ] ) ) {
+					return 0;
+				}
+
+				TestState::$dedupe[ $token ] = array(
+					'network_hash' => $m[2],
+					'post_id'      => (int) $m[3],
+					'created_at'   => $m[4],
+					'expires_at'   => $m[5],
+				);
+
+				return 1;
+			}
 			if ( preg_match( "/INSERT INTO wp_bbk_post_views_daily \\(post_id, day, views\\) VALUES \\((\\d+), '([^']+)', (\\d+)\\)/", $query, $m ) ) {
 				$key                     = $m[1] . '|' . $m[2];
 				$count                   = (int) $m[3];
@@ -654,6 +756,12 @@ namespace Bubuku\Plugins\PostViewCount {
 				return true;
 			}
 
+			if ( preg_match( '/^DROP TABLE IF EXISTS wp_bbk_post_view_dedupe/', $query ) ) {
+				TestState::$dedupe = array();
+
+				return true;
+			}
+
 			return 0;
 		}
 
@@ -668,7 +776,24 @@ namespace Bubuku\Plugins\PostViewCount {
 		}
 
 		public function get_var( string $query ) {
-			unset( $query );
+			if ( preg_match( "/^SHOW TABLES LIKE '([^']+)'/", $query, $m ) ) {
+				return str_replace( '\\_', '_', stripslashes( stripslashes( $m[1] ) ) );
+			}
+
+			if ( preg_match( "/FROM wp_bbk_post_view_dedupe WHERE network_hash = '([^']+)'(?: AND post_id = (\\d+))? AND created_at >= '([^']+)'/", $query, $m ) ) {
+				$count = 0;
+				foreach ( TestState::$dedupe as $row ) {
+					if ( $row['network_hash'] !== $m[1] || $row['created_at'] < $m[3] ) {
+						continue;
+					}
+					if ( ! empty( $m[2] ) && $row['post_id'] !== (int) $m[2] ) {
+						continue;
+					}
+					++$count;
+				}
+
+				return $count;
+			}
 
 			return 0;
 		}
@@ -677,17 +802,18 @@ namespace Bubuku\Plugins\PostViewCount {
 			unset( $output );
 
 			if ( preg_match( "/FROM wp_postmeta WHERE meta_key = 'views'/", $query ) ) {
-				$offset = 0;
-
-				if ( preg_match( '/OFFSET (\d+)/', $query, $m ) ) {
-					$offset = (int) $m[1];
-				}
+				$cursor = preg_match( '/meta_id > (\d+)/', $query, $m ) ? (int) $m[1] : 0;
 
 				$rows = array();
 
 				foreach ( TestState::$meta as $post_id => $metas ) {
 					if ( isset( $metas['views'] ) ) {
+						if ( $post_id <= $cursor ) {
+							continue;
+						}
+
 						$rows[ $post_id ] = (object) array(
+							'meta_id'    => $post_id,
 							'post_id'    => $post_id,
 							'meta_value' => $metas['views'],
 						);
@@ -696,7 +822,7 @@ namespace Bubuku\Plugins\PostViewCount {
 
 				ksort( $rows );
 
-				return array_slice( array_values( $rows ), $offset, 500 );
+				return array_slice( array_values( $rows ), 0, 500 );
 			}
 
 			if ( false !== strpos( $query, 'FROM wp_bbk_post_view_dims d' ) ) {
@@ -833,7 +959,6 @@ namespace Bubuku\Plugins\PostViewCount {
 	require_once dirname( __DIR__ ) . '/src/Core/Db.php';
 	require_once dirname( __DIR__ ) . '/src/Admin/Settings.php';
 	require_once dirname( __DIR__ ) . '/src/Admin/AdminPage.php';
-	require_once dirname( __DIR__ ) . '/src/Core/WriteBuffer.php';
 	require_once dirname( __DIR__ ) . '/src/Api/RestApi.php';
 	require_once dirname( __DIR__ ) . '/src/Api/TrendsApi.php';
 	require_once dirname( __DIR__ ) . '/src/Api/SettingsApi.php';

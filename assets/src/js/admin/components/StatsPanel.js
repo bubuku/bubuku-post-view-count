@@ -162,6 +162,8 @@ const StatsPanel = ( { context } ) => {
 	const [ momentum, setMomentum ] = useState( null );
 	const [ dimsViewport, setDimsViewport ] = useState( null );
 	const [ dimsReferrer, setDimsReferrer ] = useState( null );
+	const [ viewportCoverage, setViewportCoverage ] = useState( null );
+	const [ referrerCoverage, setReferrerCoverage ] = useState( null );
 	const [ aiTraffic, setAiTraffic ] = useState( null );
 
 	useEffect( () => {
@@ -191,11 +193,17 @@ const StatsPanel = ( { context } ) => {
 
 	useEffect( () => {
 		bbkFetch( '/trends/dims?dimension=viewport' )
-			.then( ( body ) => setDimsViewport( body.breakdown || [] ) )
+			.then( ( body ) => {
+				setDimsViewport( body.breakdown || [] );
+				setViewportCoverage( body.coverage || null );
+			} )
 			.catch( () => setDimsViewport( [] ) );
 
 		bbkFetch( '/trends/dims?dimension=referrer' )
-			.then( ( body ) => setDimsReferrer( body.breakdown || [] ) )
+			.then( ( body ) => {
+				setDimsReferrer( body.breakdown || [] );
+				setReferrerCoverage( body.coverage || null );
+			} )
 			.catch( () => setDimsReferrer( [] ) );
 	}, [] );
 
@@ -219,6 +227,28 @@ const StatsPanel = ( { context } ) => {
 			numeric: true,
 		},
 	];
+	const coverageLabel = ( coverage ) => {
+		if (
+			coverage?.percentage === null ||
+			coverage?.percentage === undefined
+		) {
+			return __(
+				'Coverage is not available yet.',
+				'bubuku-post-view-count'
+			);
+		}
+
+		return sprintf(
+			/* translators: 1: percentage, 2: classified views, 3: total accepted views */
+			__(
+				'Coverage: %1$s%% (%2$s of %3$s accepted views). Categories are approximate.',
+				'bubuku-post-view-count'
+			),
+			coverage.percentage,
+			formatNumber( coverage.tracked_views ),
+			formatNumber( coverage.total_views )
+		);
+	};
 
 	const momentumColumns = [
 		{
@@ -385,6 +415,7 @@ const StatsPanel = ( { context } ) => {
 				<div className="bbk-two-columns">
 					<div>
 						<h3>{ __( 'Device', 'bubuku-post-view-count' ) }</h3>
+						<p>{ coverageLabel( viewportCoverage ) }</p>
 						<DataTable
 							columns={ dimsColumns }
 							rows={ dimsViewport || [] }
@@ -399,6 +430,7 @@ const StatsPanel = ( { context } ) => {
 					</div>
 					<div>
 						<h3>{ __( 'Referrer', 'bubuku-post-view-count' ) }</h3>
+						<p>{ coverageLabel( referrerCoverage ) }</p>
 						<DataTable
 							columns={ dimsColumns }
 							rows={ dimsReferrer || [] }
@@ -431,10 +463,7 @@ const StatsPanel = ( { context } ) => {
 						<ExpandableViewsTable
 							rows={ aiTraffic?.referrals?.by_assistant || [] }
 							labelKey="assistant"
-							headerLabel={ __(
-								'AI',
-								'bubuku-post-view-count'
-							) }
+							headerLabel={ __( 'AI', 'bubuku-post-view-count' ) }
 							labels={ AI_ASSISTANT_LABELS }
 							totalLabel={ totalLabel }
 							emptyLabel={ __(

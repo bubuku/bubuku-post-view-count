@@ -33,6 +33,30 @@ class Query {
 	 */
 	const CACHE_TTL = 300;
 
+	const MAX_PERIOD_DAYS = 365;
+
+	const OPTION_CACHE_GENERATION = 'bbk_postview_query_cache_generation';
+
+	/**
+	 * Invalidate every analytics cache entry without requiring cache-group flush
+	 * support from the active object-cache backend.
+	 *
+	 * @return void
+	 */
+	public static function invalidate_cache(): void {
+		update_option( self::OPTION_CACHE_GENERATION, (int) get_option( self::OPTION_CACHE_GENERATION, 1 ) + 1, false );
+	}
+
+	/**
+	 * Prefix a logical cache key with the current generation.
+	 *
+	 * @param string $key Logical key.
+	 * @return string
+	 */
+	private static function cache_key( string $key ): string {
+		return (int) get_option( self::OPTION_CACHE_GENERATION, 1 ) . '_' . $key;
+	}
+
 	/**
 	 * Hard cap applied to every `limit`/`page` argument, regardless of what is requested.
 	 */
@@ -67,7 +91,7 @@ class Query {
 		$limit  = self::cap_limit( $limit );
 		$offset = ( max( 1, $page ) - 1 ) * $limit;
 
-		$cache_key = 'most_viewed_' . md5( (string) wp_json_encode( array( $post_types, $since, $until, $limit, $offset ) ) );
+		$cache_key = self::cache_key( 'most_viewed_' . md5( (string) wp_json_encode( array( $post_types, $since, $until, $limit, $offset ) ) ) );
 		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
 
 		if ( false !== $cached ) {
@@ -147,6 +171,8 @@ class Query {
 			)
 		);
 
+		self::prime_post_rows( is_array( $rows ) ? $rows : array() );
+
 		$result = array();
 
 		foreach ( is_array( $rows ) ? $rows : array() as $row ) {
@@ -201,7 +227,7 @@ class Query {
 		$from        = $range['from'];
 		$to          = $range['to'];
 
-		$cache_key = 'trend_' . md5( (string) wp_json_encode( array( $post_ids, $post_types, $granularity, $from, $to ) ) );
+		$cache_key = self::cache_key( 'trend_' . md5( (string) wp_json_encode( array( $post_ids, $post_types, $granularity, $from, $to ) ) ) );
 		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
 
 		if ( false !== $cached ) {
@@ -276,6 +302,21 @@ class Query {
 		return array(
 			'from' => $from ?? gmdate( 'Y-m-d', strtotime( $to . ' -' . self::DEFAULT_TREND_MONTHS . ' months' ) ),
 			'to'   => $to,
+		);
+	}
+
+	/**
+	 * Metadata required to interpret every analytics result consistently.
+	 *
+	 * @return array{measurement_version:int,measurement_definition:string,data_available_since:?string,computed_at:string,cache_ttl_seconds:int}
+	 */
+	public static function measurement_metadata(): array {
+		return array(
+			'measurement_version'    => Schema::MEASUREMENT_VERSION,
+			'measurement_definition' => Schema::MEASUREMENT_DEFINITION,
+			'data_available_since'   => Schema::daily_data_since(),
+			'computed_at'            => current_time( 'mysql', true ),
+			'cache_ttl_seconds'      => self::CACHE_TTL,
 		);
 	}
 
@@ -375,7 +416,7 @@ class Query {
 		global $wpdb;
 
 		$current_end    = current_time( 'Y-m-d', true );
-		$period_days    = max( 1, $period_days );
+		$period_days    = max( 1, min( self::MAX_PERIOD_DAYS, $period_days ) );
 		$current_start  = gmdate( 'Y-m-d', strtotime( "{$current_end} -" . ( $period_days - 1 ) . ' days' ) );
 		$previous_end   = gmdate( 'Y-m-d', strtotime( "{$current_start} -1 day" ) );
 		$previous_start = gmdate( 'Y-m-d', strtotime( "{$previous_end} -" . ( $period_days - 1 ) . ' days' ) );
@@ -404,7 +445,7 @@ class Query {
 		$limit     = self::cap_limit( $limit );
 		$min_views = max( 0, $min_views );
 
-		$cache_key = 'momentum_' . md5( (string) wp_json_encode( array( $post_types, $period_days, $limit, $min_views ) ) );
+		$cache_key = self::cache_key( 'momentum_' . md5( (string) wp_json_encode( array( $post_types, $period_days, $limit, $min_views ) ) ) );
 		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
 
 		if ( false !== $cached ) {
@@ -424,6 +465,8 @@ class Query {
 			),
 			ARRAY_A
 		);
+
+		self::prime_post_rows( is_array( $rows ) ? $rows : array() );
 
 		$rising  = array();
 		$falling = array();
@@ -509,7 +552,7 @@ class Query {
 		$since = $since ?? gmdate( 'Y-m-d', strtotime( '-3 months' ) );
 		$until = $until ?? current_time( 'Y-m-d', true );
 
-		$cache_key = 'dims_breakdown_' . md5( (string) wp_json_encode( array( $dimension, $post_types, $since, $until ) ) );
+		$cache_key = self::cache_key( 'dims_breakdown_' . md5( (string) wp_json_encode( array( $dimension, $post_types, $since, $until ) ) ) );
 		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
 
 		if ( false !== $cached ) {
@@ -542,6 +585,57 @@ class Query {
 		wp_cache_set( $cache_key, $result, self::CACHE_GROUP, self::CACHE_TTL );
 
 		return $result;
+	}
+
+	/**
+	 * Report how many accepted views have a value for one optional dimension.
+	 * This prevents consumers from presenting a partial breakdown as complete.
+	 *
+	 * @return array{tracked_views:int,total_views:int,percentage:?float}
+	 */
+	public static function dimension_coverage( string $dimension, array $post_types = array(), ?string $since = null, ?string $until = null ): array {
+		global $wpdb;
+
+		$post_types = self::resolve_post_types( $post_types );
+		if ( empty( Dimensions::values_for( $dimension ) ) || empty( $post_types ) ) {
+			return array(
+				'tracked_views' => 0,
+				'total_views'   => 0,
+				'percentage'    => null,
+			);
+		}
+
+		$since             = $since ?? gmdate( 'Y-m-d', strtotime( '-3 months' ) );
+		$until             = $until ?? current_time( 'Y-m-d', true );
+		$daily_table       = Schema::table_daily();
+		$dims_table        = Schema::table_dims();
+		$type_placeholders = self::placeholders( $post_types, '%s' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Coverage over plugin aggregate tables; names are internal and inputs prepared.
+		$total = (int) $wpdb->get_var(
+			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Dynamic fixed placeholder run.
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Internal tables and fixed placeholders only.
+				"SELECT COALESCE(SUM(d.views), 0) FROM {$daily_table} d INNER JOIN {$wpdb->posts} p ON p.ID = d.post_id WHERE p.post_type IN ({$type_placeholders}) AND p.post_status = 'publish' AND d.day BETWEEN %s AND %s",
+				...array_merge( $post_types, array( $since, $until ) )
+			)
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Coverage over plugin aggregate tables; names are internal and inputs prepared.
+		$tracked = (int) $wpdb->get_var(
+			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Dynamic fixed placeholder run.
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Internal tables and fixed placeholders only.
+				"SELECT COALESCE(SUM(d.views), 0) FROM {$dims_table} d INNER JOIN {$wpdb->posts} p ON p.ID = d.post_id WHERE d.dimension = %s AND p.post_type IN ({$type_placeholders}) AND p.post_status = 'publish' AND d.day BETWEEN %s AND %s",
+				...array_merge( array( $dimension ), $post_types, array( $since, $until ) )
+			)
+		);
+
+		return array(
+			'tracked_views' => $tracked,
+			'total_views'   => $total,
+			'percentage'    => $total > 0 ? round( min( 100, ( $tracked / $total ) * 100 ), 1 ) : null,
+		);
 	}
 
 	/**
@@ -583,7 +677,7 @@ class Query {
 			$until = $until ?? current_time( 'Y-m-d', true );
 			$limit = self::cap_limit( $limit );
 
-			$by_assistant_cache_key = 'ai_referral_by_assistant_' . md5( (string) wp_json_encode( array( $resolved_post_types, $since, $until, $limit ) ) );
+			$by_assistant_cache_key = self::cache_key( 'ai_referral_by_assistant_' . md5( (string) wp_json_encode( array( $resolved_post_types, $since, $until, $limit ) ) ) );
 			$cached_by_assistant    = wp_cache_get( $by_assistant_cache_key, self::CACHE_GROUP );
 
 			if ( false !== $cached_by_assistant ) {
@@ -602,6 +696,8 @@ class Query {
 					),
 					ARRAY_A
 				);
+
+				self::prime_post_rows( is_array( $rows ) ? $rows : array() );
 
 				$grouped = array();
 
@@ -665,7 +761,7 @@ class Query {
 				);
 			}
 
-			$cache_key = 'ai_crawler_posts_' . md5( (string) wp_json_encode( array( $resolved_post_types, $since, $until, $limit ) ) );
+			$cache_key = self::cache_key( 'ai_crawler_posts_' . md5( (string) wp_json_encode( array( $resolved_post_types, $since, $until, $limit ) ) ) );
 			$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
 
 			if ( false !== $cached ) {
@@ -684,6 +780,8 @@ class Query {
 					),
 					ARRAY_A
 				);
+
+				self::prime_post_rows( is_array( $rows ) ? $rows : array() );
 
 				$grouped_crawlers = array();
 
@@ -810,6 +908,8 @@ class Query {
 	 * @return array<int, array{id:int,title:string,url:string,views:int}>
 	 */
 	private static function format_view_rows( array $rows ): array {
+		self::prime_post_rows( $rows );
+
 		$result = array();
 
 		foreach ( $rows as $row ) {
@@ -823,5 +923,29 @@ class Query {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Prime post and term caches once before formatting result sets.
+	 *
+	 * @param array $rows Rows containing post_id as an object property or key.
+	 * @return void
+	 */
+	private static function prime_post_rows( array $rows ): void {
+		if ( ! function_exists( '_prime_post_caches' ) ) {
+			return;
+		}
+
+		$post_ids = array();
+		foreach ( $rows as $row ) {
+			$post_id = is_array( $row ) ? (int) ( $row['post_id'] ?? 0 ) : (int) ( $row->post_id ?? 0 );
+			if ( $post_id > 0 ) {
+				$post_ids[] = $post_id;
+			}
+		}
+
+		if ( $post_ids ) {
+			_prime_post_caches( array_values( array_unique( $post_ids ) ), false, false );
+		}
 	}
 }

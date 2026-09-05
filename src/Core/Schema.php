@@ -19,7 +19,7 @@ class Schema {
 	/**
 	 * Current schema version. Bump when the table structure changes.
 	 */
-	const VERSION = 3;
+	const VERSION = 4;
 
 	const OPTION_SCHEMA_VERSION = 'bbk_schema_version';
 
@@ -31,7 +31,17 @@ class Schema {
 	 */
 	const OPTION_DAILY_SINCE = 'bbk_postview_daily_since';
 
+	const OPTION_MIGRATION_CURSOR = 'bbk_postview_migration_cursor';
+
+	const OPTION_MIGRATION_STATUS = 'bbk_postview_migration_status';
+
+	const OPTION_INGESTION_PAUSED = 'bbk_postview_ingestion_paused';
+
 	const PURGE_CRON_HOOK = 'bbk_postview_purge_daily';
+
+	const PURGE_CONTINUE_CRON_HOOK = 'bbk_postview_purge_continue';
+
+	const PURGE_BATCH_SIZE = 10000;
 
 	const MIGRATION_CRON_HOOK = 'bbk_postview_migrate_batch';
 
@@ -39,46 +49,16 @@ class Schema {
 
 	const DEFAULT_RETENTION_DAYS = 400;
 
-	/**
-	 * Recurring hook that flushes the write buffer (F7, `Core\WriteBuffer`).
-	 * Always scheduled — flush() itself is a fast no-op when nothing is
-	 * buffered, which is the case whenever `Admin\Settings::write_buffer_enabled()`
-	 * is off (the default) or there is no persistent object cache.
-	 */
-	const BUFFER_FLUSH_CRON_HOOK = 'bbk_postview_flush_buffer';
+	const MEASUREMENT_VERSION = 2;
 
-	/**
-	 * Custom cron schedule registered for the hook above: WP core only ships
-	 * hourly/twicedaily/daily, none short enough for a write buffer to be
-	 * useful.
-	 */
-	const BUFFER_FLUSH_SCHEDULE = 'bbk_postview_every_minute';
-
-	const BUFFER_FLUSH_INTERVAL = MINUTE_IN_SECONDS;
+	const MEASUREMENT_DEFINITION = 'five_cumulative_visible_seconds';
 
 	public function __construct() {
 		add_action( 'plugins_loaded', array( $this, 'maybe_upgrade' ) );
 		add_action( self::PURGE_CRON_HOOK, array( $this, 'purge_daily' ) );
+		add_action( self::PURGE_CONTINUE_CRON_HOOK, array( $this, 'purge_daily' ) );
 		add_action( self::MIGRATION_CRON_HOOK, array( $this, 'migrate_batch' ) );
-		add_action( self::BUFFER_FLUSH_CRON_HOOK, array( WriteBuffer::class, 'flush' ) );
 		add_action( 'wp_initialize_site', array( $this, 'install_on_new_site' ) );
-		add_filter( 'cron_schedules', array( $this, 'register_cron_schedule' ) ); // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval -- Interval is a class constant (MINUTE_IN_SECONDS), not a hardcoded literal.
-	}
-
-	/**
-	 * Registers the custom "every minute" cron schedule used by the write
-	 * buffer flush (F7). Filter callback for `cron_schedules`.
-	 *
-	 * @param array $schedules Existing schedules.
-	 * @return array
-	 */
-	public function register_cron_schedule( array $schedules ): array {
-		$schedules[ self::BUFFER_FLUSH_SCHEDULE ] = array(
-			'interval' => self::BUFFER_FLUSH_INTERVAL,
-			'display'  => __( 'Every minute (Bubuku Post View Count write buffer)', 'bubuku-post-view-count' ),
-		);
-
-		return $schedules;
 	}
 
 	/**
@@ -126,6 +106,17 @@ class Schema {
 	}
 
 	/**
+	 * Table name for short-lived, atomic view deduplication records.
+	 *
+	 * @return string
+	 */
+	public static function table_dedupe(): string {
+		global $wpdb;
+
+		return $wpdb->prefix . 'bbk_post_view_dedupe';
+	}
+
+	/**
 	 * Runs on plugin activation.
 	 *
 	 * @param bool $network_wide Whether the plugin is being network-activated.
@@ -153,8 +144,8 @@ class Schema {
 	 */
 	public function deactivate() {
 		wp_clear_scheduled_hook( self::PURGE_CRON_HOOK );
+		wp_clear_scheduled_hook( self::PURGE_CONTINUE_CRON_HOOK );
 		wp_clear_scheduled_hook( self::MIGRATION_CRON_HOOK );
-		wp_clear_scheduled_hook( self::BUFFER_FLUSH_CRON_HOOK );
 	}
 
 	/**
@@ -187,6 +178,10 @@ class Schema {
 		if ( (int) get_option( self::OPTION_SCHEMA_VERSION, 0 ) < self::VERSION ) {
 			$this->install_current_site();
 		}
+
+		if ( (int) get_option( self::OPTION_SCHEMA_VERSION, 0 ) >= self::VERSION ) {
+			$this->maybe_resume_migration();
+		}
 	}
 
 	/**
@@ -199,8 +194,14 @@ class Schema {
 		$is_new_install = (int) get_option( self::OPTION_SCHEMA_VERSION, 0 ) < self::VERSION;
 
 		$this->create_tables();
+
+		if ( ! $this->tables_exist() ) {
+			update_option( self::OPTION_MIGRATION_STATUS, 'failed', false );
+
+			return;
+		}
+
 		$this->schedule_purge();
-		$this->schedule_buffer_flush();
 
 		if ( $is_new_install ) {
 			$this->schedule_migration();
@@ -236,6 +237,7 @@ class Schema {
 		$daily_table     = self::table_daily();
 		$dims_table      = self::table_dims();
 		$ai_crawls_table = self::table_ai_crawls();
+		$dedupe_table    = self::table_dedupe();
 
 		$sql = "CREATE TABLE {$views_table} (
 			post_id BIGINT UNSIGNED NOT NULL,
@@ -269,9 +271,39 @@ class Schema {
 			views INT UNSIGNED NOT NULL DEFAULT 0,
 			PRIMARY KEY  (post_id, day, bot),
 			KEY day_bot (day, bot)
+		) {$charset_collate};
+		CREATE TABLE {$dedupe_table} (
+			token_hash CHAR(64) NOT NULL,
+			network_hash CHAR(64) NOT NULL,
+			post_id BIGINT UNSIGNED NOT NULL,
+			created_at DATETIME NOT NULL,
+			expires_at DATETIME NOT NULL,
+			PRIMARY KEY  (token_hash),
+			KEY expires_at (expires_at),
+			KEY network_created (network_hash, created_at),
+			KEY network_post_created (network_hash, post_id, created_at)
 		) {$charset_collate};";
 
 		dbDelta( $sql );
+	}
+
+	/**
+	 * Verify dbDelta created every required table before advancing the schema.
+	 *
+	 * @return bool
+	 */
+	private function tables_exist(): bool {
+		global $wpdb;
+
+		foreach ( array( self::table_views(), self::table_daily(), self::table_dims(), self::table_ai_crawls(), self::table_dedupe() ) as $table ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Installation verification must inspect the live schema.
+			$found = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) );
+			if ( $table !== $found ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -286,25 +318,37 @@ class Schema {
 	}
 
 	/**
-	 * Schedules the recurring write-buffer flush (F7), if not already scheduled.
-	 *
-	 * @return void
-	 */
-	private function schedule_buffer_flush() {
-		if ( ! wp_next_scheduled( self::BUFFER_FLUSH_CRON_HOOK ) ) {
-			wp_schedule_event( time(), self::BUFFER_FLUSH_SCHEDULE, self::BUFFER_FLUSH_CRON_HOOK );
-		}
-	}
-
-	/**
 	 * Schedules the one-shot, self-rescheduling migration of postmeta → table.
 	 *
 	 * @return void
 	 */
 	private function schedule_migration() {
-		if ( ! wp_next_scheduled( self::MIGRATION_CRON_HOOK ) ) {
-			wp_schedule_single_event( time() + MINUTE_IN_SECONDS, self::MIGRATION_CRON_HOOK, array( 0 ) );
+		if ( 'complete' === get_option( self::OPTION_MIGRATION_STATUS, '' ) ) {
+			return;
 		}
+
+		update_option( self::OPTION_MIGRATION_STATUS, 'pending', false );
+
+		if ( ! wp_next_scheduled( self::MIGRATION_CRON_HOOK ) ) {
+			$cursor = (int) get_option( self::OPTION_MIGRATION_CURSOR, 0 );
+			wp_schedule_single_event( time() + MINUTE_IN_SECONDS, self::MIGRATION_CRON_HOOK, array( $cursor ) );
+		}
+	}
+
+	/**
+	 * Restores a lost one-shot migration event while work remains.
+	 *
+	 * @return void
+	 */
+	private function maybe_resume_migration() {
+		$status = (string) get_option( self::OPTION_MIGRATION_STATUS, '' );
+
+		if ( ! in_array( $status, array( 'pending', 'failed' ), true ) || wp_next_scheduled( self::MIGRATION_CRON_HOOK ) ) {
+			return;
+		}
+
+		$cursor = (int) get_option( self::OPTION_MIGRATION_CURSOR, 0 );
+		wp_schedule_single_event( time() + ( 5 * MINUTE_IN_SECONDS ), self::MIGRATION_CRON_HOOK, array( $cursor ) );
 	}
 
 	/**
@@ -312,10 +356,10 @@ class Schema {
 	 * Idempotent: re-running never duplicates or double-counts, and reschedules
 	 * itself until every row has been copied.
 	 *
-	 * @param int $offset Row offset to resume from.
+	 * @param int $cursor Last processed postmeta meta_id.
 	 * @return void
 	 */
-	public function migrate_batch( int $offset = 0 ) {
+	public function migrate_batch( int $cursor = 0 ) {
 		global $wpdb;
 
 		$views_table = self::table_views();
@@ -323,19 +367,30 @@ class Schema {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Batched one-off migration, no equivalent WP API; each batch reads a fresh offset, so caching would be incorrect.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = 'views' ORDER BY post_id LIMIT %d OFFSET %d",
-				self::MIGRATION_BATCH_SIZE,
-				$offset
+				"SELECT meta_id, post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = 'views' AND meta_id > %d ORDER BY meta_id LIMIT %d",
+				$cursor,
+				self::MIGRATION_BATCH_SIZE
 			)
 		);
 
 		if ( empty( $rows ) ) {
+			if ( ! empty( $wpdb->last_error ) ) {
+				update_option( self::OPTION_MIGRATION_STATUS, 'failed', false );
+				$this->maybe_resume_migration();
+
+				return;
+			}
+
+			update_option( self::OPTION_MIGRATION_STATUS, 'complete', false );
+
 			return;
 		}
 
+		$last_meta_id = $cursor;
+
 		foreach ( $rows as $row ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- One-off migration upsert on the plugin's own table, no equivalent WP API; a running counter must never be served from cache. $views_table is an internal constant (self::table_views()), never user input.
-			$wpdb->query(
+			$result = $wpdb->query(
 				$wpdb->prepare(
 					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$views_table} is an internal constant (self::table_views()), never user input.
 					"INSERT INTO {$views_table} (post_id, views) VALUES (%d, %d) ON DUPLICATE KEY UPDATE views = GREATEST(views, VALUES(views))",
@@ -343,15 +398,32 @@ class Schema {
 					(int) $row->meta_value
 				)
 			);
+
+			if ( false === $result ) {
+				update_option( self::OPTION_MIGRATION_STATUS, 'failed', false );
+				update_option( self::OPTION_MIGRATION_CURSOR, $last_meta_id, false );
+				$this->maybe_resume_migration();
+
+				return;
+			}
+
+			$last_meta_id = (int) $row->meta_id;
 		}
+
+		update_option( self::OPTION_MIGRATION_CURSOR, $last_meta_id, false );
+		update_option( self::OPTION_MIGRATION_STATUS, 'pending', false );
 
 		if ( count( $rows ) === self::MIGRATION_BATCH_SIZE ) {
 			wp_schedule_single_event(
 				time() + MINUTE_IN_SECONDS,
 				self::MIGRATION_CRON_HOOK,
-				array( $offset + self::MIGRATION_BATCH_SIZE )
+				array( $last_meta_id )
 			);
+
+			return;
 		}
+
+		update_option( self::OPTION_MIGRATION_STATUS, 'complete', false );
 	}
 
 	/**
@@ -362,37 +434,48 @@ class Schema {
 	public function purge_daily() {
 		global $wpdb;
 
-		$settings        = get_option( 'bbk_postview_settings', array() );
-		$retention_days  = isset( $settings['retention_days'] ) ? (int) $settings['retention_days'] : self::DEFAULT_RETENTION_DAYS;
-		$daily_table     = self::table_daily();
-		$dims_table      = self::table_dims();
-		$ai_crawls_table = self::table_ai_crawls();
+		$settings       = get_option( 'bbk_postview_settings', array() );
+		$retention_days = isset( $settings['retention_days'] ) ? (int) $settings['retention_days'] : self::DEFAULT_RETENTION_DAYS;
+		$retention_days = max( 1, min( 3650, $retention_days ) );
+		$purged         = array();
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Daily cron purge on the plugin's own table, no equivalent WP API; a purge query must never be served from cache. $daily_table is an internal constant (self::table_daily()), never user input.
-		$wpdb->query(
+		$purged[] = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Scheduled maintenance on the plugin's own table has no equivalent WP API and must not be cached.
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$daily_table} is an internal constant (self::table_daily()), never user input.
-				"DELETE FROM {$daily_table} WHERE day < DATE_SUB(UTC_DATE(), INTERVAL %d DAY)",
-				$retention_days
+				'DELETE FROM %i WHERE day < DATE_SUB(UTC_DATE(), INTERVAL %d DAY) LIMIT %d',
+				self::table_daily(),
+				$retention_days,
+				self::PURGE_BATCH_SIZE
 			)
 		);
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Daily cron purge on the plugin's own table, no equivalent WP API; a purge query must never be served from cache. $dims_table is an internal constant (self::table_dims()), never user input.
-		$wpdb->query(
+		$purged[] = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Scheduled maintenance on the plugin's own table has no equivalent WP API and must not be cached.
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$dims_table} is an internal constant (self::table_dims()), never user input.
-				"DELETE FROM {$dims_table} WHERE day < DATE_SUB(UTC_DATE(), INTERVAL %d DAY)",
-				$retention_days
+				'DELETE FROM %i WHERE day < DATE_SUB(UTC_DATE(), INTERVAL %d DAY) LIMIT %d',
+				self::table_dims(),
+				$retention_days,
+				self::PURGE_BATCH_SIZE
 			)
 		);
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Daily cron purge on the plugin's own table, no equivalent WP API; a purge query must never be served from cache. $ai_crawls_table is an internal constant (self::table_ai_crawls()), never user input.
-		$wpdb->query(
+		$purged[] = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Scheduled maintenance on the plugin's own table has no equivalent WP API and must not be cached.
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$ai_crawls_table} is an internal constant (self::table_ai_crawls()), never user input.
-				"DELETE FROM {$ai_crawls_table} WHERE day < DATE_SUB(UTC_DATE(), INTERVAL %d DAY)",
-				$retention_days
+				'DELETE FROM %i WHERE day < DATE_SUB(UTC_DATE(), INTERVAL %d DAY) LIMIT %d',
+				self::table_ai_crawls(),
+				$retention_days,
+				self::PURGE_BATCH_SIZE
 			)
 		);
+
+		$purged[] = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Scheduled maintenance on the plugin's own table has no equivalent WP API and must not be cached.
+			$wpdb->prepare(
+				'DELETE FROM %i WHERE expires_at < UTC_TIMESTAMP() LIMIT %d',
+				self::table_dedupe(),
+				self::PURGE_BATCH_SIZE
+			)
+		);
+
+		if ( in_array( self::PURGE_BATCH_SIZE, $purged, true ) && ! wp_next_scheduled( self::PURGE_CONTINUE_CRON_HOOK ) ) {
+			wp_schedule_single_event( time() + MINUTE_IN_SECONDS, self::PURGE_CONTINUE_CRON_HOOK );
+		}
 	}
 }

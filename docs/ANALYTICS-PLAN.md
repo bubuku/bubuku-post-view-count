@@ -1,5 +1,9 @@
 # Plan de analítica y exposición MCP — Bubuku Post View Count
 
+> Nota posterior: el buffer experimental descrito en F7 fue retirado por falta de
+> durabilidad. La escritura directa transaccional que lo sustituye y su estado se
+> documentan en `docs/RELIABILITY-SECURITY-PERFORMANCE-PLAN.md`.
+
 > Hoja de ruta por fases para convertir el contador de vistas actual en una capa de
 > analítica consultable, con página de ajustes y exposición de los datos a las IAs vía
 > el hub `bubuku-mcp-conex`.

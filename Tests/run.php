@@ -19,7 +19,6 @@ use Bubuku\Plugins\PostViewCount\Core\Db;
 use Bubuku\Plugins\PostViewCount\Core\Dimensions;
 use Bubuku\Plugins\PostViewCount\Core\Query;
 use Bubuku\Plugins\PostViewCount\Core\Schema;
-use Bubuku\Plugins\PostViewCount\Core\WriteBuffer;
 use Bubuku\Plugins\PostViewCount\Frontend\ViewsDisplay;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetAiTraffic;
 use Bubuku\Plugins\PostViewCount\Mcp\Tools\GetContentTrends;
@@ -232,6 +231,9 @@ $tests = array(
 		$schema->migrate_batch( 0 );
 		$schema->migrate_batch( 0 );
 
+		bbk_test_same( 11, get_option( Schema::OPTION_MIGRATION_CURSOR ), 'Migration must persist its stable meta_id cursor.' );
+		bbk_test_same( 'complete', get_option( Schema::OPTION_MIGRATION_STATUS ), 'Migration must mark completion only after the last row.' );
+
 		bbk_test_same( 9, TestState::$views[10]['views'], 'Migrating twice must not duplicate or sum the count.' );
 		bbk_test_same( 3, TestState::$views[11]['views'], 'Migrating twice must not duplicate or sum the count.' );
 	},
@@ -258,6 +260,28 @@ $tests = array(
 
 		bbk_test_error_status( $api->check_request_origin( new WP_REST_Request() ), 403 );
 	},
+	'rejects oversized or non-JSON public write requests' => static function (): void {
+		$api = new RestApi();
+
+		bbk_test_error_status(
+			$api->check_request_origin(
+				new WP_REST_Request( array(), array( 'Content-Length' => '2049' ) )
+			),
+			413
+		);
+		bbk_test_error_status(
+			$api->check_request_origin(
+				new WP_REST_Request(
+					array(),
+					array(
+						'Content-Type' => 'text/plain',
+						'Origin'       => 'https://test.wp.local',
+					)
+				)
+			),
+			415
+		);
+	},
 	'increments once and deduplicates a repeated REST view' => static function (): void {
 		TestState::reset();
 		TestState::$now          = '2026-01-01 12:00:00';
@@ -276,16 +300,20 @@ $tests = array(
 
 		bbk_test_same(
 			array(
-				'count'          => 1,
-				'last_viewed_at' => '2026-01-01 12:00:00',
+				'count'               => 1,
+				'last_viewed_at'      => '2026-01-01 12:00:00',
+				'accepted'            => true,
+				'measurement_version' => Schema::MEASUREMENT_VERSION,
 			),
 			$first->get_data(),
 			'The REST endpoint did not return the first increment.'
 		);
 		bbk_test_same(
 			array(
-				'count'          => 1,
-				'last_viewed_at' => '2026-01-01 12:00:00',
+				'count'               => 1,
+				'last_viewed_at'      => '2026-01-01 12:00:00',
+				'accepted'            => false,
+				'measurement_version' => Schema::MEASUREMENT_VERSION,
 			),
 			$second->get_data(),
 			'A duplicate REST request changed the count.'
@@ -478,81 +506,9 @@ $tests = array(
 		$sanitized = Settings::sanitize( array() );
 		bbk_test_same( false, $sanitized['respect_dnt'], 'An absent checkbox must sanitize to false, matching the other checkbox fields.' );
 	},
-	'WriteBuffer::enabled() requires both the setting and a persistent object cache' => static function (): void {
-		TestState::reset();
-
-		bbk_test_same( false, WriteBuffer::enabled(), 'Off by default, and with no persistent object cache.' );
-
-		TestState::$ext_object_cache = true;
-		bbk_test_same( false, WriteBuffer::enabled(), 'A persistent object cache alone must not be enough; the setting must also be on.' );
-
-		update_option( Settings::OPTION_KEY, array( 'write_buffer' => true ) );
-		bbk_test_same( true, WriteBuffer::enabled(), 'With the setting on and a persistent object cache present, buffering must be enabled.' );
-
-		TestState::$ext_object_cache = false;
-		bbk_test_same( false, WriteBuffer::enabled(), 'Without a persistent object cache, buffering must stay off even if the setting is on.' );
-	},
-	'Settings::sanitize() honors a submitted write_buffer value' => static function (): void {
-		TestState::reset();
-
-		$sanitized = Settings::sanitize( array( 'write_buffer' => '1' ) );
-		bbk_test_same( true, $sanitized['write_buffer'], 'An explicit truthy value must sanitize to true.' );
-
-		$sanitized = Settings::sanitize( array() );
-		bbk_test_same( false, $sanitized['write_buffer'], 'An absent checkbox must sanitize to false, matching the other checkbox fields.' );
-	},
-	'WriteBuffer::buffer() coalesces several increments in the object cache without writing to the DB until flush()' => static function (): void {
+	'durable deduplication separates different visitors and stores no raw identifiers' => static function (): void {
 		TestState::reset();
 		TestState::$now = '2026-01-01 10:00:00';
-
-		WriteBuffer::buffer( 55, array( 'viewport' => '576-991' ) );
-		WriteBuffer::buffer( 55, array( 'viewport' => '576-991' ) );
-		WriteBuffer::buffer( 55, array( 'viewport' => '992-1399' ) );
-
-		bbk_test_same( array(), TestState::$views, 'Buffered views must not hit the aggregate table before flush().' );
-		bbk_test_same( array(), TestState::$daily, 'Buffered views must not hit the daily table before flush().' );
-		bbk_test_same( 3, WriteBuffer::pending_views( 55 ), 'pending_views() must reflect every buffered increment so far.' );
-
-		WriteBuffer::flush();
-
-		bbk_test_same( 3, TestState::$views[55]['views'], 'flush() must write the coalesced total in a single batch.' );
-		bbk_test_same( 3, TestState::$daily['55|2026-01-01'], 'flush() must add the full batch to the daily aggregate.' );
-		bbk_test_same(
-			array(
-				'55|2026-01-01|viewport|576-991'  => 2,
-				'55|2026-01-01|viewport|992-1399' => 1,
-			),
-			TestState::$dims,
-			'flush() must write one row per distinct dimension value, each with its own coalesced count.'
-		);
-		bbk_test_same( 0, WriteBuffer::pending_views( 55 ), 'flush() must clear the buffered counters it just wrote.' );
-	},
-	'WriteBuffer registers a post/day in the flush index only once, no matter how many views buffer it' => static function (): void {
-		TestState::reset();
-		TestState::$now = '2026-01-01 10:00:00';
-
-		WriteBuffer::buffer( 60, array() );
-		WriteBuffer::buffer( 60, array() );
-		WriteBuffer::buffer( 60, array() );
-
-		bbk_test_same(
-			array( '60|2026-01-01' ),
-			get_option( WriteBuffer::OPTION_INDEX, array() ),
-			'The flush index must list the post/day pair exactly once, keeping the write cost proportional to distinct posts, not views.'
-		);
-	},
-	'WriteBuffer::flush() with nothing buffered is a no-op' => static function (): void {
-		TestState::reset();
-
-		WriteBuffer::flush();
-
-		bbk_test_same( array(), TestState::$views, 'An empty flush index must never touch the DB.' );
-	},
-	'RestApi buffers the write when write_buffer is enabled, and the response count includes the pending views' => static function (): void {
-		TestState::reset();
-		TestState::$now              = '2026-01-01 10:00:00';
-		TestState::$ext_object_cache = true;
-		update_option( Settings::OPTION_KEY, array( 'write_buffer' => true ) );
 
 		$api = new RestApi();
 
@@ -578,13 +534,68 @@ $tests = array(
 			)
 		);
 
-		bbk_test_same( 1, $response1->get_data()['count'], 'The first buffered view must still be reflected in the response.' );
-		bbk_test_same( 2, $response2->get_data()['count'], 'A second buffered view for the same post must add to the pending count already in the response.' );
-		bbk_test_same( array(), TestState::$views, 'Buffered views must not hit the DB until the next flush.' );
+		bbk_test_same( 1, $response1->get_data()['count'], 'The first visitor must count immediately.' );
+		bbk_test_same( 2, $response2->get_data()['count'], 'A different visitor must receive a separate durable claim.' );
+		bbk_test_same( 2, count( TestState::$dedupe ), 'Each visitor must have one durable claim.' );
+		bbk_test_same( false, false !== strpos( serialize( TestState::$dedupe ), '127.0.0.' ), 'Raw network addresses must not be persisted.' );
+	},
+	'a failed aggregate write rolls back both counters and the dedupe claim' => static function (): void {
+		TestState::reset();
+		TestState::$now        = '2026-01-01 10:00:00';
+		TestState::$fail_query = 'INSERT INTO wp_bbk_post_views_daily';
+		$_SERVER['REMOTE_ADDR'] = '127.0.0.9';
 
-		WriteBuffer::flush();
+		$response = ( new RestApi() )->set_post_views(
+			new WP_REST_Request(
+				array( 'post_id' => 71 ),
+				array(
+					'Origin'     => 'https://test.wp.local',
+					'User-Agent' => 'Rollback visitor',
+				)
+			)
+		);
 
-		bbk_test_same( 2, TestState::$views[70]['views'], 'flush() must persist every buffered view once the cron runs.' );
+		bbk_test_error_status( $response, 503 );
+		bbk_test_same( array(), TestState::$views, 'The aggregate row must roll back after a partial failure.' );
+		bbk_test_same( array(), TestState::$daily, 'The daily row must not survive a partial failure.' );
+		bbk_test_same( array(), TestState::$dedupe, 'The visitor must be allowed to retry after storage recovers.' );
+	},
+	'ingestion pause rejects writes during destructive maintenance' => static function (): void {
+		TestState::reset();
+		update_option( Schema::OPTION_INGESTION_PAUSED, true );
+
+		$response = ( new RestApi() )->set_post_views( new WP_REST_Request( array( 'post_id' => 72 ) ) );
+
+		bbk_test_error_status( $response, 503 );
+		bbk_test_same( array(), TestState::$views, 'No data may be written while ingestion is paused.' );
+	},
+	'per-network and post rate limit rejects rotating user agents' => static function (): void {
+		TestState::reset();
+		TestState::$now          = '2026-01-01 10:00:00';
+		$_SERVER['REMOTE_ADDR'] = '127.0.0.20';
+		$network_hash           = hash_hmac( 'sha256', '127.0.0.20', 'test-salt-nonce' );
+
+		for ( $i = 0; $i < 30; ++$i ) {
+			TestState::$dedupe[ 'token-' . $i ] = array(
+				'network_hash' => $network_hash,
+				'post_id'      => 73,
+				'created_at'   => '2026-01-01 09:59:30',
+				'expires_at'   => '2026-01-01 10:29:30',
+			);
+		}
+
+		$response = ( new RestApi() )->set_post_views(
+			new WP_REST_Request(
+				array( 'post_id' => 73 ),
+				array(
+					'Origin'     => 'https://test.wp.local',
+					'User-Agent' => 'Rotated user agent',
+				)
+			)
+		);
+
+		bbk_test_error_status( $response, 429 );
+		bbk_test_same( array(), TestState::$views, 'A rate-limited request must not write aggregates.' );
 	},
 	'enabled_post_types() returns [post] when the option does not exist yet' => static function (): void {
 		TestState::reset();
@@ -619,6 +630,9 @@ $tests = array(
 		bbk_test_same( array( 'post' ), $sanitized['post_types'], 'Unknown post types must be discarded.' );
 		bbk_test_same( array( 'editor' ), $sanitized['excluded_roles'], 'Unknown roles must be discarded.' );
 		bbk_test_same( 1, $sanitized['retention_days'], 'retention_days must never go below 1.' );
+
+		$sanitized = Settings::sanitize( array( 'retention_days' => '999999' ) );
+		bbk_test_same( Settings::MAX_RETENTION_DAYS, $sanitized['retention_days'], 'retention_days must have a hard upper bound.' );
 	},
 	'Settings::sanitize() falls back to the default post type when none survive' => static function (): void {
 		$sanitized = Settings::sanitize( array( 'post_types' => array( 'made-up-type' ) ) );
@@ -662,8 +676,10 @@ $tests = array(
 
 		bbk_test_same(
 			array(
-				'count'          => 0,
-				'last_viewed_at' => null,
+				'count'               => 0,
+				'last_viewed_at'      => null,
+				'accepted'            => false,
+				'measurement_version' => Schema::MEASUREMENT_VERSION,
 			),
 			$response->get_data(),
 			'A bot request must not be recorded.'
@@ -1080,6 +1096,7 @@ $tests = array(
 					'to'   => '2026-01-01',
 				),
 				'granularity' => 'week',
+				'meta'        => Query::measurement_metadata(),
 			),
 			$response->get_data(),
 			'The endpoint must return the queried range and granularity with the series.'
@@ -1108,7 +1125,19 @@ $tests = array(
 
 		$response = ( new TrendsApi() )->get_dims_breakdown( $request );
 
-		bbk_test_same( array( 'breakdown' => array() ), $response->get_data(), 'A disabled post type must return no rows, same as Query::dims_breakdown().' );
+		bbk_test_same(
+			array(
+				'breakdown' => array(),
+				'coverage'  => array(
+					'tracked_views' => 0,
+					'total_views'   => 0,
+					'percentage'    => null,
+				),
+				'meta'      => Query::measurement_metadata(),
+			),
+			$response->get_data(),
+			'A disabled post type must return no rows, same as Query::dims_breakdown().'
+		);
 	},
 	'TrendsApi::get_ai_traffic() delegates to Query::ai_traffic()' => static function (): void {
 		TestState::reset();
@@ -1174,6 +1203,8 @@ $tests = array(
 
 		bbk_test_same( array( 'deleted' => true ), $response->get_data(), 'delete_data() must confirm the deletion.' );
 		bbk_test_same( 0, ( new Db() )->get_stats( 42 )['views'], 'delete_data() must leave the tables empty after recreating them.' );
+		bbk_test_same( false, get_option( Schema::OPTION_INGESTION_PAUSED, false ), 'delete_data() must always release its ingestion pause.' );
+		bbk_test_same( true, null !== Schema::daily_data_since(), 'delete_data() must restart the data-availability timestamp.' );
 	},
 	'ViewsDisplay::render() shows the view count, and the last-viewed date when asked' => static function (): void {
 		TestState::reset();

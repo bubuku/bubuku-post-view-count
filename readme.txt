@@ -43,7 +43,7 @@ We develop custom solutions for WordPress focused on performance, accessibility,
 
 == Privacy ==
 
-This plugin does not store personal data at the per-visit level. It never persists the visitor's IP address or User-Agent string: the only per-visitor artifact is an ephemeral deduplication token (a hash of IP, User-Agent and post ID, expiring after 30 minutes) used to avoid counting the same visitor twice, which is discarded automatically and never written to any table. Everything else the plugin stores is aggregated: total views and last-viewed date per post, a daily view count per post, and — if you enable the optional session dimensions — a daily breakdown per post of device-width bucket and referrer category (never the raw screen width or referrer URL/host). None of this identifies an individual visitor.
+This plugin never persists the visitor's raw IP address or User-Agent string. To avoid duplicate views and limit abuse, it stores keyed, non-reversible HMAC tokens derived from the post, network address and User-Agent in a dedicated table for up to 30 minutes; expired tokens are deleted automatically. All reporting data is aggregated: total views and last-viewed date per post, a daily view count per post, and — if you enable the optional session dimensions — a daily breakdown per post of device-width bucket and approximate referrer category (never the raw screen width or referrer URL/host).
 
 If a visitor's browser sends the "Do Not Track" (DNT) or Global Privacy Control (Sec-GPC) signal, the plugin skips recording the optional session dimensions (device width and referrer category) for that visit. This is enabled by default and can be turned off in Settings → Post View Count. The view count itself is unaffected either way, since it never stores anything that identifies the visitor.
 
@@ -67,7 +67,7 @@ Yes, since 1.2.0. Go to Settings → Post View Count to choose which content typ
 Yes. Settings → Post View Count has a "Delete all data now" button that clears every recorded view, with a confirmation prompt before it runs.
 
 = Does this plugin affect page load speed? =
-No, the plugin only updates the view count after some time has passed through an endpoint, ensuring it doesn't impact Core Web Vitals (CWV) or page load performance.
+The lightweight counter is deferred and sends its request only after the page has accumulated five visible seconds, so it stays outside the initial rendering path. As with any analytics request, its actual server cost depends on the site's traffic and database performance.
 
 = Is this plugin compatible with multisite installations? =
 Yes, the plugin now includes multisite support, including in the uninstall routine.

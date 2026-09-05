@@ -23,6 +23,8 @@ class Settings {
 
 	const OPTION_KEY = 'bbk_postview_settings';
 
+	const MAX_RETENTION_DAYS = 3650;
+
 	/**
 	 * Default settings, used when the option does not exist yet or a key is
 	 * missing from a stored value (e.g. after an upgrade adds a new field).
@@ -38,7 +40,6 @@ class Settings {
 			'delete_data_on_uninstall' => true,
 			'ai_crawler_tracking'      => false,
 			'respect_dnt'              => true,
-			'write_buffer'             => false,
 		);
 	}
 
@@ -149,19 +150,6 @@ class Settings {
 	}
 
 	/**
-	 * Whether the best-effort write buffer (docs/ANALYTICS-PLAN.md §F7) is
-	 * enabled. Disabled by default — it only ever has an effect on a site
-	 * with a persistent external object cache (`Core\WriteBuffer::enabled()`
-	 * also checks `wp_using_ext_object_cache()`); without one it would be a
-	 * silent no-op benefit, so it stays opt-in rather than auto-detected.
-	 *
-	 * @return bool
-	 */
-	public static function write_buffer_enabled(): bool {
-		return (bool) self::get_all()['write_buffer'];
-	}
-
-	/**
 	 * Whether the currently logged-in user belongs to an excluded role.
 	 * Logged-out visitors are never excluded by this check.
 	 *
@@ -257,11 +245,10 @@ class Settings {
 			'post_types'               => empty( $post_types ) ? $defaults['post_types'] : $post_types,
 			'excluded_roles'           => $excluded_roles,
 			'exclude_bots'             => ! empty( $input['exclude_bots'] ),
-			'retention_days'           => max( 1, $retention_days ),
+			'retention_days'           => max( 1, min( self::MAX_RETENTION_DAYS, $retention_days ) ),
 			'delete_data_on_uninstall' => ! empty( $input['delete_data_on_uninstall'] ),
 			'ai_crawler_tracking'      => ! empty( $input['ai_crawler_tracking'] ),
 			'respect_dnt'              => ! empty( $input['respect_dnt'] ),
-			'write_buffer'             => ! empty( $input['write_buffer'] ),
 		);
 	}
 

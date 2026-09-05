@@ -14,7 +14,9 @@ namespace Bubuku\Plugins\PostViewCount\Api;
 
 use Bubuku\Plugins\PostViewCount\Admin\Settings;
 use Bubuku\Plugins\PostViewCount\Core\Db;
+use Bubuku\Plugins\PostViewCount\Core\Query;
 use Bubuku\Plugins\PostViewCount\Core\Schema;
+use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -122,6 +124,7 @@ class SettingsApi {
 		$sanitized = Settings::sanitize( $request->get_json_params() );
 
 		update_option( Settings::OPTION_KEY, $sanitized );
+		Query::invalidate_cache();
 
 		return new WP_REST_Response( $sanitized, 200 );
 	}
@@ -132,15 +135,31 @@ class SettingsApi {
 	 * flow as the removed `SettingsPage::handle_reset_data()`, now reachable
 	 * over REST instead of `admin-post.php`.
 	 *
-	 * @return WP_REST_Response
+	 * @return WP_REST_Response|WP_Error
 	 */
-	public function delete_data(): WP_REST_Response {
-		$db = new Db();
-		$db->drop_tables();
-		$db->remove_all_post_meta();
+	public function delete_data() {
+		update_option( Schema::OPTION_INGESTION_PAUSED, true, false );
 
-		// Recreate the (now empty) tables immediately — this is a reset, not an uninstall.
-		( new Schema() )->activate( false );
+		try {
+			$db = new Db();
+			$db->drop_tables();
+			$db->remove_all_post_meta();
+
+			delete_option( Schema::OPTION_SCHEMA_VERSION );
+			delete_option( Schema::OPTION_DAILY_SINCE );
+			delete_option( Schema::OPTION_MIGRATION_CURSOR );
+			delete_option( Schema::OPTION_MIGRATION_STATUS );
+			delete_option( 'bbk_postview_buffer_index' );
+
+			// Recreate the empty schema and its collection-start metadata.
+			( new Schema() )->activate( false );
+			if ( (int) get_option( Schema::OPTION_SCHEMA_VERSION, 0 ) !== Schema::VERSION ) {
+				return new WP_Error( 'bbk_postview_reset_failed', __( 'The analytics tables could not be recreated.', 'bubuku-post-view-count' ), array( 'status' => 500 ) );
+			}
+			Query::invalidate_cache();
+		} finally {
+			delete_option( Schema::OPTION_INGESTION_PAUSED );
+		}
 
 		return new WP_REST_Response( array( 'deleted' => true ), 200 );
 	}

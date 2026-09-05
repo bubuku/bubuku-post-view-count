@@ -297,8 +297,7 @@ recargar. Los 8 campos actuales:
 | `exclude_bots` | Checkbox | **Activado** |
 | `ai_crawler_tracking` | Checkbox | Desactivado |
 | `respect_dnt` | Checkbox | **Activado** |
-| `write_buffer` | Checkbox | Desactivado |
-| `retention_days` | Número (min 1) | 400 |
+| `retention_days` | Número (1–3650) | 400 |
 | `delete_data_on_uninstall` | Checkbox | **Activado** |
 
 Más el botón **«Eliminar todos los datos ahora»** (`DELETE /settings/data`), con confirmación.

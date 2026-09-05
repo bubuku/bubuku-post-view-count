@@ -12,16 +12,63 @@ const BK_AI_ASSISTANTS = [
 const bk_matchesDomain = (host, domain) => host === domain || host.endsWith(`.${domain}`);
 
 const bk_postview_main = {
-	time_delay: 8000,
+	time_delay: 5000,
 	end_point: null,
 	post_id: null,
+	elapsed_visible: 0,
+	visible_since: null,
+	timer_id: null,
+	sent: false,
+	state: 'not-eligible',
 	init: function () {
 		this.end_point = bbk_post_view.api_public;
 		this.post_id = bbk_post_view.post_id;
+		document.addEventListener('visibilitychange', () => this.updateVisibility());
+		window.addEventListener('pagehide', () => this.pauseVisibleTimer());
+		window.addEventListener('pageshow', () => this.updateVisibility());
+		window.addEventListener('online', () => {
+			if (this.state === 'pending' && this.elapsed_visible >= this.time_delay) this.setPostView();
+		});
+		this.updateVisibility();
+	},
+	now: function () {
+		return window.performance && typeof window.performance.now === 'function'
+			? window.performance.now()
+			: Date.now();
+	},
+	updateVisibility: function () {
+		if (this.sent) return;
 
-		setTimeout(() => {
-			bk_postview_main.setPostView();
-		}, this.time_delay);
+		if (document.visibilityState === 'visible') {
+			this.state = 'pending';
+			if (this.visible_since === null) this.visible_since = this.now();
+			this.scheduleRemainingTime();
+			return;
+		}
+
+		this.pauseVisibleTimer();
+	},
+	pauseVisibleTimer: function () {
+		if (this.visible_since !== null) {
+			this.elapsed_visible += Math.max(0, this.now() - this.visible_since);
+			this.visible_since = null;
+		}
+
+		if (this.timer_id !== null) {
+			clearTimeout(this.timer_id);
+			this.timer_id = null;
+		}
+	},
+	scheduleRemainingTime: function () {
+		if (this.timer_id !== null || this.sent) return;
+
+		const remaining = Math.max(0, this.time_delay - this.elapsed_visible);
+		this.timer_id = setTimeout(() => {
+			this.timer_id = null;
+			this.pauseVisibleTimer();
+			if (this.elapsed_visible >= this.time_delay) this.setPostView();
+			else this.updateVisibility();
+		}, remaining);
 	},
 	// Bucketed device width — never the exact pixel width (fingerprinting vector).
 	getViewportBucket: function () {
@@ -102,13 +149,16 @@ const bk_postview_main = {
 		return navigator.doNotTrack === '1' || window.doNotTrack === '1' || navigator.globalPrivacyControl === true;
 	},
 	setPostView: function () {
-		// Skip background/prerendered tabs: they are not a real view yet.
-		if (document.visibilityState !== 'visible') {
-			return;
-		}
+		if (this.sent) return;
+		this.sent = true;
+		this.state = 'sent';
 
 		const url = `${this.end_point}/set-post-views`;
-		const data = { post_id: this.post_id };
+		const data = {
+			post_id: this.post_id,
+			client_version: '2',
+			measurement_version: 2,
+		};
 
 		// The view count itself stays anonymous either way (no IP/UA stored);
 		// only the optional session dimensions are skipped for this visit.
@@ -126,8 +176,7 @@ const bk_postview_main = {
 
 		if (navigator.sendBeacon) {
 			const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-			navigator.sendBeacon(url, blob);
-			return;
+			if (navigator.sendBeacon(url, blob)) return;
 		}
 
 		fetch(url, {
@@ -138,7 +187,12 @@ const bk_postview_main = {
 				Accept: 'application/json',
 				'Content-Type': 'application/json',
 			},
-		}).catch(() => {});
+		}).catch(() => {
+			// A lost response may still mean the server committed. Retrying is safe
+			// because the durable server-side claim deduplicates the same visit.
+			this.sent = false;
+			this.state = 'pending';
+		});
 	},
 };
 

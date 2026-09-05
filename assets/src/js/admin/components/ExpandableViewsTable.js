@@ -7,13 +7,13 @@ import { formatNumber } from '../format';
  * instead of by page. Each row expands into the pages that contributed to it —
  * the page is still recorded and available, just not shown by default.
  *
- * @param {Object}          props
- * @param {Array<Object>}   props.rows         - `[{ [labelKey]: string, views, posts: [{ id, title, url, views }] }]`.
- * @param {string}          props.labelKey     - Property name identifying each row (e.g. `'assistant'` or `'bot'`).
- * @param {string}          props.headerLabel  - Text for the first column header.
- * @param {Object<string,string>} [props.labels] - Optional slug -> display label map. Falls back to the raw value.
- * @param {string}          [props.emptyLabel] - Text shown when `rows` is empty. If omitted, renders nothing.
- * @param {string}          [props.totalLabel] - Label shown in the footer row's first cell.
+ * @param {Object}                props
+ * @param {Array<Object>}         props.rows         - `[{ [labelKey]: string, views, posts: [{ id, title, url, views }] }]`.
+ * @param {string}                props.labelKey     - Property name identifying each row (e.g. `'assistant'` or `'bot'`).
+ * @param {string}                props.headerLabel  - Text for the first column header.
+ * @param {Object<string,string>} [props.labels]     - Optional slug -> display label map. Falls back to the raw value.
+ * @param {string}                [props.emptyLabel] - Text shown when `rows` is empty. If omitted, renders nothing.
+ * @param {string}                [props.totalLabel] - Label shown in the footer row's first cell.
  */
 const ExpandableViewsTable = ( {
 	rows,

@@ -89,12 +89,14 @@ class ListMomentum extends Abstract_Satellite_Tool {
 	 * @return array<string, mixed>
 	 */
 	public function execute_callback( array $args = array() ) {
-		return Query::momentum(
+		$result = Query::momentum(
 			isset( $args['post_types'] ) ? (array) $args['post_types'] : array(),
 			isset( $args['period_days'] ) ? (int) $args['period_days'] : 30,
 			isset( $args['limit'] ) ? (int) $args['limit'] : 10,
 			isset( $args['min_views'] ) ? (int) $args['min_views'] : 1
 		);
+
+		return array_merge( $result, array( 'meta' => Query::measurement_metadata() ) );
 	}
 
 	/**

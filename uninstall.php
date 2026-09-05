@@ -11,11 +11,9 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 require_once __DIR__ . '/src/Core/Db.php';
 require_once __DIR__ . '/src/Core/Schema.php';
-require_once __DIR__ . '/src/Core/WriteBuffer.php';
 
 use Bubuku\Plugins\PostViewCount\Core\Db;
 use Bubuku\Plugins\PostViewCount\Core\Schema;
-use Bubuku\Plugins\PostViewCount\Core\WriteBuffer;
 
 /**
  * Clean up the current site: always clears the cron hooks (never leave one
@@ -27,9 +25,11 @@ use Bubuku\Plugins\PostViewCount\Core\WriteBuffer;
  */
 function bbk_uninstall_current_site() {
 	wp_clear_scheduled_hook( Schema::PURGE_CRON_HOOK );
+	wp_clear_scheduled_hook( Schema::PURGE_CONTINUE_CRON_HOOK );
 	wp_clear_scheduled_hook( Schema::MIGRATION_CRON_HOOK );
-	wp_clear_scheduled_hook( Schema::BUFFER_FLUSH_CRON_HOOK );
-	delete_option( WriteBuffer::OPTION_INDEX );
+	// Remove state left by versions that offered the retired volatile buffer.
+	wp_clear_scheduled_hook( 'bbk_postview_flush_buffer' );
+	delete_option( 'bbk_postview_buffer_index' );
 
 	$settings    = get_option( 'bbk_postview_settings', array() );
 	$delete_data = $settings['delete_data_on_uninstall'] ?? true;
@@ -45,6 +45,10 @@ function bbk_uninstall_current_site() {
 	delete_option( 'bbk_postview_settings' );
 	delete_option( Schema::OPTION_SCHEMA_VERSION );
 	delete_option( Schema::OPTION_DAILY_SINCE );
+	delete_option( Schema::OPTION_MIGRATION_CURSOR );
+	delete_option( Schema::OPTION_MIGRATION_STATUS );
+	delete_option( Schema::OPTION_INGESTION_PAUSED );
+	delete_option( 'bbk_postview_query_cache_generation' );
 
 	global $wpdb;
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Uninstall-only cleanup of leftover transient options; no object cache is available during uninstall.

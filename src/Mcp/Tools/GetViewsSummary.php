@@ -82,12 +82,7 @@ class GetViewsSummary extends Abstract_Satellite_Tool {
 			isset( $args['since'] ) && '' !== $args['since'] ? (string) $args['since'] : null
 		);
 
-		return array_merge(
-			$summary,
-			array(
-				'computed_at' => gmdate( 'Y-m-d\TH:i:s\Z' ),
-			)
-		);
+		return array_merge( $summary, Query::measurement_metadata() );
 	}
 
 	/**

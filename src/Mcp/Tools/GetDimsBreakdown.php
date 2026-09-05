@@ -14,7 +14,6 @@ namespace Bubuku\Plugins\PostViewCount\Mcp\Tools;
 
 use Bubuku\Plugins\PostViewCount\Core\Dimensions;
 use Bubuku\Plugins\PostViewCount\Core\Query;
-use Bubuku\Plugins\PostViewCount\Core\Schema;
 use BubukuConex\Abstract_Satellite_Tool;
 
 defined( 'ABSPATH' ) || exit;
@@ -89,8 +88,9 @@ class GetDimsBreakdown extends Abstract_Satellite_Tool {
 	 * @return array<string, mixed>
 	 */
 	public function execute_callback( array $args = array() ) {
+		$dimension = isset( $args['dimension'] ) ? (string) $args['dimension'] : '';
 		$breakdown = Query::dims_breakdown(
-			isset( $args['dimension'] ) ? (string) $args['dimension'] : '',
+			$dimension,
 			isset( $args['post_types'] ) ? (array) $args['post_types'] : array(),
 			isset( $args['since'] ) && '' !== $args['since'] ? (string) $args['since'] : null,
 			isset( $args['until'] ) && '' !== $args['until'] ? (string) $args['until'] : null
@@ -98,10 +98,13 @@ class GetDimsBreakdown extends Abstract_Satellite_Tool {
 
 		return array(
 			'breakdown' => $breakdown,
-			'meta'      => array(
-				'computed_at'          => gmdate( 'Y-m-d\TH:i:s\Z' ),
-				'data_available_since' => Schema::daily_data_since(),
+			'coverage'  => Query::dimension_coverage(
+				$dimension,
+				isset( $args['post_types'] ) ? (array) $args['post_types'] : array(),
+				isset( $args['since'] ) && '' !== $args['since'] ? (string) $args['since'] : null,
+				isset( $args['until'] ) && '' !== $args['until'] ? (string) $args['until'] : null
 			),
+			'meta'      => Query::measurement_metadata(),
 		);
 	}
 

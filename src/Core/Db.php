@@ -12,6 +12,8 @@ declare( strict_types=1 );
 
 namespace Bubuku\Plugins\PostViewCount\Core;
 
+use WP_Error;
+
 defined( 'ABSPATH' ) || exit;
 
 class Db {
@@ -29,7 +31,7 @@ class Db {
 	 *                       before calling this method.
 	 * @return array{views:int,first_viewed_at:?string,last_viewed_at:?string}
 	 */
-	public function record_view( int $post_id, array $dims = array() ): array {
+	public function record_view( int $post_id, array $dims = array() ) {
 		$now = current_time( 'mysql', true );
 
 		$grouped = array();
@@ -44,12 +46,165 @@ class Db {
 	}
 
 	/**
-	 * Record several views for a post/day in one batch — used by the write
-	 * buffer (F7, `Core\WriteBuffer::flush()`) to coalesce many increments
-	 * accumulated in the object cache into a single upsert per table, instead
-	 * of one per view. `$now` (first/last viewed timestamp) reflects the
-	 * flush time rather than each individual view's timestamp — an accepted
-	 * trade-off of buffering, bounded by the flush interval.
+	 * Atomically claim a visitor token and record all aggregates for one view.
+	 * The dedupe claim and counter writes share a transaction, so neither can
+	 * survive if another write fails.
+	 *
+	 * @param int    $post_id     Post ID.
+	 * @param string $token_hash  HMAC of post, network address and user agent.
+	 * @param string $network_hash HMAC of the network address for rate limiting.
+	 * @param int    $dedupe_ttl  Dedupe lifetime in seconds.
+	 * @param array  $dims        Whitelisted dimension => value pairs.
+	 * @return array{accepted:bool,stats:array}|WP_Error
+	 */
+	public function record_unique_view( int $post_id, string $token_hash, string $network_hash, int $dedupe_ttl, array $dims = array() ) {
+		global $wpdb;
+
+		$now        = current_time( 'mysql', true );
+		$expires_at = gmdate( 'Y-m-d H:i:s', strtotime( $now . ' UTC' ) + $dedupe_ttl );
+		$table      = Schema::table_dedupe();
+		$rate_error = $this->rate_limit_error( $post_id, $network_hash, $now );
+
+		if ( $rate_error ) {
+			return $rate_error;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Transaction required to couple the durable dedupe claim to every aggregate write.
+		if ( false === $wpdb->query( 'START TRANSACTION' ) ) {
+			return $this->storage_error();
+		}
+
+		// Remove only this visitor's expired claim before attempting a fresh insert.
+		// Keeping both statements inside the transaction lets the unique key arbitrate
+		// concurrent requests without relying on DB-specific UPSERT affected-row rules.
+		$expired_claim = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Transactional maintenance of one short-lived dedupe claim; caching would be incorrect.
+			$wpdb->prepare(
+				'DELETE FROM %i WHERE token_hash = %s AND expires_at <= %s',
+				$table,
+				$token_hash,
+				$now
+			)
+		);
+
+		if ( false === $expired_claim ) {
+			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Roll back the failed claim refresh.
+
+			return $this->storage_error();
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The unique token key is the atomic dedupe primitive; caching would be incorrect.
+		$claimed = $wpdb->query(
+			$wpdb->prepare(
+				'INSERT IGNORE INTO %i (token_hash, network_hash, post_id, created_at, expires_at) VALUES (%s, %s, %d, %s, %s)',
+				$table,
+				$token_hash,
+				$network_hash,
+				$post_id,
+				$now,
+				$expires_at
+			)
+		);
+
+		if ( false === $claimed ) {
+			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Transaction control.
+
+			return new WP_Error( 'bbk_postview_storage_error', __( 'The view could not be stored.', 'bubuku-post-view-count' ), array( 'status' => 503 ) );
+		}
+
+		if ( 0 === $claimed ) {
+			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Release transaction without changing the existing claim.
+
+			return array(
+				'accepted' => false,
+				'stats'    => $this->get_stats( $post_id ),
+			);
+		}
+
+		$grouped = array();
+		foreach ( $dims as $dimension => $value ) {
+			if ( '' !== $value ) {
+				$grouped[ $dimension ] = array( $value => 1 );
+			}
+		}
+
+		$stats = $this->write_aggregates( $post_id, $now, substr( $now, 0, 10 ), 1, $grouped );
+		if ( is_wp_error( $stats ) ) {
+			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Roll back claim and partial aggregates.
+
+			return $stats;
+		}
+
+		if ( false === $wpdb->query( 'COMMIT' ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Transaction control.
+			return new WP_Error( 'bbk_postview_storage_error', __( 'The view could not be stored.', 'bubuku-post-view-count' ), array( 'status' => 503 ) );
+		}
+
+		$this->mirror_post_meta( $post_id, $stats );
+
+		return array(
+			'accepted' => true,
+			'stats'    => $stats,
+		);
+	}
+
+	/**
+	 * Apply conservative per-network and per-network/post admission limits.
+	 * Sites behind large trusted proxies can adjust both values with the filter.
+	 *
+	 * @return WP_Error|null
+	 */
+	private function rate_limit_error( int $post_id, string $network_hash, string $now ): ?WP_Error {
+		global $wpdb;
+
+		$limits        = apply_filters(
+			'bbk_postview_rate_limits',
+			array(
+				'network_per_minute'      => 120,
+				'network_post_per_minute' => 30,
+			)
+		);
+		$network_limit = max( 1, (int) ( $limits['network_per_minute'] ?? 120 ) );
+		$post_limit    = max( 1, (int) ( $limits['network_post_per_minute'] ?? 30 ) );
+		$since         = gmdate( 'Y-m-d H:i:s', strtotime( $now . ' UTC' ) - MINUTE_IN_SECONDS );
+		$table         = Schema::table_dedupe();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Short-lived abuse-control lookup in the plugin's indexed dedupe table.
+		$network_count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$table} is internal.
+				"SELECT COUNT(*) FROM {$table} WHERE network_hash = %s AND created_at >= %s",
+				$network_hash,
+				$since
+			)
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Short-lived abuse-control lookup in the plugin's indexed dedupe table.
+		$post_count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$table} is internal.
+				"SELECT COUNT(*) FROM {$table} WHERE network_hash = %s AND post_id = %d AND created_at >= %s",
+				$network_hash,
+				$post_id,
+				$since
+			)
+		);
+
+		if ( $network_count < $network_limit && $post_count < $post_limit ) {
+			return null;
+		}
+
+		return new WP_Error(
+			'bbk_postview_rate_limited',
+			__( 'Too many view requests. Please retry shortly.', 'bubuku-post-view-count' ),
+			array(
+				'status'  => 429,
+				'headers' => array( 'Retry-After' => '60' ),
+			)
+		);
+	}
+
+	/**
+	 * Record several views for a post/day in one transaction. Kept as a public
+	 * primitive for repair/import tooling; the live endpoint writes immediately.
 	 *
 	 * @param int   $post_id Post ID.
 	 * @param string $day    UTC day (Y-m-d) the buffered views belong to.
@@ -58,7 +213,7 @@ class Db {
 	 *                       whitelisted by the caller.
 	 * @return array{views:int,first_viewed_at:?string,last_viewed_at:?string}
 	 */
-	public function record_view_bulk( int $post_id, string $day, int $count, array $dims = array() ): array {
+	public function record_view_bulk( int $post_id, string $day, int $count, array $dims = array() ) {
 		return $this->upsert_views( $post_id, current_time( 'mysql', true ), $day, $count, $dims );
 	}
 
@@ -67,7 +222,7 @@ class Db {
 	 * atomic `INSERT ... ON DUPLICATE KEY UPDATE` (aggregate, daily, one per
 	 * dimension value), then the post meta mirror. `views = views +
 	 * VALUES(views)` (rather than a literal increment) is what lets the same
-	 * query shape serve both a single view (count = 1) and a batched flush
+	 * query shape serves both a single view (count = 1) and an imported batch
 	 * (count = N) without a second SQL template.
 	 *
 	 * @param int    $post_id Post ID.
@@ -77,7 +232,35 @@ class Db {
 	 * @param array  $dims    dimension => [ value => count ] pairs.
 	 * @return array{views:int,first_viewed_at:?string,last_viewed_at:?string}
 	 */
-	private function upsert_views( int $post_id, string $now, string $day, int $count, array $dims ): array {
+	private function upsert_views( int $post_id, string $now, string $day, int $count, array $dims ) {
+		global $wpdb;
+
+		if ( false === $wpdb->query( 'START TRANSACTION' ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Keep aggregate tables consistent.
+			return $this->storage_error();
+		}
+		$stats = $this->write_aggregates( $post_id, $now, $day, $count, $dims );
+
+		if ( is_wp_error( $stats ) ) {
+			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Roll back partial aggregates.
+
+			return $stats;
+		}
+
+		if ( false === $wpdb->query( 'COMMIT' ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Transaction control.
+			return $this->storage_error();
+		}
+
+		$this->mirror_post_meta( $post_id, $stats );
+
+		return $stats;
+	}
+
+	/**
+	 * Write aggregate rows inside an existing transaction.
+	 *
+	 * @return array{views:int,first_viewed_at:?string,last_viewed_at:?string}|WP_Error
+	 */
+	private function write_aggregates( int $post_id, string $now, string $day, int $count, array $dims ) {
 		global $wpdb;
 
 		$views_table = Schema::table_views();
@@ -85,7 +268,7 @@ class Db {
 		$dims_table  = Schema::table_dims();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Atomic upsert on the plugin's own view-counter table, no equivalent WP API; a running counter must never be served from cache. $views_table is an internal constant (Schema::table_views()), never user input.
-		$wpdb->query(
+		$result = $wpdb->query(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$views_table} is an internal constant (Schema::table_views()), never user input.
 				"INSERT INTO {$views_table} (post_id, views, first_viewed_at, last_viewed_at) VALUES (%d, %d, %s, %s) ON DUPLICATE KEY UPDATE views = views + VALUES(views), last_viewed_at = VALUES(last_viewed_at)",
@@ -95,9 +278,12 @@ class Db {
 				$now
 			)
 		);
+		if ( false === $result ) {
+			return $this->storage_error();
+		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Atomic upsert on the plugin's own daily-counter table, no equivalent WP API; a running counter must never be served from cache. $daily_table is an internal constant (Schema::table_daily()), never user input.
-		$wpdb->query(
+		$result = $wpdb->query(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$daily_table} is an internal constant (Schema::table_daily()), never user input.
 				"INSERT INTO {$daily_table} (post_id, day, views) VALUES (%d, %s, %d) ON DUPLICATE KEY UPDATE views = views + VALUES(views)",
@@ -106,6 +292,9 @@ class Db {
 				$count
 			)
 		);
+		if ( false === $result ) {
+			return $this->storage_error();
+		}
 
 		foreach ( $dims as $dimension => $values ) {
 			foreach ( $values as $value => $value_count ) {
@@ -114,7 +303,7 @@ class Db {
 				}
 
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Atomic upsert on the plugin's own session-dimensions table, no equivalent WP API; a running counter must never be served from cache. $dims_table is an internal constant (Schema::table_dims()), never user input.
-				$wpdb->query(
+				$result = $wpdb->query(
 					$wpdb->prepare(
 						// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$dims_table} is an internal constant (Schema::table_dims()), never user input.
 						"INSERT INTO {$dims_table} (post_id, day, dimension, value, views) VALUES (%d, %s, %s, %s, %d) ON DUPLICATE KEY UPDATE views = views + VALUES(views)",
@@ -125,14 +314,24 @@ class Db {
 						$value_count
 					)
 				);
+				if ( false === $result ) {
+					return $this->storage_error();
+				}
 			}
 		}
 
 		$stats = $this->get_stats( $post_id );
 
-		$this->mirror_post_meta( $post_id, $stats );
-
 		return $stats;
+	}
+
+	/**
+	 * Standard storage failure returned to the REST layer.
+	 *
+	 * @return WP_Error
+	 */
+	private function storage_error(): WP_Error {
+		return new WP_Error( 'bbk_postview_storage_error', __( 'The view could not be stored.', 'bubuku-post-view-count' ), array( 'status' => 503 ) );
 	}
 
 	/**
@@ -173,7 +372,9 @@ class Db {
 	 * @return int
 	 */
 	public function set_post_views( int $post_id ): int {
-		return $this->record_view( $post_id )['views'];
+		$result = $this->record_view( $post_id );
+
+		return is_wp_error( $result ) ? $this->get_stats( $post_id )['views'] : $result['views'];
 	}
 
 	/**
@@ -218,9 +419,13 @@ class Db {
 			return;
 		}
 
-		update_post_meta( $post_id, 'views', $stats['views'] );
-		update_post_meta( $post_id, 'views_last', $stats['last_viewed_at'] );
+		$views_updated = update_post_meta( $post_id, 'views', $stats['views'] );
+		$last_updated  = update_post_meta( $post_id, 'views_last', $stats['last_viewed_at'] );
 		wp_cache_delete( $post_id, 'post_meta' );
+
+		if ( ( ! $views_updated && (int) get_post_meta( $post_id, 'views', true ) !== $stats['views'] ) || ( ! $last_updated && get_post_meta( $post_id, 'views_last', true ) !== $stats['last_viewed_at'] ) ) {
+			do_action( 'bbk_postview_meta_mirror_failed', $post_id, $stats );
+		}
 	}
 
 	/**
@@ -249,5 +454,7 @@ class Db {
 		$wpdb->query( 'DROP TABLE IF EXISTS ' . Schema::table_dims() );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Uninstall-only table drop; DDL can't use placeholders for identifiers, and the name is an internal constant (Schema::table_ai_crawls()), never user input.
 		$wpdb->query( 'DROP TABLE IF EXISTS ' . Schema::table_ai_crawls() );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Uninstall-only table drop; internal identifier.
+		$wpdb->query( 'DROP TABLE IF EXISTS ' . Schema::table_dedupe() );
 	}
 }

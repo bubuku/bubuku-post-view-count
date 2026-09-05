@@ -15,7 +15,7 @@ namespace Bubuku\Plugins\PostViewCount\Api;
 use Bubuku\Plugins\PostViewCount\Admin\Settings;
 use Bubuku\Plugins\PostViewCount\Core\Db;
 use Bubuku\Plugins\PostViewCount\Core\Dimensions;
-use Bubuku\Plugins\PostViewCount\Core\WriteBuffer;
+use Bubuku\Plugins\PostViewCount\Core\Schema;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -56,7 +56,7 @@ class RestApi {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'set_post_views' ),
 				'args'                => array(
-					'post_id'      => array(
+					'post_id'             => array(
 						'required'          => true,
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
@@ -66,22 +66,33 @@ class RestApi {
 					// assets/js/common.js. No validate_callback — an unknown/invalid
 					// value must never fail the whole request, only be dropped
 					// silently before it's written (see set_post_views()).
-					'viewport'     => array(
+					'viewport'            => array(
 						'required'          => false,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					),
-					'referrer'     => array(
+					'referrer'            => array(
 						'required'          => false,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					),
 					// Only meaningful (and only ever sent) alongside referrer='ai' —
 					// see assets/js/common.js getAiAssistantClass().
-					'ai_assistant' => array(
+					'ai_assistant'        => array(
 						'required'          => false,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'client_version'      => array(
+						'required'          => false,
+						'type'              => 'string',
+						'maxLength'         => 20,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'measurement_version' => array(
+						'required' => false,
+						'type'     => 'integer',
+						'enum'     => array( Schema::MEASUREMENT_VERSION ),
 					),
 				),
 				// Anonymous by design: views must be countable for logged-out visitors
@@ -102,6 +113,17 @@ class RestApi {
 	 * @return true|WP_Error
 	 */
 	public function check_request_origin( WP_REST_Request $request ) {
+		$content_length = absint( $request->get_header( 'content_length' ) );
+		$content_type   = strtolower( trim( (string) $request->get_header( 'content_type' ) ) );
+
+		if ( $content_length > 2048 ) {
+			return new WP_Error( 'bbk_postview_payload_too_large', __( 'The request body is too large.', 'bubuku-post-view-count' ), array( 'status' => 413 ) );
+		}
+
+		if ( '' !== $content_type && 0 !== strpos( $content_type, 'application/json' ) ) {
+			return new WP_Error( 'bbk_postview_unsupported_media_type', __( 'Only JSON requests are accepted.', 'bubuku-post-view-count' ), array( 'status' => 415 ) );
+		}
+
 		$request_url = (string) $request->get_header( 'origin' );
 
 		if ( '' === $request_url ) {
@@ -143,23 +165,27 @@ class RestApi {
 	public function set_post_views( WP_REST_Request $request ) {
 		$post_id = absint( $request->get_param( 'post_id' ) );
 
-		if ( $this->is_deduped( $post_id, $request ) || $this->is_bot_request( $request ) ) {
-			return new WP_REST_Response( $this->response_data( $this->db->get_stats( $post_id ), $post_id ), 200 );
+		if ( get_option( Schema::OPTION_INGESTION_PAUSED, false ) ) {
+			return new WP_Error( 'bbk_postview_ingestion_paused', __( 'View counting is temporarily paused.', 'bubuku-post-view-count' ), array( 'status' => 503 ) );
 		}
 
-		$this->mark_deduped( $post_id, $request );
-
-		$dims = $this->valid_dims( $request );
-
-		if ( WriteBuffer::enabled() ) {
-			WriteBuffer::buffer( $post_id, $dims );
-
-			return new WP_REST_Response( $this->response_data( $this->db->get_stats( $post_id ), $post_id ), 200 );
+		if ( $this->is_bot_request( $request ) ) {
+			return new WP_REST_Response( $this->response_data( $this->db->get_stats( $post_id ), false ), 200 );
 		}
 
-		$stats = $this->db->record_view( $post_id, $dims );
+		$result = $this->db->record_unique_view(
+			$post_id,
+			$this->visitor_token( $post_id, $request ),
+			$this->network_token(),
+			self::DEDUPE_TTL,
+			$this->valid_dims( $request )
+		);
 
-		return new WP_REST_Response( $this->response_data( $stats ), 200 );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return new WP_REST_Response( $this->response_data( $result['stats'], $result['accepted'] ), 200 );
 	}
 
 	/**
@@ -192,30 +218,17 @@ class RestApi {
 	 * Shape the public REST response — keeps the historical `count` key and adds
 	 * `last_viewed_at` now that the aggregate table tracks it.
 	 *
-	 * @param array   $stats   Stats as returned by Db::get_stats()/record_view().
-	 * @param int|null $post_id Post ID, only when the write buffer (F7) is active —
-	 *                          adds the buffered-but-not-yet-flushed views to `count`
-	 *                          so the response doesn't lag behind what was just recorded.
-	 * @return array{count:int,last_viewed_at:?string}
+	 * @param array $stats    Stats as returned by Db::get_stats()/record_view().
+	 * @param bool  $accepted Whether this request created a new durable view.
+	 * @return array{count:int,last_viewed_at:?string,accepted:bool,measurement_version:int}
 	 */
-	private function response_data( array $stats, ?int $post_id = null ): array {
-		$pending = null !== $post_id ? WriteBuffer::pending_views( $post_id ) : 0;
-
+	private function response_data( array $stats, bool $accepted ): array {
 		return array(
-			'count'          => $stats['views'] + $pending,
-			'last_viewed_at' => $pending > 0 ? current_time( 'mysql', true ) : $stats['last_viewed_at'],
+			'count'               => $stats['views'],
+			'last_viewed_at'      => $stats['last_viewed_at'],
+			'accepted'            => $accepted,
+			'measurement_version' => Schema::MEASUREMENT_VERSION,
 		);
-	}
-
-	/**
-	 * Whether this visitor has already registered a view for this post recently.
-	 *
-	 * @param int              $post_id Post ID.
-	 * @param WP_REST_Request  $request Current request.
-	 * @return bool
-	 */
-	private function is_deduped( int $post_id, WP_REST_Request $request ): bool {
-		return (bool) get_transient( $this->dedupe_key( $post_id, $request ) );
 	}
 
 	/**
@@ -252,28 +265,36 @@ class RestApi {
 	}
 
 	/**
-	 * Mark this visitor/post pair as already counted.
-	 *
-	 * @param int              $post_id Post ID.
-	 * @param WP_REST_Request  $request Current request.
-	 * @return void
-	 */
-	private function mark_deduped( int $post_id, WP_REST_Request $request ) {
-		set_transient( $this->dedupe_key( $post_id, $request ), 1, self::DEDUPE_TTL );
-	}
-
-	/**
-	 * Build the transient key used to deduplicate a visitor for a given post.
+	 * Build a non-reversible visitor/post token. No raw network address or user
+	 * agent is persisted.
 	 *
 	 * @param int              $post_id Post ID.
 	 * @param WP_REST_Request  $request Current request.
 	 * @return string
 	 */
-	private function dedupe_key( int $post_id, WP_REST_Request $request ): string {
-		$ip         = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
-		$user_agent = $request->get_header( 'user_agent' ) ? sanitize_text_field( $request->get_header( 'user_agent' ) ) : '';
+	private function visitor_token( int $post_id, WP_REST_Request $request ): string {
+		$user_agent = sanitize_text_field( $request->get_header( 'user_agent' ) );
 
-		return 'bbk_view_' . md5( $post_id . '|' . $ip . '|' . $user_agent );
+		return hash_hmac( 'sha256', $post_id . '|' . $this->client_ip() . '|' . $user_agent, wp_salt( 'nonce' ) );
+	}
+
+	/**
+	 * Build a separate network token for aggregate rate controls and diagnostics.
+	 *
+	 * @return string
+	 */
+	private function network_token(): string {
+		return hash_hmac( 'sha256', $this->client_ip(), wp_salt( 'nonce' ) );
+	}
+
+	/**
+	 * Read the direct peer address. Proxy headers are intentionally ignored
+	 * unless a trusted proxy integration normalizes REMOTE_ADDR upstream.
+	 *
+	 * @return string
+	 */
+	private function client_ip(): string {
+		return isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 	}
 
 	/**

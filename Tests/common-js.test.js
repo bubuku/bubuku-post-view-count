@@ -19,17 +19,19 @@ globalThis.classifyAiAssistant = (referrer, pageUrl) => {
 	location.hostname = url.hostname;
 	location.search = url.search;
 	return bk_postview_main.getAiAssistantClass();
-};`;
+};
+globalThis.tracker = bk_postview_main;`;
 
 const context = {
 	Blob,
 	URL,
 	URLSearchParams,
 	bbk_post_view: { api_public: '', post_id: 1, respect_dnt: false },
-	document: { referrer: '', visibilityState: 'visible' },
+	document: { referrer: '', visibilityState: 'visible', addEventListener: () => {} },
 	fetch: () => Promise.resolve(),
 	location: { host: 'example.com', hostname: 'example.com', search: '' },
 	navigator: { doNotTrack: '0' },
+	clearTimeout: () => {},
 	setTimeout: () => {},
 	window: { addEventListener: () => {}, doNotTrack: '0', innerWidth: 1200 },
 };
@@ -116,4 +118,71 @@ test( 'returns no AI assistant for non-AI or absent referrers', () => {
 	assert.equal( classifyAssistant( '' ), '' );
 	assert.equal( classifyAssistant( 'https://www.google.com/search?q=example' ), '' );
 	assert.equal( classifyAssistant( 'https://evilchatgpt.com/example' ), '' );
+} );
+
+test( 'uses five cumulative visible seconds as the view threshold', () => {
+	assert.equal( context.tracker.time_delay, 5000 );
+} );
+
+test( 'pauses in a hidden tab and resumes only the remaining visible time', () => {
+	let now = 0;
+	let scheduledDelay = null;
+	let cleared = false;
+	context.window.performance = { now: () => now };
+	context.setTimeout = ( callback, delay ) => {
+		scheduledDelay = delay;
+		return callback;
+	};
+	context.clearTimeout = () => {
+		cleared = true;
+	};
+	context.tracker.elapsed_visible = 0;
+	context.tracker.visible_since = null;
+	context.tracker.timer_id = null;
+	context.tracker.sent = false;
+	context.document.visibilityState = 'visible';
+
+	context.tracker.updateVisibility();
+	assert.equal( scheduledDelay, 5000 );
+	now = 2000;
+	context.document.visibilityState = 'hidden';
+	context.tracker.updateVisibility();
+	assert.equal( context.tracker.elapsed_visible, 2000 );
+	assert.equal( cleared, true );
+
+	context.document.visibilityState = 'visible';
+	context.tracker.updateVisibility();
+	assert.equal( scheduledDelay, 3000 );
+} );
+
+test( 'falls back to fetch when sendBeacon declines the payload', () => {
+	let fetchCalls = 0;
+	context.bbk_post_view.api_public = 'https://example.com/wp-json/bbk_postview/v1';
+	context.tracker.end_point = context.bbk_post_view.api_public;
+	context.tracker.post_id = 9;
+	context.tracker.sent = false;
+	context.navigator.sendBeacon = () => false;
+	context.fetch = () => {
+		fetchCalls += 1;
+		return Promise.resolve();
+	};
+
+	context.tracker.setPostView();
+	assert.equal( fetchCalls, 1 );
+	context.tracker.setPostView();
+	assert.equal( fetchCalls, 1, 'a view must only be sent once' );
+} );
+
+test( 'a failed fetch returns to pending so an online retry is deduplicated server-side', async () => {
+	context.tracker.sent = false;
+	context.tracker.state = 'pending';
+	context.navigator.sendBeacon = () => false;
+	context.fetch = () => Promise.reject( new Error( 'offline' ) );
+
+	context.tracker.setPostView();
+	await Promise.resolve();
+	await Promise.resolve();
+
+	assert.equal( context.tracker.sent, false );
+	assert.equal( context.tracker.state, 'pending' );
 } );

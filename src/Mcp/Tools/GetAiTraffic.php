@@ -13,7 +13,6 @@ declare( strict_types=1 );
 namespace Bubuku\Plugins\PostViewCount\Mcp\Tools;
 
 use Bubuku\Plugins\PostViewCount\Core\Query;
-use Bubuku\Plugins\PostViewCount\Core\Schema;
 use BubukuConex\Abstract_Satellite_Tool;
 
 defined( 'ABSPATH' ) || exit;
@@ -97,10 +96,7 @@ class GetAiTraffic extends Abstract_Satellite_Tool {
 		return array_merge(
 			$ai_traffic,
 			array(
-				'meta' => array(
-					'computed_at'          => gmdate( 'Y-m-d\TH:i:s\Z' ),
-					'data_available_since' => Schema::daily_data_since(),
-				),
+				'meta' => Query::measurement_metadata(),
 			)
 		);
 	}

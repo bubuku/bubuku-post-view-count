@@ -97,9 +97,7 @@ class ListStaleContent extends Abstract_Satellite_Tool {
 
 		return array(
 			'results' => $results,
-			'meta'    => array(
-				'computed_at' => gmdate( 'Y-m-d\TH:i:s\Z' ),
-			),
+			'meta'    => Query::measurement_metadata(),
 		);
 	}
 

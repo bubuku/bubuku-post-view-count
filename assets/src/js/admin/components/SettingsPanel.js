@@ -30,7 +30,7 @@ const ICON_DANGER = (
 );
 
 /**
- * SettingsPanel — the 8 settings fields (docs/PENDING-ADMIN-UI-REACT.md Fase 5),
+ * SettingsPanel — plugin settings (docs/PENDING-ADMIN-UI-REACT.md Fase 5),
  * plus the "delete all data" action. Reads its initial state from `context`
  * (the GET /settings response App.js already fetched) and saves/deletes over
  * the same REST namespace via `bbkFetch`.
@@ -317,34 +317,6 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 				animationDelay=".15s"
 			>
 				<div className="bbk-field-group">
-					<label className="bbk-checkbox" htmlFor="bbk-write-buffer">
-						<input
-							id="bbk-write-buffer"
-							type="checkbox"
-							checked={ !! settings.write_buffer }
-							onChange={ ( e ) =>
-								update( 'write_buffer', e.target.checked )
-							}
-						/>
-						{ __(
-							'Accumulate increments in memory and write them to the database in batches, once per minute, instead of on every visit.',
-							'bubuku-post-view-count'
-						) }
-					</label>
-					<p className="bbk-field-group__help">
-						{ context.has_object_cache
-							? __(
-									'This site has a persistent object cache active: the buffer will take effect.',
-									'bubuku-post-view-count'
-							  )
-							: __(
-									'This site has no persistent object cache (Redis, Memcached…) active: without one, this option has no effect — each visit is still written immediately.',
-									'bubuku-post-view-count'
-							  ) }
-					</p>
-				</div>
-
-				<div className="bbk-field-group">
 					<label
 						className="bbk-field-group__label"
 						htmlFor="bbk-retention-days"
@@ -359,6 +331,7 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 							id="bbk-retention-days"
 							type="number"
 							min="1"
+							max="3650"
 							className="bbk-input"
 							value={ settings.retention_days ?? '' }
 							onChange={ ( e ) =>

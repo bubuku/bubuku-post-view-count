@@ -96,7 +96,7 @@ class GetPostViews extends Abstract_Satellite_Tool {
 			);
 		}
 
-		return Query::post_stats( $post_id );
+		return array_merge( Query::post_stats( $post_id ), array( 'meta' => Query::measurement_metadata() ) );
 	}
 
 	/**
