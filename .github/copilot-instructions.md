@@ -11,7 +11,7 @@ Plugin público de WordPress (WordPress.org) que cuenta las visitas de un Post s
 | **Versión actual** | `1.2.0` (Header PHP y `readme.txt` `Stable tag` sincronizados) |
 | **Prefijo PHP** | `bbk` (constantes, hooks, funciones globales). Las clases ya no llevan prefijo (`Plugin`, `Db`, `RestApi`, `Assets`) tras la migración PSR-4 |
 | **Namespace PHP** | `Bubuku\Plugins\PostViewCount\{Core,Api,Frontend}\` — ver `docs/MIGRATION-PSR4.md` |
-| **Estructura actual** | `src/{Core,Api,Frontend}/` por responsabilidad (migración PSR-4 completada) |
+| **Estructura actual** | `src/{Core,Api,Frontend,Admin}/` por responsabilidad (migración PSR-4 completada; `Admin/` añadido en la Fase 2 de `docs/ANALYTICS-PLAN.md`) |
 | **Text domain** | `bubuku-post-view-count` |
 | **Archivo principal** | `bubuku-post-view-count.php` |
 | **REST API namespace** | `bbk_postview/v1` (endpoint público, sin autenticación — ver `wp-security`) |
