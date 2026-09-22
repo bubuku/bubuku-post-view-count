@@ -8,6 +8,10 @@ module.exports = {
 			path.resolve( __dirname, 'assets/src/js/admin/index.js' ),
 			path.resolve( __dirname, 'assets/src/scss/admin/style.scss' ),
 		],
+		// CSS-only entry for the wp-admin dashboard widget (Admin\DashboardWidget).
+		// wp-scripts still emits a residual widget.js — never enqueued, see
+		// AdminPage::enqueue_assets().
+		widget: path.resolve( __dirname, 'assets/src/scss/widget/style.scss' ),
 	},
 	output: {
 		...defaultConfig.output,

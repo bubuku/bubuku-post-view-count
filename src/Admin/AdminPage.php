@@ -78,6 +78,11 @@ class AdminPage {
 	 * @return void
 	 */
 	public function enqueue_assets( string $hook ) {
+		if ( 'index.php' === $hook ) {
+			$this->enqueue_widget_styles();
+			return;
+		}
+
 		if ( $hook !== $this->hook_suffix ) {
 			return;
 		}
@@ -117,6 +122,29 @@ class AdminPage {
 				)
 			) . ';',
 			'before'
+		);
+	}
+
+	/**
+	 * Enqueues only the CSS for `Admin\DashboardWidget`, on wp-admin/index.php
+	 * alone — the React bundle never loads there (docs/DASHBOARD-SUMMARY-PLAN.md
+	 * §6). Silently skipped if the build hasn't run yet: the widget's own markup
+	 * still renders, just unstyled, and this is never expected in a released zip.
+	 *
+	 * @return void
+	 */
+	private function enqueue_widget_styles() {
+		$style = BBK_PLUGIN_PATH . '/assets/build/style-widget.css';
+
+		if ( ! file_exists( $style ) ) {
+			return;
+		}
+
+		wp_enqueue_style(
+			$this->plugin_name . '-widget',
+			BBK_PLUGIN_URL . '/assets/build/style-widget.css',
+			array(),
+			$this->version
 		);
 	}
 

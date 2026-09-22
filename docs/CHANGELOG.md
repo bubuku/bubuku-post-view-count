@@ -5,6 +5,11 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-09-22
+### Añadido
+- `docs/DASHBOARD-SUMMARY-PLAN.md`: fila de 4 tarjetas resumen («Vistas totales», «Últimos 30 días» con variación vs los 30 previos, «AI referrals», «AI bot crawling») sobre las `bk-dashboard-card` de la pestaña Estadísticas, alimentadas por un nuevo endpoint `GET /bbk_postview/v1/stats/overview` (capability `edit_posts`, cacheado como el resto de `Api\TrendsApi`) que envuelve el nuevo `Core\Query::overview()`.
+- Widget «Post views summary» en el escritorio de WordPress (`wp-admin/index.php`, capability `edit_posts`), con las mismas 4 cifras y un sparkline SVG de los últimos 7 días generado en PHP, sin JS ni librerías de gráficos. Se alimenta de un snapshot en option (`Admin\OverviewSnapshot`, autoload `no`) refrescado de forma asíncrona por cron cada 15 minutos (patrón stale-while-revalidate, igual que `Bubuku-Media-Library`), de modo que el render del dashboard no ejecuta ninguna consulta a las tablas del plugin. El CSS del widget se encola solo en `index.php`, nunca el bundle React del admin.
+
 ## [1.2.3] - 2026-09-22
 ### Corregido
 

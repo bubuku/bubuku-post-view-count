@@ -11,6 +11,7 @@ declare( strict_types=1 );
 
 use Bubuku\Plugins\PostViewCount\Admin\Settings;
 use Bubuku\Plugins\PostViewCount\Admin\AdminPage;
+use Bubuku\Plugins\PostViewCount\Admin\OverviewSnapshot;
 use Bubuku\Plugins\PostViewCount\Api\RestApi;
 use Bubuku\Plugins\PostViewCount\Api\SettingsApi;
 use Bubuku\Plugins\PostViewCount\Api\TrendsApi;
@@ -1024,6 +1025,161 @@ $tests = array(
 		bbk_test_same( 1, $stats['views'], 'post_stats() must reflect the recorded view count.' );
 		bbk_test_same( '2026-01-01 10:00:00', $stats['first_viewed_at'], 'post_stats() must reflect first_viewed_at.' );
 		bbk_test_same( '2026-01-01 10:00:00', $stats['last_viewed_at'], 'post_stats() must reflect last_viewed_at.' );
+	},
+	'Query::overview() returns a zeroed structure for a post type that is not enabled' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+
+		$result = Query::overview( array( 'page' ) );
+
+		bbk_test_same( 0, $result['total_views'], 'A disabled post type must never be queried, and must return zeros.' );
+		bbk_test_same( 0, $result['current_views'], 'A disabled post type must return zero current views.' );
+		bbk_test_same( 0, $result['previous_views'], 'A disabled post type must return zero previous views.' );
+		bbk_test_same( 0, $result['delta'], 'A disabled post type must return a zero delta.' );
+		bbk_test_same( null, $result['delta_pct'], 'With no previous views, delta_pct must be null, same contract as momentum().' );
+		bbk_test_same( 0, $result['ai_referral_views'], 'A disabled post type must return zero AI referrals.' );
+		bbk_test_same( 0, $result['ai_crawler_views'], 'A disabled post type must return zero AI crawler views.' );
+		bbk_test_same( 7, count( $result['last_7_days'] ), 'last_7_days must always report exactly 7 entries, even on the empty path.' );
+		bbk_test_same( 0, array_sum( array_column( $result['last_7_days'], 'views' ) ), 'A disabled post type must return an all-zero 7-day series.' );
+		bbk_test_same( true, isset( $result['period']['current'], $result['period']['previous'] ), 'overview() must always report the two compared periods, same as momentum().' );
+	},
+	'Query::overview() computes the current/previous 30-day comparison and a zero-filled 7-day series from the daily aggregate' => static function (): void {
+		TestState::reset();
+		TestState::$now = '2026-02-01 00:00:00';
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+
+		// Inside the current 30-day window (2026-01-03..2026-02-01).
+		TestState::$daily['1|2026-01-20'] = 10;
+		// Inside the previous 30-day window (2025-12-04..2026-01-02).
+		TestState::$daily['1|2026-01-01'] = 4;
+		// Before the previous window — must never be counted.
+		TestState::$daily['1|2025-12-01'] = 999;
+		// Inside the last 7 days (2026-01-26..2026-02-01) — also inside the current
+		// 30-day window (the last 7 days are always a subset of the last 30), so
+		// these two rows count towards current_views too.
+		TestState::$daily['1|2026-01-31'] = 7;
+		TestState::$daily['1|2026-02-01'] = 3;
+
+		$result = Query::overview();
+
+		bbk_test_same( 20, $result['current_views'], 'current_views must sum every daily row on or after the 30-day cutoff, including the last 7 days.' );
+		bbk_test_same( 4, $result['previous_views'], 'previous_views must sum only daily rows in the prior 30-day window.' );
+		bbk_test_same( 16, $result['delta'], 'delta must be current_views - previous_views.' );
+		bbk_test_same( 400.0, $result['delta_pct'], 'delta_pct must be round( delta / previous_views * 100, 1 ), same formula as momentum().' );
+		bbk_test_same(
+			array(
+				array(
+					'day'   => '2026-01-26',
+					'views' => 0,
+				),
+				array(
+					'day'   => '2026-01-27',
+					'views' => 0,
+				),
+				array(
+					'day'   => '2026-01-28',
+					'views' => 0,
+				),
+				array(
+					'day'   => '2026-01-29',
+					'views' => 0,
+				),
+				array(
+					'day'   => '2026-01-30',
+					'views' => 0,
+				),
+				array(
+					'day'   => '2026-01-31',
+					'views' => 7,
+				),
+				array(
+					'day'   => '2026-02-01',
+					'views' => 3,
+				),
+			),
+			$result['last_7_days'],
+			'last_7_days must be a continuous 7-day series ending today, zero-filled for days without a row.'
+		);
+	},
+	'Query::overview() sums ai_assistant referrals and AI-crawler hits over the last 3 months' => static function (): void {
+		TestState::reset();
+		TestState::$now             = gmdate( 'Y-m-d H:i:s' );
+		TestState::$post_titles[42] = 'AI destination';
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+
+		$db = new Db();
+		$db->record_view(
+			42,
+			array(
+				'referrer'     => 'ai',
+				'ai_assistant' => 'chatgpt',
+			)
+		);
+		$db->record_view(
+			42,
+			array(
+				'referrer'     => 'ai',
+				'ai_assistant' => 'chatgpt',
+			)
+		);
+
+		$today = gmdate( 'Y-m-d' );
+		TestState::$ai_crawls[ "42|{$today}|GPTBot" ] = 5;
+
+		$result = Query::overview();
+
+		bbk_test_same( 2, $result['ai_referral_views'], 'ai_referral_views must sum dims_breakdown( \'ai_assistant\' ) over the last 3 months, like ai_traffic().' );
+		bbk_test_same( 5, $result['ai_crawler_views'], 'ai_crawler_views must sum bbk_post_ai_crawls over the last 3 months.' );
+	},
+	'OverviewSnapshot::get_cached() builds and persists a fresh snapshot on the first call' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+
+		$snapshot = OverviewSnapshot::get_cached();
+
+		bbk_test_same( false, $snapshot['stale'], 'A freshly built snapshot must not be marked stale.' );
+		bbk_test_same( false, $snapshot['warming'], 'A freshly built snapshot must not be marked warming.' );
+		bbk_test_same( '0', $snapshot['total_views_formatted'], 'Formatted figures must come from number_format_i18n(), not the raw int.' );
+		bbk_test_same( true, get_option( OverviewSnapshot::OPTION_SNAPSHOT, false ) === $snapshot, 'The freshly built snapshot must be persisted to its option.' );
+	},
+	'OverviewSnapshot::get_cached() serves a stale snapshot unchanged instead of rebuilding synchronously' => static function (): void {
+		TestState::reset();
+
+		$stale_snapshot = array(
+			'generated_at'          => time() - OverviewSnapshot::TTL - 1,
+			'stale'                 => false,
+			'warming'               => false,
+			'total_views'           => 42,
+			'total_views_formatted' => '42',
+		);
+		update_option( OverviewSnapshot::OPTION_SNAPSHOT, $stale_snapshot );
+
+		$snapshot = OverviewSnapshot::get_cached();
+
+		bbk_test_same( 42, $snapshot['total_views'], 'An expired snapshot must still be served as-is, never rebuilt synchronously.' );
+		bbk_test_same( true, $snapshot['stale'], 'An expired snapshot must be flagged stale for the caller.' );
+	},
+	'OverviewSnapshot::get_cached() returns a zeroed warming payload when locked with no snapshot yet' => static function (): void {
+		TestState::reset();
+		set_transient( OverviewSnapshot::LOCK_TRANSIENT, 1, OverviewSnapshot::LOCK_TTL );
+
+		$snapshot = OverviewSnapshot::get_cached();
+
+		bbk_test_same( true, $snapshot['warming'], 'With no snapshot and a build already in progress, get_cached() must not build concurrently.' );
+		bbk_test_same( 0, $snapshot['total_views'], 'The warming payload must report zero, never a partial or stale figure.' );
+		bbk_test_same( 7, count( $snapshot['last_7_days'] ), 'The warming payload must still report exactly 7 (zeroed) days.' );
+		bbk_test_same( false, get_option( OverviewSnapshot::OPTION_SNAPSHOT, false ), 'A locked, snapshot-less state must never write an option.' );
+	},
+	'OverviewSnapshot::clear() removes the snapshot, its lock and its pending refresh' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+		OverviewSnapshot::get_cached();
+		set_transient( OverviewSnapshot::LOCK_TRANSIENT, 1, OverviewSnapshot::LOCK_TTL );
+
+		OverviewSnapshot::clear();
+
+		bbk_test_same( false, get_option( OverviewSnapshot::OPTION_SNAPSHOT, false ), 'clear() must delete the snapshot option.' );
+		bbk_test_same( false, get_transient( OverviewSnapshot::LOCK_TRANSIENT ), 'clear() must release the build lock.' );
 	},
 	'ListMostViewed tool delegates to Query::most_viewed() and reports data_available_since' => static function (): void {
 		TestState::reset();

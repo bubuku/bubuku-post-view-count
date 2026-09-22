@@ -393,6 +393,200 @@ class Query {
 	}
 
 	/**
+	 * Single-call payload for a site-wide "at a glance" summary — the admin dashboard's
+	 * summary cards and the `Admin\DashboardWidget` (docs/DASHBOARD-SUMMARY-PLAN.md). One
+	 * method so both surfaces share one cache entry instead of issuing the same handful of
+	 * queries twice. Everything here reuses an existing query shape (summary(), the
+	 * current/previous comparison already proven by momentum(), dims_breakdown()) except
+	 * the AI-crawler total and the 7-day series, which are new but minimal, index-backed
+	 * aggregates over the plugin's own tables.
+	 *
+	 * @param string[] $post_types Post types to include; empty means every enabled type.
+	 * @param int      $days       Length of the current/previous comparison window, in days.
+	 * @return array{
+	 *     total_views:int,
+	 *     posts_with_traffic:int,
+	 *     posts_without_traffic:int,
+	 *     current_views:int,
+	 *     previous_views:int,
+	 *     delta:int,
+	 *     delta_pct:?float,
+	 *     ai_referral_views:int,
+	 *     ai_crawler_views:int,
+	 *     last_7_days:array<int, array{day:string,views:int}>,
+	 *     period:array{current:array{from:string,to:string},previous:array{from:string,to:string}}
+	 * }
+	 */
+	public static function overview( array $post_types = array(), int $days = 30 ): array {
+		global $wpdb;
+
+		$days           = max( 1, min( self::MAX_PERIOD_DAYS, $days ) );
+		$current_end    = current_time( 'Y-m-d', true );
+		$current_start  = gmdate( 'Y-m-d', strtotime( "{$current_end} -" . ( $days - 1 ) . ' days' ) );
+		$previous_end   = gmdate( 'Y-m-d', strtotime( "{$current_start} -1 day" ) );
+		$previous_start = gmdate( 'Y-m-d', strtotime( "{$previous_end} -" . ( $days - 1 ) . ' days' ) );
+		$period         = array(
+			'current'  => array(
+				'from' => $current_start,
+				'to'   => $current_end,
+			),
+			'previous' => array(
+				'from' => $previous_start,
+				'to'   => $previous_end,
+			),
+		);
+
+		$empty = array(
+			'total_views'           => 0,
+			'posts_with_traffic'    => 0,
+			'posts_without_traffic' => 0,
+			'current_views'         => 0,
+			'previous_views'        => 0,
+			'delta'                 => 0,
+			'delta_pct'             => null,
+			'ai_referral_views'     => 0,
+			'ai_crawler_views'      => 0,
+			'last_7_days'           => self::empty_last_days( 7 ),
+			'period'                => $period,
+		);
+
+		$post_types = self::resolve_post_types( $post_types );
+
+		if ( empty( $post_types ) ) {
+			return $empty;
+		}
+
+		$cache_key = self::cache_key( 'overview_' . md5( (string) wp_json_encode( array( $post_types, $days ) ) ) );
+		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
+
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
+		$summary           = self::summary( $post_types );
+		$daily_table       = Schema::table_daily();
+		$ai_crawls_table   = Schema::table_ai_crawls();
+		$type_placeholders = self::placeholders( $post_types, '%s' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Read query over the plugin's own table, no equivalent WP API. $daily_table is an internal constant (Schema::table_daily()), never user input.
+		$window = $wpdb->get_row(
+			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- {$type_placeholders} expands to a dynamic run of %s placeholders at runtime, which this static sniff cannot count.
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- {$daily_table} is an internal constant, never user input; {$type_placeholders} is a fixed run of %s placeholders the sniff can't see through.
+				"SELECT SUM(CASE WHEN d.day >= %s THEN d.views ELSE 0 END) AS current_views, SUM(CASE WHEN d.day < %s THEN d.views ELSE 0 END) AS previous_views FROM {$daily_table} d INNER JOIN {$wpdb->posts} p ON p.ID = d.post_id WHERE p.post_type IN ({$type_placeholders}) AND p.post_status = 'publish' AND d.day BETWEEN %s AND %s",
+				...array_merge( array( $current_start, $current_start ), $post_types, array( $previous_start, $current_end ) )
+			),
+			ARRAY_A
+		);
+
+		$current_views  = (int) ( $window['current_views'] ?? 0 );
+		$previous_views = (int) ( $window['previous_views'] ?? 0 );
+		$delta          = $current_views - $previous_views;
+
+		$ai_since = gmdate( 'Y-m-d', strtotime( '-3 months' ) );
+
+		$ai_referral_views = array_sum(
+			array_column(
+				self::dims_breakdown( 'ai_assistant', $post_types, $ai_since, $current_end ),
+				'views'
+			)
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Read query over the plugin's own table, no equivalent WP API. $ai_crawls_table is an internal constant (Schema::table_ai_crawls()), never user input.
+		$ai_crawler_views = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- {$ai_crawls_table} is an internal constant, never user input; {$type_placeholders} is a fixed run of %s placeholders the sniff can't see through.
+				"SELECT COALESCE(SUM(c.views), 0) FROM {$ai_crawls_table} c INNER JOIN {$wpdb->posts} p ON p.ID = c.post_id WHERE p.post_type IN ({$type_placeholders}) AND p.post_status = 'publish' AND c.day >= %s",
+				...array_merge( $post_types, array( $ai_since ) )
+			)
+		);
+
+		$result = array_merge(
+			$summary,
+			array(
+				'current_views'     => $current_views,
+				'previous_views'    => $previous_views,
+				'delta'             => $delta,
+				'delta_pct'         => $previous_views > 0 ? round( ( $delta / $previous_views ) * 100, 1 ) : null,
+				'ai_referral_views' => $ai_referral_views,
+				'ai_crawler_views'  => $ai_crawler_views,
+				'last_7_days'       => self::last_days( $post_types, 7 ),
+				'period'            => $period,
+			)
+		);
+
+		wp_cache_set( $cache_key, $result, self::CACHE_GROUP, self::CACHE_TTL );
+
+		return $result;
+	}
+
+	/**
+	 * The last `$days` days of site-wide daily views, zero-filled for days without a row.
+	 * Never invents a day before `Schema::daily_data_since()` as anything but its real,
+	 * possibly-partial value — there is nothing to invent, the day either has rows or not.
+	 *
+	 * @param string[] $post_types Resolved, non-empty post types.
+	 * @param int      $days       Number of trailing days to include (ending today, UTC).
+	 * @return array<int, array{day:string,views:int}>
+	 */
+	private static function last_days( array $post_types, int $days ): array {
+		global $wpdb;
+
+		$today = current_time( 'Y-m-d', true );
+		$since = gmdate( 'Y-m-d', strtotime( "{$today} -" . ( $days - 1 ) . ' days' ) );
+
+		$daily_table       = Schema::table_daily();
+		$type_placeholders = self::placeholders( $post_types, '%s' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Read query over the plugin's own table, no equivalent WP API. $daily_table is an internal constant (Schema::table_daily()), never user input.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- {$daily_table} is an internal constant, never user input; {$type_placeholders} is a fixed run of %s placeholders the sniff can't see through.
+				"SELECT d.day AS day, SUM(d.views) AS total_views FROM {$daily_table} d INNER JOIN {$wpdb->posts} p ON p.ID = d.post_id WHERE p.post_type IN ({$type_placeholders}) AND p.post_status = 'publish' AND d.day >= %s GROUP BY d.day",
+				...array_merge( $post_types, array( $since ) )
+			),
+			ARRAY_A
+		);
+
+		$by_day = array();
+		foreach ( is_array( $rows ) ? $rows : array() as $row ) {
+			$by_day[ (string) $row['day'] ] = (int) $row['total_views'];
+		}
+
+		$series = array();
+		for ( $i = $days - 1; $i >= 0; $i-- ) {
+			$day      = gmdate( 'Y-m-d', strtotime( "{$today} -{$i} days" ) );
+			$series[] = array(
+				'day'   => $day,
+				'views' => $by_day[ $day ] ?? 0,
+			);
+		}
+
+		return $series;
+	}
+
+	/**
+	 * Zero-value fallback series for overview()'s early-return paths (no enabled post
+	 * type), so a caller never has to special-case a missing `last_7_days` key.
+	 *
+	 * @param int $days Number of trailing days.
+	 * @return array<int, array{day:string,views:int}>
+	 */
+	private static function empty_last_days( int $days ): array {
+		$today  = current_time( 'Y-m-d', true );
+		$series = array();
+
+		for ( $i = $days - 1; $i >= 0; $i-- ) {
+			$series[] = array(
+				'day'   => gmdate( 'Y-m-d', strtotime( "{$today} -{$i} days" ) ),
+				'views' => 0,
+			);
+		}
+
+		return $series;
+	}
+
+	/**
 	 * Posts whose daily views are rising or falling, comparing the last `$period_days` days
 	 * against the equal-length period immediately before them (docs/ANALYTICS-PLAN.md §5,
 	 * "listados en alza/en caída" pendiente de la Fase 4). Unlike most_viewed(), this always

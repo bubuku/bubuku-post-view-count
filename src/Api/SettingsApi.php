@@ -12,6 +12,7 @@ declare( strict_types=1 );
 
 namespace Bubuku\Plugins\PostViewCount\Api;
 
+use Bubuku\Plugins\PostViewCount\Admin\OverviewSnapshot;
 use Bubuku\Plugins\PostViewCount\Admin\Settings;
 use Bubuku\Plugins\PostViewCount\Core\AiCrawlers;
 use Bubuku\Plugins\PostViewCount\Core\Db;
@@ -127,6 +128,7 @@ class SettingsApi {
 
 		update_option( Settings::OPTION_KEY, $sanitized );
 		Query::invalidate_cache();
+		OverviewSnapshot::mark_stale();
 
 		return new WP_REST_Response( $sanitized, 200 );
 	}
@@ -159,6 +161,7 @@ class SettingsApi {
 				return new WP_Error( 'bbk_postview_reset_failed', __( 'The analytics tables could not be recreated.', 'bubuku-post-view-count' ), array( 'status' => 500 ) );
 			}
 			Query::invalidate_cache();
+			OverviewSnapshot::clear();
 		} finally {
 			delete_option( Schema::OPTION_INGESTION_PAUSED );
 		}

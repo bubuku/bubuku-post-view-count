@@ -1,0 +1,93 @@
+.bbk-summary-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 16px;
+	margin-bottom: 16px;
+}
+
+.bbk-stat-card {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	background: var(--surface-card);
+	border: 1px solid var(--border-card);
+	border-radius: var(--radius-large);
+	padding: 16px 18px;
+	box-shadow: var(--shadow-pluma);
+	animation: bk-fadeUp 0.5s ease both;
+}
+
+.bbk-stat-card__icon {
+	width: 32px;
+	height: 32px;
+	border-radius: 8px;
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--brand-soft);
+	color: var(--brand);
+
+	svg {
+		width: 18px;
+		height: 18px;
+	}
+}
+
+.bbk-stat-card__body {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.bbk-stat-card__label {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+}
+
+.bbk-stat-card__value {
+	font-size: 22px;
+	font-weight: 700;
+	color: var(--text-heading);
+	line-height: 1.2;
+}
+
+.bbk-stat-card__note {
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.bbk-stat-card__note--up {
+	color: var(--green-500);
+}
+
+.bbk-stat-card__note--down {
+	color: var(--red-500);
+}
+
+.bbk-stat-card__skeleton {
+	display: block;
+	width: 60%;
+	height: 20px;
+	margin: 2px 0;
+	border-radius: 4px;
+	background: var(--border-card);
+	opacity: 0.6;
+	animation: bk-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes bk-pulse {
+
+	0%,
+	100% {
+		opacity: 0.4;
+	}
+
+	50% {
+		opacity: 0.8;
+	}
+}

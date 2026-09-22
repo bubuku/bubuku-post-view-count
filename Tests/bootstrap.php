@@ -301,6 +301,12 @@ namespace {
 		return true;
 	}
 
+	function delete_transient( string $key ): bool {
+		unset( TestState::$transients[ $key ] );
+
+		return true;
+	}
+
 	function get_option( string $key, $default = false ) {
 		return TestState::$options[ $key ] ?? $default;
 	}
@@ -772,6 +778,35 @@ namespace Bubuku\Plugins\PostViewCount {
 				return TestState::$views[ (int) $m[1] ] ?? null;
 			}
 
+			// Query::overview()'s current/previous-window comparison — same day-range
+			// shape as momentum(), without the per-post GROUP BY.
+			if ( preg_match( "/SUM\\(CASE WHEN d\\.day >= '([^']+)' THEN d\\.views ELSE 0 END\\) AS current_views.*FROM wp_bbk_post_views_daily d.*d\\.day BETWEEN '([^']+)' AND '([^']+)'/s", $query, $m ) ) {
+				$cutoff = $m[1];
+				$since  = $m[2];
+				$until  = $m[3];
+				$current  = 0;
+				$previous = 0;
+
+				foreach ( TestState::$daily as $key => $views ) {
+					list( , $day ) = explode( '|', $key, 2 );
+
+					if ( $day < $since || $day > $until ) {
+						continue;
+					}
+
+					if ( $day >= $cutoff ) {
+						$current += $views;
+					} else {
+						$previous += $views;
+					}
+				}
+
+				return array(
+					'current_views'  => $current,
+					'previous_views' => $previous,
+				);
+			}
+
 			return null;
 		}
 
@@ -795,11 +830,62 @@ namespace Bubuku\Plugins\PostViewCount {
 				return $count;
 			}
 
+			// Query::overview()'s AI-crawler total over the last 3 months.
+			if ( false !== strpos( $query, 'FROM wp_bbk_post_ai_crawls c' ) && preg_match( "/c\\.day >= '([^']+)'/", $query, $m ) ) {
+				$since = $m[1];
+				$total = 0;
+
+				foreach ( TestState::$ai_crawls as $key => $views ) {
+					list( , $day ) = explode( '|', $key, 3 );
+
+					if ( $day >= $since ) {
+						$total += $views;
+					}
+				}
+
+				return $total;
+			}
+
 			return 0;
 		}
 
 		public function get_results( string $query, $output = null ) {
 			unset( $output );
+
+			// Query::overview()'s last-N-days series (also matches trend()'s
+			// single-bucket 'day' grouping, which shares this exact shape).
+			if ( false !== strpos( $query, 'FROM wp_bbk_post_views_daily d' ) && false !== strpos( $query, 'GROUP BY d.day' ) ) {
+				$since = '1970-01-01';
+
+				if ( preg_match( "/d\\.day >= '([^']+)'/", $query, $m ) ) {
+					$since = $m[1];
+				}
+
+				$grouped = array();
+
+				foreach ( TestState::$daily as $key => $views ) {
+					list( , $day ) = explode( '|', $key, 2 );
+
+					if ( $day < $since ) {
+						continue;
+					}
+
+					$grouped[ $day ] = ( $grouped[ $day ] ?? 0 ) + $views;
+				}
+
+				ksort( $grouped );
+
+				return array_map(
+					static function ( string $day, int $views ): array {
+						return array(
+							'day'         => $day,
+							'total_views' => $views,
+						);
+					},
+					array_keys( $grouped ),
+					array_values( $grouped )
+				);
+			}
 
 			if ( preg_match( "/FROM wp_postmeta WHERE meta_key = 'views'/", $query ) ) {
 				$cursor = preg_match( '/meta_id > (\d+)/', $query, $m ) ? (int) $m[1] : 0;
@@ -860,7 +946,11 @@ namespace Bubuku\Plugins\PostViewCount {
 					);
 				}
 
-				if ( false !== strpos( $query, "d.dimension = 'ai_assistant'" ) ) {
+				// ai_traffic()'s own per-assistant/per-post query, grouped by (value, post_id) —
+				// distinct from dims_breakdown('ai_assistant', ...), which Query::overview()
+				// also calls and which groups by value alone (handled by the generic branch
+				// below, since both queries share the "d.dimension = 'ai_assistant'" fragment).
+				if ( false !== strpos( $query, "d.dimension = 'ai_assistant'" ) && false !== strpos( $query, 'GROUP BY d.value, d.post_id' ) ) {
 					$grouped = array();
 
 					foreach ( TestState::$dims as $key => $views ) {
@@ -959,6 +1049,7 @@ namespace Bubuku\Plugins\PostViewCount {
 	require_once dirname( __DIR__ ) . '/src/Core/Db.php';
 	require_once dirname( __DIR__ ) . '/src/Admin/Settings.php';
 	require_once dirname( __DIR__ ) . '/src/Admin/AdminPage.php';
+	require_once dirname( __DIR__ ) . '/src/Admin/OverviewSnapshot.php';
 	require_once dirname( __DIR__ ) . '/src/Api/RestApi.php';
 	require_once dirname( __DIR__ ) . '/src/Api/TrendsApi.php';
 	require_once dirname( __DIR__ ) . '/src/Api/SettingsApi.php';

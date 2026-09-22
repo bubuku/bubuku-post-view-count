@@ -13,6 +13,7 @@ declare( strict_types=1 );
 namespace Bubuku\Plugins\PostViewCount\Core;
 
 use Bubuku\Plugins\PostViewCount\Admin\Admin as AdminController;
+use Bubuku\Plugins\PostViewCount\Admin\OverviewSnapshot;
 use Bubuku\Plugins\PostViewCount\Admin\PostListColumns;
 use Bubuku\Plugins\PostViewCount\Api\RestApi;
 use Bubuku\Plugins\PostViewCount\Api\SettingsApi;
@@ -60,6 +61,11 @@ class Plugin {
 		new Block();
 		new AiCrawlerTracker();
 
+		// Registered unconditionally, not inside the is_admin() block below: its
+		// refresh hook must exist for wp-cron.php requests too, which never set
+		// is_admin() (docs/DASHBOARD-SUMMARY-PLAN.md §4).
+		new OverviewSnapshot();
+
 		if ( is_admin() ) {
 			( new AdminController( 'bubuku-post-view-count', BBK_PLUGIN_VERSION ) )->register();
 			new PostListColumns();
@@ -67,7 +73,9 @@ class Plugin {
 
 		add_action( 'init', array( $this, 'init_mcp_satellite' ) );
 		add_action( 'save_post', array( Query::class, 'invalidate_cache' ) );
+		add_action( 'save_post', array( OverviewSnapshot::class, 'mark_stale' ) );
 		add_action( 'deleted_post', array( Query::class, 'invalidate_cache' ) );
+		add_action( 'deleted_post', array( OverviewSnapshot::class, 'mark_stale' ) );
 	}
 
 	/**

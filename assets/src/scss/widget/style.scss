@@ -1,0 +1,132 @@
+// Dashboard-widget-only stylesheet (Admin\DashboardWidget,
+// docs/DASHBOARD-SUMMARY-PLAN.md §6). Tokens are duplicated here rather than
+// imported from admin/config/_tokens.scss: that partial scopes every custom
+// property to #bbk-postview-app, which this widget does not share (it lives
+// in a wp-admin postbox on index.php, never mounted alongside the React
+// app) — same reasoning as Bubuku-Media-Library's widget/style.scss.
+// --bg-page is deliberately not defined: the postbox already provides a
+// white canvas.
+#bbk-postview-dashboard-summary {
+	--brand: #239295;
+	--text-heading: #132633;
+	--text-muted: #54707e;
+	--border-card: #dce7f0;
+	--green-500: #1f9d6b;
+	--red-500: #d1503c;
+
+	.inside {
+		margin: 0;
+		padding: 0 12px 12px;
+	}
+
+	h2 .bbk-widget-dot {
+		display: inline-block;
+		width: 8px;
+		height: 8px;
+		margin-right: 6px;
+		border-radius: 50%;
+		background: var(--brand);
+	}
+}
+
+.bbk-widget-stats {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+	margin-bottom: 14px;
+}
+
+.bbk-widget-stat {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 10px 12px;
+	border: 1px solid var(--border-card);
+	border-radius: 8px;
+}
+
+.bbk-widget-stat-label {
+	font-size: 11px;
+	font-weight: 600;
+	color: var(--text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+}
+
+.bbk-widget-stat-value {
+	font-size: 18px;
+	font-weight: 700;
+	color: var(--text-heading);
+	line-height: 1.3;
+}
+
+.bbk-widget-delta {
+	font-size: 11px;
+	font-weight: 600;
+	margin-left: 4px;
+
+	&--up {
+		color: var(--green-500);
+	}
+
+	&--down {
+		color: var(--red-500);
+	}
+}
+
+.bbk-widget-section {
+
+	h3 {
+		font-size: 12px;
+		font-weight: 600;
+		color: var(--text-heading);
+		margin: 0 0 8px;
+	}
+}
+
+.bbk-widget-spark {
+	display: block;
+	width: 100%;
+	height: 48px;
+}
+
+.bbk-widget-spark-area {
+	fill: var(--brand);
+	fill-opacity: 0.12;
+	stroke: none;
+}
+
+.bbk-widget-spark-line {
+	fill: none;
+	stroke: var(--brand);
+	stroke-width: 1.5;
+	vector-effect: non-scaling-stroke;
+}
+
+.bbk-widget-spark-empty {
+	font-size: 12px;
+	color: var(--text-muted);
+	margin: 0;
+}
+
+.bbk-widget-warming {
+	font-size: 12px;
+	color: var(--text-muted);
+	margin: 10px 0 0;
+}
+
+.bbk-widget-footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-top: 14px;
+	padding-top: 10px;
+	border-top: 1px solid var(--border-card);
+	font-size: 12px;
+	color: var(--text-muted);
+
+	strong {
+		color: var(--text-heading);
+	}
+}

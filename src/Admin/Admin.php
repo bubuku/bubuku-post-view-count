@@ -44,5 +44,7 @@ class Admin {
 
 		add_action( 'admin_menu', array( $page, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $page, 'enqueue_assets' ) );
+
+		new DashboardWidget( $this->plugin_name );
 	}
 }

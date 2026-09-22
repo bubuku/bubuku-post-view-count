@@ -167,6 +167,28 @@ class TrendsApi {
 				),
 			)
 		);
+
+		register_rest_route(
+			BBK_PLUGIN_ENDPOINTS_URL,
+			'stats/overview',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'get_overview' ),
+				'permission_callback' => array( $this, 'check_permission' ),
+				'args'                => array(
+					'post_types' => array(
+						'type'  => 'array',
+						'items' => array( 'type' => 'string' ),
+					),
+					'days'       => array(
+						'type'    => 'integer',
+						'minimum' => 1,
+						'maximum' => Query::MAX_PERIOD_DAYS,
+						'default' => 30,
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -334,6 +356,28 @@ class TrendsApi {
 
 		// Object-cached in Core\Query::ai_traffic() (5 min for the referral
 		// breakdown and crawler blocks; the total reuses dims_breakdown()'s cache).
+		$response->header( 'Cache-Control', 'private, max-age=300' );
+
+		return $response;
+	}
+
+	/**
+	 * Site-wide "at a glance" summary consumed by the admin summary cards and
+	 * `Admin\DashboardWidget` — see docs/DASHBOARD-SUMMARY-PLAN.md.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response
+	 */
+	public function get_overview( WP_REST_Request $request ) {
+		$overview = Query::overview(
+			(array) ( $request->get_param( 'post_types' ) ?? array() ),
+			(int) ( $request->get_param( 'days' ) ?? 30 )
+		);
+
+		$response = new WP_REST_Response( array_merge( $overview, array( 'meta' => Query::measurement_metadata() ) ), 200 );
+
+		// Object-cached in Core\Query::overview() (5 min), same private, short-TTL
+		// policy as the rest of this controller.
 		$response->header( 'Cache-Control', 'private, max-age=300' );
 
 		return $response;

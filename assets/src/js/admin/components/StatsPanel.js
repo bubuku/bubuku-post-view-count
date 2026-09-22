@@ -3,6 +3,7 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 import ExpandableViewsTable from './ExpandableViewsTable';
 import DashboardCard from './DashboardCard';
 import DataTable from './DataTable';
+import SummaryCards from './SummaryCards';
 import TrendChart from './TrendChart';
 import CrawlerCategoryDot from './CrawlerCategoryDot';
 import CrawlerCategoryLegend from './CrawlerCategoryLegend';
@@ -340,6 +341,8 @@ const StatsPanel = ( { context } ) => {
 
 	return (
 		<div className="bbk-stats-panel">
+			<SummaryCards context={ context } />
+
 			<DashboardCard
 				icon={ ICON_TREND }
 				title={ __( 'Views over time', 'bubuku-post-view-count' ) }

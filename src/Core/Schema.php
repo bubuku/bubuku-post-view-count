@@ -12,6 +12,8 @@ declare( strict_types=1 );
 
 namespace Bubuku\Plugins\PostViewCount\Core;
 
+use Bubuku\Plugins\PostViewCount\Admin\OverviewSnapshot;
+
 defined( 'ABSPATH' ) || exit;
 
 class Schema {
@@ -146,6 +148,7 @@ class Schema {
 		wp_clear_scheduled_hook( self::PURGE_CRON_HOOK );
 		wp_clear_scheduled_hook( self::PURGE_CONTINUE_CRON_HOOK );
 		wp_clear_scheduled_hook( self::MIGRATION_CRON_HOOK );
+		OverviewSnapshot::clear();
 	}
 
 	/**

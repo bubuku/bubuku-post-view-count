@@ -4,7 +4,7 @@ Tags: page view count, post views, post count, posts, post view count
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.3
+Stable tag: 1.3.0
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -83,6 +83,10 @@ Yes, by default. When a visitor's browser sends the DNT or Sec-GPC signal, the p
 
 
 == Changelog ==
+
+= 1.3.0 =
+* New "at a glance" summary cards above the Stats tab: total views, last 30 days (with the change vs. the previous 30), AI referrals and AI bot crawling.
+* New "Post views summary" widget on the WordPress dashboard (enable it from Screen Options if it's hidden), with the same four figures plus a 7-day trend sparkline. Fully server-rendered from a background-refreshed snapshot, so it adds no extra queries or JavaScript to wp-admin.
 
 = 1.2.3 =
 * AI crawler tracking now recognizes 63 AI crawlers (up from 9), grouped into 4 categories — AI assistant, data scraper, AI search and AI training — each shown with its own color. Settings → Post View Count has a new collapsible "AI crawlers monitored" panel listing all of them with their vendor and category, and the "AI bot crawling" table in Stats shows a color dot next to each bot with a legend below it.
