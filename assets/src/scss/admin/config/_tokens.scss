@@ -39,6 +39,16 @@
 	// antes usaba --warning como color de primer plano pasa a --amber-700,
 	// nunca a --accent.
 
+	// ---- Categorías de rastreadores IA (Core\AiCrawlers) — no forman parte
+	// de la paleta bk26, son propias de este catálogo. Mismo criterio 100/500/700
+	// que el resto de tokens de estado. ----
+	--blue-500: #2f6fed; // "Búsqueda IA"
+	--blue-100: #eaf1fe;
+	--blue-700: #1e3a8a;
+	--orange-500: #e8720c; // "Extractor de datos"
+	--orange-100: #fdf0e2;
+	--orange-700: #8a3d05;
+
 	// ---- Sombra (bk26 theme.json → settings.shadow.presets) ----
 	--shadow-pluma: 0 1px 2px rgba(19, 38, 51, 0.06), 0 2px 8px rgba(19, 38, 51, 0.05);
 	--shadow-profunda: 0 4px 12px rgba(19, 38, 51, 0.08), 0 32px 64px -16px rgba(31, 130, 136, 0.22);

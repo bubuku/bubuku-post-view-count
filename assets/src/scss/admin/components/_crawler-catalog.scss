@@ -1,0 +1,157 @@
+// AI crawler category dots, legend and the "AI crawlers monitored" collapsible
+// catalog — see components/CrawlerCategoryDot.js, CrawlerCategoryLegend.js and
+// AiCrawlerCatalog.js. Category colors come from the --crawler-* role tokens
+// in config/_aliases.scss, never hardcoded here.
+
+.bbk-crawler-dot {
+	display: inline-block;
+	width: 9px;
+	height: 9px;
+	min-width: 9px;
+	border-radius: 50%;
+	margin-right: 2px;
+
+	&--assistant {
+		background: var(--crawler-assistant);
+	}
+
+	&--scraper {
+		background: var(--crawler-scraper);
+	}
+
+	&--search {
+		background: var(--crawler-search);
+	}
+
+	&--training {
+		background: var(--crawler-training);
+	}
+}
+
+.bbk-crawler-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 18px;
+	list-style: none;
+	margin: 10px 0 0;
+	padding: 0;
+}
+
+.bbk-crawler-legend__item {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 12.5px;
+	color: var(--text-muted);
+}
+
+.bbk-crawler-catalog {
+	margin-top: 14px;
+}
+
+.bbk-crawler-catalog__toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	background: none;
+	border: none;
+	padding: 0;
+	font: inherit;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--brand);
+	cursor: pointer;
+
+	&:hover {
+		color: var(--brand-hover);
+	}
+
+	&::before {
+		content: "\25B8"; // ▸
+		font-size: 10px;
+		color: var(--text-muted);
+		transition: transform 0.15s ease;
+	}
+
+	&[aria-expanded="true"]::before {
+		transform: rotate(90deg);
+	}
+}
+
+.bbk-crawler-catalog__body {
+	margin-top: 10px;
+	padding: 14px;
+	border: 1px solid var(--border-card);
+	border-radius: var(--radius-button);
+	background: var(--surface-sunken);
+}
+
+.bbk-crawler-catalog__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+	gap: 10px;
+	list-style: none;
+	margin: 14px 0 0;
+	padding: 0;
+}
+
+.bbk-crawler-catalog__card {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 10px 12px;
+	background: var(--surface-card);
+	border: 1px solid var(--border-card);
+	border-radius: var(--radius-button);
+}
+
+.bbk-crawler-catalog__name {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--text-heading);
+	word-break: break-word;
+}
+
+.bbk-crawler-catalog__vendor {
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.bbk-crawler-catalog__badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	align-self: flex-start;
+	margin-top: 2px;
+	padding: 2px 8px;
+	border-radius: 10px;
+	font-size: 10.5px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+
+	.bbk-crawler-dot {
+		margin-right: 0;
+	}
+
+	// One badge background/text pair per category, matching the dot colors.
+	&--assistant {
+		background: var(--crawler-assistant-bg);
+		color: var(--crawler-assistant-text);
+	}
+
+	&--scraper {
+		background: var(--crawler-scraper-bg);
+		color: var(--crawler-scraper-text);
+	}
+
+	&--search {
+		background: var(--crawler-search-bg);
+		color: var(--crawler-search-text);
+	}
+
+	&--training {
+		background: var(--crawler-training-bg);
+		color: var(--crawler-training-text);
+	}
+}

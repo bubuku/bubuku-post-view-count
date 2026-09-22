@@ -4,6 +4,8 @@ import ExpandableViewsTable from './ExpandableViewsTable';
 import DashboardCard from './DashboardCard';
 import DataTable from './DataTable';
 import TrendChart from './TrendChart';
+import CrawlerCategoryDot from './CrawlerCategoryDot';
+import CrawlerCategoryLegend from './CrawlerCategoryLegend';
 import { bbkFetch } from '../App';
 import { formatNumber } from '../format';
 
@@ -277,6 +279,16 @@ const StatsPanel = ( { context } ) => {
 
 	const totalLabel = __( 'Total', 'bubuku-post-view-count' );
 
+	const crawlerCatalog = context?.ai_crawler_catalog || {};
+	const crawlerCategories = crawlerCatalog.categories || {};
+	const crawlerCategoryByBot = ( crawlerCatalog.crawlers || [] ).reduce(
+		( map, crawler ) => {
+			map[ crawler.name ] = crawler.category;
+			return map;
+		},
+		{}
+	);
+
 	const trendTotal = trend.reduce(
 		( total, row ) => total + row.total_views,
 		0
@@ -498,7 +510,24 @@ const StatsPanel = ( { context } ) => {
 											'bubuku-post-view-count'
 									  )
 							}
+							renderIndicator={ ( bot ) => {
+								const category = crawlerCategoryByBot[ bot ];
+								return category ? (
+									<CrawlerCategoryDot
+										category={ category }
+										label={
+											crawlerCategories[ category ] ||
+											category
+										}
+									/>
+								) : null;
+							} }
 						/>
+						{ ( aiTraffic?.crawlers || [] ).length > 0 && (
+							<CrawlerCategoryLegend
+								categories={ crawlerCategories }
+							/>
+						) }
 					</div>
 				</div>
 			</DashboardCard>

@@ -4,7 +4,7 @@ Tags: page view count, post views, post count, posts, post view count
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.2
+Stable tag: 1.2.3
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -83,6 +83,11 @@ Yes, by default. When a visitor's browser sends the DNT or Sec-GPC signal, the p
 
 
 == Changelog ==
+
+= 1.2.3 =
+* AI crawler tracking now recognizes 63 AI crawlers (up from 9), grouped into 4 categories — AI assistant, data scraper, AI search and AI training — each shown with its own color. Settings → Post View Count has a new collapsible "AI crawlers monitored" panel listing all of them with their vendor and category, and the "AI bot crawling" table in Stats shows a color dot next to each bot with a legend below it.
+* New privacy setting: "Respect Do Not Track / Global Privacy Control". When a visitor's browser sends the DNT or Sec-GPC signal, the view is still counted (it was already anonymous, with no IP or user agent stored) but the optional device/referrer breakdown is skipped for that visit.
+* Optional write buffer for high-traffic sites with a persistent object cache (Redis/Memcached): coalesces views for the same post into a single database write per minute instead of one per view. Off by default and has no effect without a persistent object cache.
 
 = 1.2.2 =
 * Evolution chart, period comparison, rising/falling content lists, device/referrer breakdown and the shortcode/block for showing view counts on the front end.

@@ -736,6 +736,15 @@ El endpoint valida la dimensión contra una lista blanca cerrada antes de escrib
 > simulada en el harness (mismo precedente que `momentum()`/`dims_breakdown()`), y
 > `Frontend\AiCrawlerTracker` se valida manualmente en `test.wp.local`, igual que
 > `dbDelta()`/WP-Cron en fases anteriores.
+>
+> **Ampliación posterior** (`docs/AI-CRAWLERS-CATALOG-PLAN.md`): el catálogo pasó de 9 a
+> **63 crawlers**, agrupados en 4 categorías (`Core\AiCrawlers::CATEGORIES` — asistente IA,
+> extractor de datos, búsqueda IA, entrenamiento IA) con fabricante por entrada, filtrable
+> con `bbk_postview_ai_crawlers`. Sin migración de datos: los 9 nombres originales siguen
+> resolviendo al mismo nombre canónico. El admin gana un panel plegable «Rastreadores IA
+> monitorizados» en Ajustes → AI & privacy con el catálogo completo y una leyenda de color
+> por categoría, y la tabla «AI bot crawling» de Estadísticas muestra esa misma pelotita de
+> color delante de cada bot.
 
 El requerimiento mezcla dos fenómenos que técnicamente **no se capturan igual**, y
 planificarlos como uno solo lleva a un callejón sin salida:
@@ -746,8 +755,9 @@ Copilot o Gemini. Se detectan por `document.referrer` (`chatgpt.com`, `claude.ai
 **Sí** los ve el mecanismo actual: son navegadores reales ejecutando el script. Es la
 dimensión `source = 'ai'` de la F5, sin infraestructura adicional.
 
-**2. Rastreo por IA** — los crawlers `GPTBot`, `ClaudeBot`, `Claude-User`, `PerplexityBot`,
-`CCBot`, `Google-Extended`, `Bytespider`, `Amazonbot`, `Applebot-Extended`.
+**2. Rastreo por IA** — crawlers como `GPTBot`, `ClaudeBot`, `Claude-User`, `PerplexityBot`,
+`CCBot`, `Google-Extended`, `Bytespider`, `Amazonbot`, `Applebot-Extended` (lista original
+de 9; ampliada después a 63 en 4 categorías, ver el addendum arriba).
 **Estos crawlers no ejecutan JavaScript**, así que el endpoint REST del plugin **nunca los
 verá**, por mucha dimensión que se añada. Contarlos exige una vía distinta:
 

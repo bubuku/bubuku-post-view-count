@@ -13,6 +13,7 @@ declare( strict_types=1 );
 namespace Bubuku\Plugins\PostViewCount\Api;
 
 use Bubuku\Plugins\PostViewCount\Admin\Settings;
+use Bubuku\Plugins\PostViewCount\Core\AiCrawlers;
 use Bubuku\Plugins\PostViewCount\Core\Db;
 use Bubuku\Plugins\PostViewCount\Core\Query;
 use Bubuku\Plugins\PostViewCount\Core\Schema;
@@ -105,6 +106,7 @@ class SettingsApi {
 					'available_post_types'   => $post_types,
 					'available_roles'        => $roles,
 					'bot_signature_examples' => Settings::bot_signature_examples(),
+					'ai_crawler_catalog'     => AiCrawlers::catalog(),
 					'has_object_cache'       => wp_using_ext_object_cache(),
 					'daily_data_since'       => Schema::daily_data_since(),
 				)

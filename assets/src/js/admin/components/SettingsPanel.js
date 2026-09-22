@@ -2,6 +2,7 @@ import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import DashboardCard from './DashboardCard';
 import BkSaveBar from './SaveBar';
+import AiCrawlerCatalog from './AiCrawlerCatalog';
 import { bbkFetch } from '../App';
 
 const ICON_SETTINGS = (
@@ -278,6 +279,8 @@ const SettingsPanel = ( { context, onContextChange } ) => {
 							'bubuku-post-view-count'
 						) }
 					</p>
+
+					<AiCrawlerCatalog catalog={ context.ai_crawler_catalog } />
 				</div>
 
 				<div className="bbk-field-group">

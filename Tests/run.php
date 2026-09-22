@@ -198,6 +198,59 @@ $tests = array(
 		bbk_test_same( null, AiCrawlers::detect( 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0' ), 'A regular browser User-Agent must never match an AI crawler.' );
 		bbk_test_same( null, AiCrawlers::detect( '' ), 'An empty User-Agent must never match.' );
 	},
+	'AiCrawlers::detect() prefers the longer, more specific name over a name that is its substring' => static function (): void {
+		bbk_test_same(
+			'Applebot-Extended',
+			AiCrawlers::detect( 'Mozilla/5.0 (compatible; Applebot-Extended/0.1; +http://www.apple.com/go/applebot)' ),
+			'Applebot-Extended must never be misreported as Applebot.'
+		);
+		bbk_test_same(
+			'Applebot',
+			AiCrawlers::detect( 'Mozilla/5.0 (compatible; Applebot/0.1; +http://www.apple.com/go/applebot)' ),
+			'A plain Applebot User-Agent (no "-Extended" suffix) must still be identified as Applebot.'
+		);
+		bbk_test_same(
+			'AI2Bot-Dolma',
+			AiCrawlers::detect( 'Mozilla/5.0 (compatible; AI2Bot-Dolma; +https://allenai.org/crawler)' ),
+			'AI2Bot-Dolma must never be misreported as AI2Bot.'
+		);
+	},
+	'AiCrawlers catalog is internally consistent across all entries' => static function (): void {
+		$catalog  = AiCrawlers::catalog();
+		$crawlers = $catalog['crawlers'];
+
+		bbk_test_same( 63, count( $crawlers ), 'The catalog must list exactly 63 crawlers.' );
+		bbk_test_same( array_keys( $catalog['categories'] ), AiCrawlers::CATEGORIES, 'The catalog categories must match AiCrawlers::CATEGORIES, in order.' );
+
+		$seen_names = array();
+
+		foreach ( $crawlers as $crawler ) {
+			$name = $crawler['name'];
+
+			bbk_test_same( false, isset( $seen_names[ $name ] ), "Duplicate canonical crawler name: {$name}." );
+			$seen_names[ $name ] = true;
+
+			bbk_test_same( true, strlen( $name ) <= 50, "Crawler name exceeds the bbk_post_ai_crawls.bot column width (50 chars): {$name}." );
+			bbk_test_same( true, in_array( $crawler['category'], AiCrawlers::CATEGORIES, true ), "Unknown category for {$name}: {$crawler['category']}." );
+		}
+	},
+	'AiCrawlers keeps detecting the 9 crawlers tracked before the 63-entry catalog, with the same canonical names' => static function (): void {
+		$previously_tracked = array(
+			'GPTBot',
+			'ClaudeBot',
+			'Claude-User',
+			'PerplexityBot',
+			'CCBot',
+			'Google-Extended',
+			'Bytespider',
+			'Amazonbot',
+			'Applebot-Extended',
+		);
+
+		foreach ( $previously_tracked as $name ) {
+			bbk_test_same( $name, AiCrawlers::detect( "Mozilla/5.0 (compatible; {$name}/1.0)" ), "Previously-tracked crawler {$name} must keep resolving to the same canonical name (no data-continuity break)." );
+		}
+	},
 	'record_ai_crawl() upserts per bot, aggregating repeats and keeping bots separate' => static function (): void {
 		TestState::reset();
 		TestState::$now = '2026-01-01 10:00:00';

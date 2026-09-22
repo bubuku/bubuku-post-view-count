@@ -28,4 +28,18 @@
 	// que --border-strong: un escalón por debajo de --border, para que se
 	// lea como filete sobre un fondo casi blanco.
 	--separator: var(--border-strong);
+
+	// ---- Categorías de rastreadores IA (docs/AI-CRAWLERS-CATALOG-PLAN.md) ----
+	--crawler-assistant: var(--green-500);
+	--crawler-assistant-bg: var(--green-100);
+	--crawler-assistant-text: var(--green-700);
+	--crawler-scraper: var(--orange-500);
+	--crawler-scraper-bg: var(--orange-100);
+	--crawler-scraper-text: var(--orange-700);
+	--crawler-search: var(--blue-500);
+	--crawler-search-bg: var(--blue-100);
+	--crawler-search-text: var(--blue-700);
+	--crawler-training: var(--red-500);
+	--crawler-training-bg: var(--red-100);
+	--crawler-training-text: var(--red-700);
 }

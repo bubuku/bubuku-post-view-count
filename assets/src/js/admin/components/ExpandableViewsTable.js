@@ -8,12 +8,13 @@ import { formatNumber } from '../format';
  * the page is still recorded and available, just not shown by default.
  *
  * @param {Object}                props
- * @param {Array<Object>}         props.rows         - `[{ [labelKey]: string, views, posts: [{ id, title, url, views }] }]`.
- * @param {string}                props.labelKey     - Property name identifying each row (e.g. `'assistant'` or `'bot'`).
- * @param {string}                props.headerLabel  - Text for the first column header.
- * @param {Object<string,string>} [props.labels]     - Optional slug -> display label map. Falls back to the raw value.
- * @param {string}                [props.emptyLabel] - Text shown when `rows` is empty. If omitted, renders nothing.
- * @param {string}                [props.totalLabel] - Label shown in the footer row's first cell.
+ * @param {Array<Object>}         props.rows              - `[{ [labelKey]: string, views, posts: [{ id, title, url, views }] }]`.
+ * @param {string}                props.labelKey          - Property name identifying each row (e.g. `'assistant'` or `'bot'`).
+ * @param {string}                props.headerLabel       - Text for the first column header.
+ * @param {Object<string,string>} [props.labels]          - Optional slug -> display label map. Falls back to the raw value.
+ * @param {string}                [props.emptyLabel]      - Text shown when `rows` is empty. If omitted, renders nothing.
+ * @param {string}                [props.totalLabel]      - Label shown in the footer row's first cell.
+ * @param {Function}              [props.renderIndicator] - Optional `( key ) => node`, rendered before the row label (e.g. a CrawlerCategoryDot).
  */
 const ExpandableViewsTable = ( {
 	rows,
@@ -22,6 +23,7 @@ const ExpandableViewsTable = ( {
 	labels = {},
 	emptyLabel,
 	totalLabel,
+	renderIndicator,
 } ) => {
 	const [ expanded, setExpanded ] = useState( null );
 
@@ -65,6 +67,8 @@ const ExpandableViewsTable = ( {
 												)
 											}
 										>
+											{ renderIndicator &&
+												renderIndicator( key ) }
 											{ labels[ key ] || key }
 										</button>
 									</td>

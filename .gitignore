@@ -10,6 +10,7 @@
 
 # Build output (scripts/build.sh).
 /dist/
+/docs/assets/
 
 # OS / editor cruft.
 .DS_Store
