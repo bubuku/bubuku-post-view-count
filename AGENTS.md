@@ -8,7 +8,7 @@ Plugin público de WordPress (WordPress.org) que cuenta las visitas de un Post s
 
 | Concepto | Valor |
 |---|---|
-| **Versión actual** | `1.2.0` (Header PHP y `readme.txt` `Stable tag` sincronizados) |
+| **Versión actual** | `1.2.3` (Header PHP y `readme.txt` `Stable tag` sincronizados) |
 | **Prefijo PHP** | `bbk` (constantes, hooks, funciones globales). Las clases ya no llevan prefijo (`Plugin`, `Db`, `RestApi`, `Assets`) tras la migración PSR-4 |
 | **Namespace PHP** | `Bubuku\Plugins\PostViewCount\{Core,Api,Frontend}\` — ver `docs/MIGRATION-PSR4.md` |
 | **Estructura actual** | `src/{Core,Api,Frontend,Admin}/` por responsabilidad (migración PSR-4 completada; `Admin/` añadido en la Fase 2 de `docs/ANALYTICS-PLAN.md`) |

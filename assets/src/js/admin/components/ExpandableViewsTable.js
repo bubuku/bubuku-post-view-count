@@ -67,9 +67,9 @@ const ExpandableViewsTable = ( {
 												)
 											}
 										>
+											{ labels[ key ] || key }
 											{ renderIndicator &&
 												renderIndicator( key ) }
-											{ labels[ key ] || key }
 										</button>
 									</td>
 									<td className="bk-data-table__num">

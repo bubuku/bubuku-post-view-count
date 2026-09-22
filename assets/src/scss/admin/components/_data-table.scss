@@ -132,9 +132,11 @@
 
 		&::before {
 			content: "\25B8"; // ▸
-			font-size: 10px;
+			font-size: 1.5rem;
+			line-height: 1;
 			color: var(--text-muted);
 			transition: transform 0.15s ease;
+			transform: translateY(-3px);
 		}
 
 		&:disabled::before {
@@ -142,7 +144,7 @@
 		}
 
 		&[aria-expanded="true"]::before {
-			transform: rotate(90deg);
+			transform: rotate(90deg) translateY(-3px);
 		}
 	}
 

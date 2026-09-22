@@ -482,6 +482,18 @@ const StatsPanel = ( { context } ) => {
 								'No views from AI assistants in this period.',
 								'bubuku-post-view-count'
 							) }
+							renderIndicator={ () => (
+								<CrawlerCategoryDot
+									category="assistant"
+									label={
+										crawlerCategories.assistant ||
+										__(
+											'AI assistant',
+											'bubuku-post-view-count'
+										)
+									}
+								/>
+							) }
 						/>
 					</div>
 					<div>
@@ -523,13 +535,12 @@ const StatsPanel = ( { context } ) => {
 								) : null;
 							} }
 						/>
-						{ ( aiTraffic?.crawlers || [] ).length > 0 && (
-							<CrawlerCategoryLegend
-								categories={ crawlerCategories }
-							/>
-						) }
 					</div>
 				</div>
+				{ ( ( aiTraffic?.referrals?.by_assistant || [] ).length > 0 ||
+					( aiTraffic?.crawlers || [] ).length > 0 ) && (
+					<CrawlerCategoryLegend categories={ crawlerCategories } />
+				) }
 			</DashboardCard>
 		</div>
 	);
