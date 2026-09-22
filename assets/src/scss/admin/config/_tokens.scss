@@ -40,14 +40,24 @@
 	// nunca a --accent.
 
 	// ---- Categorías de rastreadores IA (Core\AiCrawlers) — no forman parte
-	// de la paleta bk26, son propias de este catálogo. Mismo criterio 100/500/700
-	// que el resto de tokens de estado. ----
-	--blue-500: #2f6fed; // "Búsqueda IA"
-	--blue-100: #eaf1fe;
-	--blue-700: #1e3a8a;
-	--orange-500: #e8720c; // "Extractor de datos"
-	--orange-100: #fdf0e2;
-	--orange-700: #8a3d05;
+	// de la paleta bk26, son propias de este catálogo. Deliberadamente NO
+	// reutilizan --green-500/--red-500 (semántica de éxito/error, ajena a esto)
+	// ni los colores de la captura de referencia (verde/naranja/azul/rojo):
+	// 4 tonos repartidos por el círculo cromático para que se distingan entre
+	// sí a simple vista, incluida la pareja que antes chocaba (naranja/rojo).
+	// Mismo criterio 100/500/700 que el resto de tokens de estado. ----
+	--violet-500: #7c5cff; // "Asistente IA"
+	--violet-100: #f1edff;
+	--violet-700: #4c2889;
+	--teal-500: #0f9d8f; // "Extractor de datos"
+	--teal-100: #e3f7f5;
+	--teal-700: #0b5c53;
+	--magenta-500: #e0218a; // "Búsqueda IA"
+	--magenta-100: #fdeaf4;
+	--magenta-700: #8a1257;
+	--gold-500: #c68a00; // "Entrenamiento IA"
+	--gold-100: #fdf3d9;
+	--gold-700: #7a5400;
 
 	// ---- Sombra (bk26 theme.json → settings.shadow.presets) ----
 	--shadow-pluma: 0 1px 2px rgba(19, 38, 51, 0.06), 0 2px 8px rgba(19, 38, 51, 0.05);
