@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
+import { formatNumber } from '../format';
 
 function formatBucket( bucket, granularity ) {
 	const date = new Date( `${ bucket.slice( 0, 10 ) }T00:00:00Z` );
@@ -85,7 +86,7 @@ const TrendChart = ( { trend, granularity, noDataLabel } ) => {
 
 		ctx.fillStyle = colorMuted;
 		ctx.font = '11px sans-serif';
-		ctx.fillText( String( maxViews ), 4, padding.top + 4 );
+		ctx.fillText( formatNumber( maxViews ), 4, padding.top + 4 );
 		ctx.fillText( '0', 4, padding.top + plotHeight );
 
 		const stepX = trend.length > 1 ? plotWidth / ( trend.length - 1 ) : 0;
@@ -223,14 +224,14 @@ const TrendChart = ( { trend, granularity, noDataLabel } ) => {
 					<strong>{ tooltip.date }</strong>
 					<span>
 						{ sprintf(
-							/* translators: %d: number of views in the hovered bucket. */
+							/* translators: %s: number of views in the hovered bucket. */
 							_n(
-								'%d view',
-								'%d views',
+								'%s view',
+								'%s views',
 								tooltip.views,
 								'bubuku-post-view-count'
 							),
-							tooltip.views
+							formatNumber( tooltip.views )
 						) }
 					</span>
 				</div>

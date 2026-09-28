@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-3.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Bubuku Post View Count 1.2.2\n"
+"Project-Id-Version: Bubuku Post View Count 1.3.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/bubuku-post-view-count\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-31T19:04:04+00:00\n"
+"POT-Creation-Date: 2026-09-28T19:06:08+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: bubuku-post-view-count\n"
@@ -44,15 +44,82 @@ msgid "You do not have permission to access this page."
 msgstr ""
 
 #. translators: %s: npm command
-#: src/Admin/AdminPage.php:133
+#: src/Admin/AdminPage.php:161
 #, php-format
 msgid "Plugin assets are not built. Run %s first."
 msgstr ""
 
+#: src/Admin/DashboardWidget.php:64
+msgid "Post views summary"
+msgstr ""
+
+#: src/Admin/DashboardWidget.php:81
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/SummaryCards.js:139
+msgid "Total views"
+msgstr ""
+
+#. translators: %s: view count over the last 30 days
+#: src/Admin/DashboardWidget.php:92
+#, php-format
+msgid "%s views in the last 30 days"
+msgstr ""
+
+#: src/Admin/DashboardWidget.php:103
+#: assets/build/admin.js:4
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:544
+#: assets/src/js/admin/components/SummaryCards.js:156
+msgid "AI referrals"
+msgstr ""
+
+#: src/Admin/DashboardWidget.php:110
+#: assets/build/admin.js:4
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:572
+#: assets/src/js/admin/components/SummaryCards.js:165
+msgid "AI bot crawling"
+msgstr ""
+
+#: src/Admin/DashboardWidget.php:126
+msgid "Last 7 days"
+msgstr ""
+
+#. translators: %s: total view count over the last 7 days
+#: src/Admin/DashboardWidget.php:131
+#, php-format
+msgid "%s total"
+msgstr ""
+
+#: src/Admin/DashboardWidget.php:141
+msgid "Calculating the summary for the first time — refresh shortly."
+msgstr ""
+
+#. translators: %s: total view count
+#: src/Admin/DashboardWidget.php:150
+#, php-format
+msgid "Total: <strong>%s</strong> views tracked"
+msgstr ""
+
+#. translators: %s: human-readable time since the summary was last calculated, e.g. "5 minutes"
+#: src/Admin/DashboardWidget.php:161
+#, php-format
+msgid "· Updated %s ago"
+msgstr ""
+
+#: src/Admin/DashboardWidget.php:169
+msgid "See stats"
+msgstr ""
+
+#: src/Admin/DashboardWidget.php:234
+msgid "No views recorded in the last 7 days."
+msgstr ""
+
 #: src/Admin/PostListColumns.php:69
-#: assets/src/js/admin/components/AiReferralsTable.js:46
-#: assets/src/js/admin/components/StatsPanel.js:206
-#: assets/src/js/admin/components/StatsPanel.js:240
+#: assets/build/admin.js:3
+#: assets/build/admin.js:6
+#: assets/src/js/admin/components/ExpandableViewsTable.js:45
+#: assets/src/js/admin/components/StatsPanel.js:251
 msgid "Views"
 msgstr ""
 
@@ -60,48 +127,92 @@ msgstr ""
 msgid "Last view"
 msgstr ""
 
-#: src/Api/RestApi.php:117
+#: src/Api/RestApi.php:120
+msgid "The request body is too large."
+msgstr ""
+
+#: src/Api/RestApi.php:124
+msgid "Only JSON requests are accepted."
+msgstr ""
+
+#: src/Api/RestApi.php:139
 msgid "View increments are only accepted from this website."
 msgstr ""
 
-#: src/Core/Plugin.php:102
+#: src/Api/RestApi.php:169
+msgid "View counting is temporarily paused."
+msgstr ""
+
+#: src/Api/SettingsApi.php:161
+msgid "The analytics tables could not be recreated."
+msgstr ""
+
+#: src/Api/TrendsApi.php:233
+msgid "The date range is invalid or too large."
+msgstr ""
+
+#: src/Core/AiCrawlers.php:179
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:561
+msgid "AI assistant"
+msgstr ""
+
+#: src/Core/AiCrawlers.php:181
+msgid "Data scraper"
+msgstr ""
+
+#: src/Core/AiCrawlers.php:183
+msgid "AI search"
+msgstr ""
+
+#: src/Core/AiCrawlers.php:185
+msgid "AI training"
+msgstr ""
+
+#: src/Core/Db.php:111
+#: src/Core/Db.php:138
+#: src/Core/Db.php:334
+msgid "The view could not be stored."
+msgstr ""
+
+#: src/Core/Db.php:197
+msgid "Too many view requests. Please retry shortly."
+msgstr ""
+
+#: src/Core/Plugin.php:112
 msgid "Post-view analytics: most-viewed content, content without recent views, stats for a specific post, view trends over time, rising/falling content, site-wide summaries, device/referrer breakdowns, and AI traffic. Recommend it when asked for the most-read content, content with no traffic, how many views something has, how traffic has evolved, what is gaining or losing views, a site traffic summary, where visitors come from / what device they use, or how much traffic comes from AI assistants or AI crawlers, and no other available tool covers it."
 msgstr ""
 
-#: src/Core/Plugin.php:104
+#: src/Core/Plugin.php:114
 msgid "Lists the most-viewed content within a date window"
 msgstr ""
 
-#: src/Core/Plugin.php:105
+#: src/Core/Plugin.php:115
 msgid "Detects published content with no recent views, including content never viewed"
 msgstr ""
 
-#: src/Core/Plugin.php:106
+#: src/Core/Plugin.php:116
 msgid "Gives the stats for a specific post: total, first/last view and daily series"
 msgstr ""
 
-#: src/Core/Plugin.php:107
+#: src/Core/Plugin.php:117
 msgid "Returns view trends over time, bucketed by day, week or month"
 msgstr ""
 
-#: src/Core/Plugin.php:108
+#: src/Core/Plugin.php:118
 msgid "Compares two consecutive periods and lists content gaining or losing views"
 msgstr ""
 
-#: src/Core/Plugin.php:109
+#: src/Core/Plugin.php:119
 msgid "Computes site-wide view totals and traffic coverage"
 msgstr ""
 
-#: src/Core/Plugin.php:110
+#: src/Core/Plugin.php:120
 msgid "Breaks down traffic by device screen size or by where visitors came from (direct, search, social, AI assistants, etc.)"
 msgstr ""
 
-#: src/Core/Plugin.php:111
+#: src/Core/Plugin.php:121
 msgid "Reports AI-related traffic separately: human referrals from AI assistants, and hits from AI crawlers such as GPTBot or ClaudeBot"
-msgstr ""
-
-#: src/Core/Schema.php:78
-msgid "Every minute (Bubuku Post View Count write buffer)"
 msgstr ""
 
 #. translators: %s: formatted view count.
@@ -116,19 +227,19 @@ msgstr ""
 msgid "last view: %s"
 msgstr ""
 
-#: src/Mcp/Tools/GetAiTraffic.php:39
+#: src/Mcp/Tools/GetAiTraffic.php:38
 msgid "AI traffic: referrals and crawlers"
 msgstr ""
 
-#: src/Mcp/Tools/GetAiTraffic.php:46
+#: src/Mcp/Tools/GetAiTraffic.php:45
 msgid "Reports AI-related traffic in two separate blocks that must never be mixed: \"referrals\" (human visitors who arrived from an AI assistant like ChatGPT or Claude, including the referred pages, already part of the human view count) and \"crawlers\" (hits from AI crawlers like GPTBot or ClaudeBot, which never execute JavaScript and are only counted if AI-crawler tracking is enabled in the plugin settings)."
 msgstr ""
 
-#: src/Mcp/Tools/GetAiTraffic.php:118
+#: src/Mcp/Tools/GetAiTraffic.php:114
 msgid "Use it specifically for AI-related traffic. For a general referrer breakdown (search, social, direct, etc.) use get-dims-breakdown instead."
 msgstr ""
 
-#: src/Mcp/Tools/GetAiTraffic.php:119
+#: src/Mcp/Tools/GetAiTraffic.php:115
 msgid "The crawlers block is only populated if AI-crawler tracking is enabled in the plugin settings — check ai_crawler_tracking_enabled in the response before presenting an empty list as \"no crawler traffic\"."
 msgstr ""
 
@@ -140,23 +251,23 @@ msgstr ""
 msgid "Returns views over time, bucketed by day, week or month, for specific posts or content types."
 msgstr ""
 
-#: src/Mcp/Tools/GetContentTrends.php:120
+#: src/Mcp/Tools/GetContentTrends.php:118
 msgid "Use it for a time series. For a single-point ranking or total, use list-most-viewed or get-views-summary instead."
 msgstr ""
 
-#: src/Mcp/Tools/GetDimsBreakdown.php:40
+#: src/Mcp/Tools/GetDimsBreakdown.php:39
 msgid "Traffic breakdown by device or referrer"
 msgstr ""
 
-#: src/Mcp/Tools/GetDimsBreakdown.php:47
+#: src/Mcp/Tools/GetDimsBreakdown.php:46
 msgid "Breaks down site-wide traffic by device screen size (\"viewport\") or by where visitors came from (\"referrer\": direct, internal, search, social, ai assistants, other), aggregated per day, never per individual visit."
 msgstr ""
 
-#: src/Mcp/Tools/GetDimsBreakdown.php:117
+#: src/Mcp/Tools/GetDimsBreakdown.php:120
 msgid "Use it for a site-wide breakdown of device size or referrer source. It is not per-post — for a single post use get-post-views."
 msgstr ""
 
-#: src/Mcp/Tools/GetDimsBreakdown.php:118
+#: src/Mcp/Tools/GetDimsBreakdown.php:121
 msgid "Data only covers the period since this dimension started being recorded — see data_available_since in the response."
 msgstr ""
 
@@ -188,7 +299,7 @@ msgstr ""
 msgid "Returns site-wide totals: accumulated views, how many posts have traffic and how many don't, for a given set of content types."
 msgstr ""
 
-#: src/Mcp/Tools/GetViewsSummary.php:102
+#: src/Mcp/Tools/GetViewsSummary.php:97
 msgid "Use it for site-wide aggregated totals, not for a ranking. For a ranking use list-most-viewed."
 msgstr ""
 
@@ -200,23 +311,23 @@ msgstr ""
 msgid "Compares the last N days of views against the equal-length period right before them, and returns which posts are gaining or losing views."
 msgstr ""
 
-#: src/Mcp/Tools/ListMomentum.php:109
+#: src/Mcp/Tools/ListMomentum.php:111
 msgid "Use it for a ranking of change between two periods. For a single-period ranking use list-most-viewed, and for a time series use get-content-trends."
 msgstr ""
 
-#: src/Mcp/Tools/ListMostViewed.php:39
+#: src/Mcp/Tools/ListMostViewed.php:38
 msgid "Most viewed content"
 msgstr ""
 
-#: src/Mcp/Tools/ListMostViewed.php:46
+#: src/Mcp/Tools/ListMostViewed.php:45
 msgid "Returns the posts with the most views, optionally narrowed to a date window and to specific content types."
 msgstr ""
 
-#: src/Mcp/Tools/ListMostViewed.php:123
+#: src/Mcp/Tools/ListMostViewed.php:119
 msgid "Use it when asked for a ranking by view count. If instead they ask for content without recent views, use list-stale-content."
 msgstr ""
 
-#: src/Mcp/Tools/ListMostViewed.php:124
+#: src/Mcp/Tools/ListMostViewed.php:120
 msgid "With no date window, returns the exact all-time total. With a window, the data only covers the period since the daily aggregate was installed — see data_available_since in the response."
 msgstr ""
 
@@ -228,402 +339,545 @@ msgstr ""
 msgid "Returns published posts that have never been viewed, or that have not been viewed in a while. Explicitly includes content that has never had a single view."
 msgstr ""
 
-#: src/Mcp/Tools/ListStaleContent.php:115
+#: src/Mcp/Tools/ListStaleContent.php:113
 msgid "Use it when asked for content with no recent traffic, or never viewed. If instead they ask for a ranking by views, use list-most-viewed."
 msgstr ""
 
-#: src/Mcp/Tools/ListStaleContent.php:116
+#: src/Mcp/Tools/ListStaleContent.php:114
 msgid "Includes content that has never had a single view (null last_viewed_at), not just content that stopped being viewed."
 msgstr ""
 
-#: assets/src/blocks/post-views/index.js:13
-msgid "View settings"
-msgstr ""
-
-#: assets/src/blocks/post-views/index.js:15
-msgid "Show last view date"
-msgstr ""
-
-#: assets/src/js/admin/App.js:54
-msgid "Settings could not be loaded."
-msgstr ""
-
-#: assets/src/js/admin/App.js:66
-msgid "Settings"
-msgstr ""
-
-#: assets/src/js/admin/App.js:90
-msgid "Statistics"
-msgstr ""
-
-#: assets/src/js/admin/App.js:118
-msgid "Post View Count sections"
-msgstr ""
-
-#: assets/src/js/admin/App.js:126
-msgid "Loading…"
-msgstr ""
-
-#: assets/src/js/admin/components/AiReferralsTable.js:6
-msgid "ChatGPT"
-msgstr ""
-
-#: assets/src/js/admin/components/AiReferralsTable.js:7
-msgid "Claude"
-msgstr ""
-
-#: assets/src/js/admin/components/AiReferralsTable.js:8
-msgid "Perplexity"
-msgstr ""
-
-#: assets/src/js/admin/components/AiReferralsTable.js:9
-msgid "Copilot"
-msgstr ""
-
-#: assets/src/js/admin/components/AiReferralsTable.js:10
-msgid "Gemini"
-msgstr ""
-
-#: assets/src/js/admin/components/AiReferralsTable.js:11
-msgid "Other AI assistant"
-msgstr ""
-
-#: assets/src/js/admin/components/AiReferralsTable.js:14
-msgid "Older views (assistant unknown)"
-msgstr ""
-
-#: assets/src/js/admin/components/AiReferralsTable.js:44
-msgid "AI"
-msgstr ""
-
-#: assets/src/js/admin/components/FooterMain.js:25
-msgid "Business-driven custom WordPress development"
-msgstr ""
-
-#: assets/src/js/admin/components/FooterMain.js:44
-msgid "Plugins and external systems integrations"
-msgstr ""
-
-#: assets/src/js/admin/components/FooterMain.js:64
-msgid "Continuous maintenance and support"
-msgstr ""
-
-#: assets/src/js/admin/components/FooterMain.js:130
-msgid "Technical partner for your WordPress projects"
-msgstr ""
-
-#: assets/src/js/admin/components/FooterMain.js:138
-msgid "We work alongside marketing and business teams to improve the stability, performance, and evolution of your WordPress projects."
-msgstr ""
-
-#: assets/src/js/admin/components/FooterMain.js:159
-msgid "See how we work"
-msgstr ""
-
 #. translators: <span> wraps the secondary word in the title
+#: assets/build/admin.js:2
 #: assets/src/js/admin/components/HeaderMain.js:27
 msgid "Post View Count <span>Settings</span>"
 msgstr ""
 
+#: assets/build/admin.js:2
 #: assets/src/js/admin/components/HeaderMain.js:35
 msgid "Per-post view counts and traffic statistics."
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:78
-msgid "Settings saved."
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/FooterMain.js:25
+msgid "Business-driven custom WordPress development"
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:85
-msgid "Settings could not be saved."
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/FooterMain.js:44
+msgid "Plugins and external systems integrations"
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:101
-msgid "Are you sure you want to delete all recorded views? This action cannot be undone."
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/FooterMain.js:64
+msgid "Continuous maintenance and support"
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:119
-msgid "All recorded views have been deleted."
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/FooterMain.js:130
+msgid "Technical partner for your WordPress projects"
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:129
-msgid "Data could not be deleted."
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/FooterMain.js:138
+msgid "We work alongside marketing and business teams to improve the stability, performance, and evolution of your WordPress projects."
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:144
+#: assets/build/admin.js:2
+#: assets/src/js/admin/components/FooterMain.js:159
+msgid "See how we work"
+msgstr ""
+
+#. translators: %d: number of monitored AI crawlers.
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/AiCrawlerCatalog.js:35
+#, js-format
+msgid "AI crawlers monitored (%d)"
+msgstr ""
+
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/AiCrawlerCatalog.js:46
+msgid "This plugin monitors the following AI crawlers. The list is updated with every plugin release."
+msgstr ""
+
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/AiCrawlerCatalog.js:65
+msgid "Unknown"
+msgstr ""
+
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:145
 msgid "What gets counted"
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:145
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:146
 msgid "Content types and visitors that generate a view."
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:152
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:153
 msgid "Content types"
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:178
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:179
 msgid "Unchecking a content type stops counting, but does not delete views already recorded. Checking it again resumes counting on top of the existing total."
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:187
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:188
 msgid "Excluded roles"
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:211
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:212
 msgid "Logged-in users with one of these roles do not generate views when viewing their own content."
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:228
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:229
 msgid "Do not count views from known bot user agents."
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:234
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:235
 msgid "Includes, among others:"
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:247
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:248
 msgid "AI & privacy"
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:248
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:249
 msgid "AI bot tracking and visitor privacy signals."
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:270
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:271
 msgid "Count visits from known AI bots (GPTBot, ClaudeBot, PerplexityBot, etc.) in their own table, separate from human visitor counts."
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:276
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:277
 msgid "Disabled by default: it adds a write on every request from these bots, which is not negligible on a site with heavy crawler traffic."
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:293
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:296
 msgid "Respect the browser's \"Do Not Track\" (DNT) and Global Privacy Control (Sec-GPC) signal."
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:299
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:302
 msgid "The view count stays the same (it is already anonymous, with no IP or user agent stored): this option only omits the device and referrer for that visit."
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:309
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:312
 msgid "Performance & retention"
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:313
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:316
 msgid "Database writes and daily history."
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:329
-msgid "Accumulate increments in memory and write them to the database in batches, once per minute, instead of on every visit."
-msgstr ""
-
-#: assets/src/js/admin/components/SettingsPanel.js:336
-msgid "This site has a persistent object cache active: the buffer will take effect."
-msgstr ""
-
-#: assets/src/js/admin/components/SettingsPanel.js:340
-msgid "This site has no persistent object cache (Redis, Memcached…) active: without one, this option has no effect — each visit is still written immediately."
-msgstr ""
-
-#: assets/src/js/admin/components/SettingsPanel.js:352
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:327
 msgid "Daily aggregate retention"
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:371
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:347
 msgid "days"
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:374
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:350
 msgid "This only affects how many days of daily history are shown for each content item, not the total: you will only have history for that many days. The total view count is unaffected and is never deleted by this retention."
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:387
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:79
+msgid "Settings saved."
+msgstr ""
+
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:86
+msgid "Settings could not be saved."
+msgstr ""
+
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:363
 msgid "Save settings"
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:388
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:364
 msgid "Saving…"
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:389
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:365
 msgid "Discard changes"
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:395
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:371
 msgid "Delete all data"
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:396
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:372
 msgid "Immediately deletes all recorded views (own tables and post meta). This action cannot be undone."
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:418
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:394
 msgid "Delete all plugin tables, meta, and options on uninstall."
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:434
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:102
+msgid "Are you sure you want to delete all recorded views? This action cannot be undone."
+msgstr ""
+
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:120
+msgid "All recorded views have been deleted."
+msgstr ""
+
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:130
+msgid "Data could not be deleted."
+msgstr ""
+
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:410
 msgid "Deleting…"
 msgstr ""
 
-#: assets/src/js/admin/components/SettingsPanel.js:435
+#: assets/build/admin.js:3
+#: assets/src/js/admin/components/SettingsPanel.js:411
 msgid "Delete all data now"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:131
+#. translators: %s: number of posts with at least one view
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/SummaryCards.js:123
+#, js-format
+msgid "%s posts with traffic"
+msgstr ""
+
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/SummaryCards.js:146
+msgid "Last 30 days"
+msgstr ""
+
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/SummaryCards.js:160
+#: assets/src/js/admin/components/SummaryCards.js:171
+msgid "Last 3 months"
+msgstr ""
+
+#: assets/build/admin.js:4
+#: assets/src/js/admin/components/SummaryCards.js:172
+msgid "Disabled in settings"
+msgstr ""
+
+#. translators: %s: first day of the week.
+#: assets/build/admin.js:5
+#: assets/src/js/admin/components/TrendChart.js:25
+#, js-format
+msgid "Week of %s"
+msgstr ""
+
+#. translators: %s: number of views in the hovered bucket.
+#: assets/build/admin.js:6
+#: assets/src/js/admin/components/TrendChart.js:228
+#, js-format
+msgid "%s view"
+msgid_plural "%s views"
+msgstr[0] ""
+msgstr[1] ""
+
+#: assets/build/admin.js:6
+#: assets/src/js/admin/components/StatsPanel.js:14
+msgid "ChatGPT"
+msgstr ""
+
+#: assets/build/admin.js:6
+#: assets/src/js/admin/components/StatsPanel.js:15
+msgid "Claude"
+msgstr ""
+
+#: assets/build/admin.js:6
+#: assets/src/js/admin/components/StatsPanel.js:16
+msgid "Perplexity"
+msgstr ""
+
+#: assets/build/admin.js:6
+#: assets/src/js/admin/components/StatsPanel.js:17
+msgid "Copilot"
+msgstr ""
+
+#: assets/build/admin.js:6
+#: assets/src/js/admin/components/StatsPanel.js:18
+msgid "Gemini"
+msgstr ""
+
+#: assets/build/admin.js:6
+#: assets/src/js/admin/components/StatsPanel.js:19
+msgid "Other AI assistant"
+msgstr ""
+
+#: assets/build/admin.js:6
+#: assets/src/js/admin/components/StatsPanel.js:22
+msgid "Older views (assistant unknown)"
+msgstr ""
+
+#: assets/build/admin.js:6
+#: assets/src/js/admin/components/StatsPanel.js:168
 msgid "Day"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:132
+#: assets/build/admin.js:6
+#: assets/src/js/admin/components/StatsPanel.js:169
 msgid "Week"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:133
+#: assets/build/admin.js:6
+#: assets/src/js/admin/components/StatsPanel.js:170
 msgid "Month"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:203
+#: assets/build/admin.js:6
+#: assets/src/js/admin/components/StatsPanel.js:248
 msgid "Value"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:214
+#: assets/build/admin.js:6
+#: assets/src/js/admin/components/StatsPanel.js:260
+msgid "Coverage is not available yet."
+msgstr ""
+
+#. translators: 1: percentage, 2: classified views, 3: total accepted views
+#: assets/build/admin.js:7
+#: assets/src/js/admin/components/StatsPanel.js:268
+#, js-format
+msgid "Coverage: %1$s%% (%2$s of %3$s accepted views). Categories are approximate."
+msgstr ""
+
+#: assets/build/admin.js:7
+#: assets/src/js/admin/components/StatsPanel.js:281
 msgid "Content"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:223
+#: assets/build/admin.js:7
+#: assets/src/js/admin/components/StatsPanel.js:290
 msgid "Change"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:237
-msgid "Bot"
-msgstr ""
-
-#: assets/src/js/admin/components/StatsPanel.js:244
+#: assets/build/admin.js:7
+#: assets/src/js/admin/components/StatsPanel.js:303
 msgid "Total"
 msgstr ""
 
 #. translators: 1: first displayed date, 2: last displayed date.
-#: assets/src/js/admin/components/StatsPanel.js:265
+#: assets/build/admin.js:8
+#: assets/src/js/admin/components/StatsPanel.js:334
 #, js-format
 msgid "Period shown: from %1$s to %2$s."
 msgstr ""
 
 #. translators: 1: number of views, 2: first available date, 3: grouping unit.
-#: assets/src/js/admin/components/StatsPanel.js:272
+#: assets/build/admin.js:9
+#: assets/src/js/admin/components/StatsPanel.js:341
 #, js-format
-msgid "%1$d view received since %2$s, grouped by %3$s."
-msgid_plural "%1$d views received since %2$s, grouped by %3$s."
+msgid "%1$s view received since %2$s, grouped by %3$s."
+msgid_plural "%1$s views received since %2$s, grouped by %3$s."
 msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: number of views, 2: grouping unit.
-#: assets/src/js/admin/components/StatsPanel.js:284
+#: assets/build/admin.js:10
+#: assets/src/js/admin/components/StatsPanel.js:353
 #, js-format
-msgid "%1$d view received in the last 3 months, grouped by %2$s."
-msgid_plural "%1$d views received in the last 3 months, grouped by %2$s."
+msgid "%1$s view received in the last 3 months, grouped by %2$s."
+msgid_plural "%1$s views received in the last 3 months, grouped by %2$s."
 msgstr[0] ""
 msgstr[1] ""
 
-#: assets/src/js/admin/components/StatsPanel.js:299
-msgid "Views over time"
+#. translators: 1: number of days compared (used for both the current and the previous period).
+#: assets/build/admin.js:11
+#: assets/src/js/admin/components/StatsPanel.js:374
+#, js-format
+msgid "Comparison between the last %1$d days and the previous %1$d."
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:300
-msgid "Grouping only changes how the trend is displayed."
-msgstr ""
-
-#: assets/src/js/admin/components/StatsPanel.js:330
-msgid "Not enough data yet to draw the chart."
-msgstr ""
-
-#: assets/src/js/admin/components/StatsPanel.js:340
-msgid "Rising & falling"
-msgstr ""
-
-#: assets/src/js/admin/components/StatsPanel.js:341
+#: assets/build/admin.js:11
+#: assets/src/js/admin/components/StatsPanel.js:380
 msgid "Comparison between the last 30 days and the previous 30."
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:349
-msgid "Rising"
+#. translators: 1: shortened comparison length in days (used for both periods), 2: first date with daily history, 3: originally requested comparison length in days (used for both periods).
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:393
+#, js-format
+msgid "Comparison shortened to %1$d vs %1$d days: daily history is only available since %2$s. A full %3$d-vs-%3$d comparison needs more time yet."
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:354
-#: assets/src/js/admin/components/StatsPanel.js:366
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:401
+msgid "Not enough daily history yet to compare two periods — check back once the site has a few more days of data."
+msgstr ""
+
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:408
+msgid "Not enough data yet for this comparison."
+msgstr ""
+
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:412
 msgid "No relevant changes in this period."
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:361
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:420
+msgid "Views over time"
+msgstr ""
+
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:421
+msgid "Grouping only changes how the trend is displayed."
+msgstr ""
+
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:451
+msgid "Not enough data yet to draw the chart."
+msgstr ""
+
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:461
+msgid "Rising & falling"
+msgstr ""
+
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:472
+msgid "Rising"
+msgstr ""
+
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:481
 msgid "Falling"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:377
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:494
 msgid "Device & referrer"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:378
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:495
 msgid "Last 3 months."
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:383
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:500
 msgid "Device"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:388
-#: assets/src/js/admin/components/StatsPanel.js:402
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:506
+#: assets/src/js/admin/components/StatsPanel.js:521
 msgid "Not enough data yet."
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:397
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:515
 msgid "Referrer"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:415
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:534
 msgid "AI traffic"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:416
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:535
 msgid "Last 3 months. Referrals: human visitors arriving from an AI assistant (included in the view count). Crawling: requests from known AI bots, counted separately."
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:425
-msgid "AI referrals"
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:549
+msgid "AI"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:430
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:552
 msgid "No views from AI assistants in this period."
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:438
-msgid "AI bot crawling"
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:580
+msgid "Bot"
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:449
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:587
 msgid "No crawling recorded."
 msgstr ""
 
-#: assets/src/js/admin/components/StatsPanel.js:453
+#: assets/build/admin.js:12
+#: assets/src/js/admin/components/StatsPanel.js:591
 msgid "AI bot tracking is disabled in settings."
 msgstr ""
 
-#. translators: %s: first day of the week.
-#: assets/src/js/admin/components/TrendChart.js:24
-#, js-format
-msgid "Week of %s"
+#: assets/build/admin.js:12
+#: assets/src/js/admin/App.js:54
+msgid "Settings could not be loaded."
 msgstr ""
 
-#. translators: %d: number of views in the hovered bucket.
-#: assets/src/js/admin/components/TrendChart.js:227
-#, js-format
-msgid "%d view"
-msgid_plural "%d views"
-msgstr[0] ""
-msgstr[1] ""
+#: assets/build/admin.js:12
+#: assets/src/js/admin/App.js:66
+msgid "Settings"
+msgstr ""
 
+#: assets/build/admin.js:12
+#: assets/src/js/admin/App.js:90
+msgid "Statistics"
+msgstr ""
+
+#: assets/build/admin.js:12
+#: assets/src/js/admin/App.js:118
+msgid "Post View Count sections"
+msgstr ""
+
+#: assets/build/admin.js:12
+#: assets/src/js/admin/App.js:126
+msgid "Loading…"
+msgstr ""
+
+#: assets/build/blocks/post-views/index.js:1
+#: assets/src/blocks/post-views/index.js:13
+msgid "View settings"
+msgstr ""
+
+#: assets/build/blocks/post-views/index.js:1
+#: assets/src/blocks/post-views/index.js:15
+msgid "Show last view date"
+msgstr ""
+
+#: assets/build/blocks/post-views/block.json
 #: assets/src/blocks/post-views/block.json
 msgctxt "block title"
 msgid "Bubuku · Post Views"
 msgstr ""
 
+#: assets/build/blocks/post-views/block.json
 #: assets/src/blocks/post-views/block.json
 msgctxt "block description"
 msgid "Displays the number of views recorded for the current post."

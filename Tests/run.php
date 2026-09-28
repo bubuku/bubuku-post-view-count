@@ -815,6 +815,46 @@ $tests = array(
 		bbk_test_same( array(), $result['falling'], 'A disabled post type must never be queried, and must return no rows.' );
 		bbk_test_same( true, isset( $result['period']['current'], $result['period']['previous'] ), 'momentum() must always report the two compared periods.' );
 	},
+	'Query::momentum() shrinks the comparison window when the daily aggregate is younger than 2x period_days' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+		TestState::$now                                   = '2026-01-20 00:00:00';
+		TestState::$options[ Schema::OPTION_DAILY_SINCE ] = '2026-01-01 00:00:00';
+
+		$result = Query::momentum( array( 'post' ), 30 );
+
+		bbk_test_same( true, $result['insufficient_history'], 'With only 20 days of daily history, a 30-vs-30 comparison must be flagged insufficient.' );
+		bbk_test_same( 30, $result['requested_period_days'], 'The originally requested period_days must always be reported, even when shrunk.' );
+		bbk_test_same( '2026-01-01 00:00:00', $result['history_since'], 'history_since must mirror Schema::daily_data_since().' );
+
+		$current_days  = (int) ( ( strtotime( $result['period']['current']['to'] ) - strtotime( $result['period']['current']['from'] ) ) / 86400 ) + 1;
+		$previous_days = (int) ( ( strtotime( $result['period']['previous']['to'] ) - strtotime( $result['period']['previous']['from'] ) ) / 86400 ) + 1;
+
+		bbk_test_same( 10, $current_days, 'floor(20 available days / 2) = 10 days per period, not the requested 30.' );
+		bbk_test_same( 10, $previous_days, 'Both compared periods must stay equal length.' );
+	},
+	'Query::momentum() reports insufficient_history=false and finds a falling post once the daily aggregate covers both periods' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+
+		$today = '2026-03-01';
+		TestState::$now                                   = "{$today} 00:00:00";
+		TestState::$options[ Schema::OPTION_DAILY_SINCE ] = '2025-01-01 00:00:00';
+
+		$current_mid  = gmdate( 'Y-m-d', strtotime( "{$today} -10 days" ) );
+		$previous_mid = gmdate( 'Y-m-d', strtotime( "{$today} -45 days" ) );
+
+		TestState::$daily[ "55|{$current_mid}" ]  = 2;
+		TestState::$daily[ "55|{$previous_mid}" ] = 10;
+
+		$result = Query::momentum( array( 'post' ) );
+
+		bbk_test_same( false, $result['insufficient_history'], 'A year of daily history must cover a 30-vs-30 comparison without shrinking it.' );
+		bbk_test_same( 1, count( $result['falling'] ), 'A post with fewer views this period than last must appear in falling.' );
+		bbk_test_same( 55, $result['falling'][0]['id'], 'The falling post must be post 55.' );
+		bbk_test_same( -8, $result['falling'][0]['delta'], 'delta must be current_views (2) - previous_views (10).' );
+		bbk_test_same( array(), $result['rising'], 'Post 55 fell, so rising must stay empty.' );
+	},
 	'Query::dims_breakdown() returns an empty array for an unknown dimension' => static function (): void {
 		TestState::reset();
 		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
@@ -1158,6 +1198,43 @@ $tests = array(
 
 		bbk_test_same( 42, $snapshot['total_views'], 'An expired snapshot must still be served as-is, never rebuilt synchronously.' );
 		bbk_test_same( true, $snapshot['stale'], 'An expired snapshot must be flagged stale for the caller.' );
+	},
+	'OverviewSnapshot::get_cached() rebuilds synchronously once a snapshot is older than MAX_STALE' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+
+		$ancient_snapshot = array(
+			'generated_at'          => time() - OverviewSnapshot::MAX_STALE - 1,
+			'stale'                 => true,
+			'warming'               => false,
+			'total_views'           => 42,
+			'total_views_formatted' => '42',
+		);
+		update_option( OverviewSnapshot::OPTION_SNAPSHOT, $ancient_snapshot );
+
+		$snapshot = OverviewSnapshot::get_cached();
+
+		bbk_test_same( false, $snapshot['stale'], 'Past MAX_STALE, get_cached() must stop trusting a pending cron refresh and rebuild now.' );
+		bbk_test_same( 0, $snapshot['total_views'], 'The rebuilt snapshot must reflect current data (no views recorded), not the ancient 42.' );
+		bbk_test_same( true, ( time() - (int) get_option( OverviewSnapshot::OPTION_SNAPSHOT, array() )['generated_at'] ) < OverviewSnapshot::TTL, 'The synchronous rebuild must persist a freshly timestamped snapshot.' );
+	},
+	'OverviewSnapshot::get_cached() serves the old snapshot, still marked stale, when a MAX_STALE rebuild is already locked' => static function (): void {
+		TestState::reset();
+
+		$ancient_snapshot = array(
+			'generated_at'          => time() - OverviewSnapshot::MAX_STALE - 1,
+			'stale'                 => true,
+			'warming'               => false,
+			'total_views'           => 42,
+			'total_views_formatted' => '42',
+		);
+		update_option( OverviewSnapshot::OPTION_SNAPSHOT, $ancient_snapshot );
+		set_transient( OverviewSnapshot::LOCK_TRANSIENT, 1, OverviewSnapshot::LOCK_TTL );
+
+		$snapshot = OverviewSnapshot::get_cached();
+
+		bbk_test_same( 42, $snapshot['total_views'], 'A concurrent build already in progress must not be duplicated, even past MAX_STALE.' );
+		bbk_test_same( true, $snapshot['stale'], 'The old snapshot served while locked must still be flagged stale.' );
 	},
 	'OverviewSnapshot::get_cached() returns a zeroed warming payload when locked with no snapshot yet' => static function (): void {
 		TestState::reset();

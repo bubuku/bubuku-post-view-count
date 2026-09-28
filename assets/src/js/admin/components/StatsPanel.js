@@ -133,6 +133,28 @@ function completeTrend( rows, range, granularity, dataAvailable ) {
 	return series;
 }
 
+/**
+ * Length in whole days of an inclusive `{from, to}` API range, or null when
+ * either bound is missing — used to describe the "Rising & falling" card's
+ * actually-compared period, which `Query::momentum()` shortens on a site
+ * whose daily history is younger than 2x the requested period_days (see
+ * docs/PENDING-1.3.1-FIXES.md §3).
+ *
+ * @param {Object|null} range Inclusive range with `from`/`to` (Y-m-d).
+ * @return {number|null} Number of days, or null.
+ */
+function periodLengthDays( range ) {
+	if ( ! range?.from || ! range?.to ) {
+		return null;
+	}
+
+	const days = Math.round(
+		( parseIsoDate( range.to ) - parseIsoDate( range.from ) ) / 86400000
+	);
+
+	return days + 1;
+}
+
 function formatDate( value ) {
 	return new Intl.DateTimeFormat( document.documentElement.lang || 'es', {
 		day: 'numeric',
@@ -317,27 +339,77 @@ const StatsPanel = ( { context } ) => {
 			? sprintf(
 					/* translators: 1: number of views, 2: first available date, 3: grouping unit. */
 					_n(
-						'%1$d view received since %2$s, grouped by %3$s.',
-						'%1$d views received since %2$s, grouped by %3$s.',
+						'%1$s view received since %2$s, grouped by %3$s.',
+						'%1$s views received since %2$s, grouped by %3$s.',
 						trendTotal,
 						'bubuku-post-view-count'
 					),
-					trendTotal,
+					formatNumber( trendTotal ),
 					formatDate( availableDay ),
 					granularityLabel
 			  )
 			: sprintf(
 					/* translators: 1: number of views, 2: grouping unit. */
 					_n(
-						'%1$d view received in the last 3 months, grouped by %2$s.',
-						'%1$d views received in the last 3 months, grouped by %2$s.',
+						'%1$s view received in the last 3 months, grouped by %2$s.',
+						'%1$s views received in the last 3 months, grouped by %2$s.',
 						trendTotal,
 						'bubuku-post-view-count'
 					),
-					trendTotal,
+					formatNumber( trendTotal ),
 					granularityLabel
 			  );
 	}
+
+	// "Rising & falling" card: Query::momentum() shortens the comparison when the
+	// daily aggregate doesn't yet cover two full requested periods (e.g. a recently
+	// updated site), instead of comparing against an all-zero "previous" period —
+	// see docs/PENDING-1.3.1-FIXES.md §3. Reflect the period actually compared, and
+	// explain the shortfall instead of showing a bare, misleading "no changes".
+	const momentumDays = periodLengthDays( momentum?.period?.current );
+	const momentumClaim =
+		momentumDays && ! momentum?.insufficient_history
+			? sprintf(
+					/* translators: 1: number of days compared (used for both the current and the previous period). */
+					__(
+						'Comparison between the last %1$d days and the previous %1$d.',
+						'bubuku-post-view-count'
+					),
+					momentumDays
+			  )
+			: __(
+					'Comparison between the last 30 days and the previous 30.',
+					'bubuku-post-view-count'
+			  );
+	let momentumHistoryNote = null;
+
+	if ( momentum?.insufficient_history ) {
+		const historySince = momentum.history_since?.slice( 0, 10 );
+
+		momentumHistoryNote =
+			momentumDays && momentumDays > 1 && historySince
+				? sprintf(
+						/* translators: 1: shortened comparison length in days (used for both periods), 2: first date with daily history, 3: originally requested comparison length in days (used for both periods). */
+						__(
+							'Comparison shortened to %1$d vs %1$d days: daily history is only available since %2$s. A full %3$d-vs-%3$d comparison needs more time yet.',
+							'bubuku-post-view-count'
+						),
+						momentumDays,
+						formatDate( historySince ),
+						momentum.requested_period_days
+				  )
+				: __(
+						'Not enough daily history yet to compare two periods — check back once the site has a few more days of data.',
+						'bubuku-post-view-count'
+				  );
+	}
+
+	const momentumEmptyLabel = momentum?.insufficient_history
+		? __(
+				'Not enough data yet for this comparison.',
+				'bubuku-post-view-count'
+		  )
+		: __( 'No relevant changes in this period.', 'bubuku-post-view-count' );
 
 	return (
 		<div className="bbk-stats-panel">
@@ -387,12 +459,14 @@ const StatsPanel = ( { context } ) => {
 			<DashboardCard
 				icon={ ICON_TREND }
 				title={ __( 'Rising & falling', 'bubuku-post-view-count' ) }
-				claim={ __(
-					'Comparison between the last 30 days and the previous 30.',
-					'bubuku-post-view-count'
-				) }
+				claim={ momentumClaim }
 				animationDelay=".1s"
 			>
+				{ momentumHistoryNote && (
+					<p className="bbk-trend-chart__range">
+						{ momentumHistoryNote }
+					</p>
+				) }
 				<div className="bbk-two-columns">
 					<div>
 						<h3>{ __( 'Rising', 'bubuku-post-view-count' ) }</h3>
@@ -400,10 +474,7 @@ const StatsPanel = ( { context } ) => {
 							columns={ momentumColumns }
 							rows={ momentum?.rising || [] }
 							rowKey={ ( row ) => row.url }
-							emptyLabel={ __(
-								'No relevant changes in this period.',
-								'bubuku-post-view-count'
-							) }
+							emptyLabel={ momentumEmptyLabel }
 						/>
 					</div>
 					<div>
@@ -412,10 +483,7 @@ const StatsPanel = ( { context } ) => {
 							columns={ momentumColumns }
 							rows={ momentum?.falling || [] }
 							rowKey={ ( row ) => row.url }
-							emptyLabel={ __(
-								'No relevant changes in this period.',
-								'bubuku-post-view-count'
-							) }
+							emptyLabel={ momentumEmptyLabel }
 						/>
 					</div>
 				</div>

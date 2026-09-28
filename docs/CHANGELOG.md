@@ -5,6 +5,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-09-28
+### Corregido
+- `docs/PENDING-1.3.1-FIXES.md`: los números de «Views over time» (eje, resumen y tooltip) ahora pasan por `formatNumber()` (`assets/src/js/admin/format.js`), igual que el resto de tablas y cards, en vez de mostrarse sin separador de miles.
+- `Core\Query::momentum()` («Rising & falling») ya no compara siempre contra una ventana «previous» fija de 30 días: cuando el agregado diario (`Schema::daily_data_since()`) no cubre todavía las dos ventanas completas, recorta ambas ventanas a la mitad del histórico disponible (`effective_momentum_period_days()`) y reporta `insufficient_history`/`requested_period_days`/`history_since` para que la UI explique el motivo en vez de mostrar «Falling» vacío de forma permanente (con «Rising» inflado por posts `0 → N` sin subida real). `Api\TrendsApi::get_momentum()` y la tool MCP `bubuku-views/list-momentum` propagan los campos nuevos sin cambios de contrato. `StatsPanel.js` muestra el periodo realmente comparado y un aviso cuando el histórico es insuficiente.
+- Corregida además una llamada a `$wpdb->prepare()` en `Query::momentum()` que pasaba el array de parámetros sin expandir (`...array_merge(...)`, inconsistente con el resto de `Core\Query`), lo que en ciertos entornos truncaba silenciosamente el bind de placeholders.
+- `Admin\OverviewSnapshot::get_cached()` («Post views summary» del escritorio) ya no depende por completo de WP-Cron: si el snapshot supera `MAX_STALE` (1 hora, 4× su TTL de 15 min) se reconstruye de forma síncrona bajo el mismo lock que la primera build, en vez de servir datos indefinidamente desfasados cuando WP-Cron está desactivado o el loopback está bloqueado. `Admin\DashboardWidget` muestra ahora «Updated X ago» en el pie del widget.
+
 ## [1.3.0] - 2026-09-22
 ### Añadido
 - `docs/DASHBOARD-SUMMARY-PLAN.md`: fila de 4 tarjetas resumen («Vistas totales», «Últimos 30 días» con variación vs los 30 previos, «AI referrals», «AI bot crawling») sobre las `bk-dashboard-card` de la pestaña Estadísticas, alimentadas por un nuevo endpoint `GET /bbk_postview/v1/stats/overview` (capability `edit_posts`, cacheado como el resto de `Api\TrendsApi`) que envuelve el nuevo `Core\Query::overview()`.

@@ -153,6 +153,17 @@ class DashboardWidget {
 						array( 'strong' => array() )
 					);
 					?>
+					<?php if ( empty( $snapshot['warming'] ) && ! empty( $snapshot['generated_at'] ) ) : ?>
+						<span class="bbk-widget-footer-updated">
+							<?php
+							printf(
+								/* translators: %s: human-readable time since the summary was last calculated, e.g. "5 minutes" */
+								esc_html__( '· Updated %s ago', 'bubuku-post-view-count' ),
+								esc_html( human_time_diff( (int) $snapshot['generated_at'] ) )
+							);
+							?>
+						</span>
+					<?php endif; ?>
 				</span>
 				<a class="bbk-widget-footer-link" href="<?php echo esc_url( admin_url( 'options-general.php?page=' . $this->plugin_name ) ); ?>">
 					<?php esc_html_e( 'See stats', 'bubuku-post-view-count' ); ?>

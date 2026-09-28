@@ -4,7 +4,7 @@ Tags: page view count, post views, post count, posts, post view count
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -83,6 +83,12 @@ Yes, by default. When a visitor's browser sends the DNT or Sec-GPC signal, the p
 
 
 == Changelog ==
+
+= 1.3.1 =
+* View counts in the "Views over time" chart (axis, summary and tooltip) now use the same thousand-separator formatting as the rest of the admin.
+* The "Rising & falling" comparison now shrinks itself to fit the daily history actually available, instead of always comparing against a full 30-day "previous" period that may still be entirely empty on a recently updated site — which made "Falling" look permanently empty and inflated "Rising" with posts that simply had no prior data. The card now reports the period it actually compared, and explains when there still isn't enough history for a full comparison.
+* Fixed a bug in the rising/falling query that silently dropped the comparison dates in some environments.
+* The "Post views summary" dashboard widget now falls back to a synchronous refresh once its snapshot is over an hour old, instead of depending entirely on WP-Cron — sites where WP-Cron is disabled or blocked no longer get stuck showing stale numbers indefinitely. The widget footer now also shows how long ago the summary was last calculated.
 
 = 1.3.0 =
 * New "at a glance" summary cards above the Stats tab: total views, last 30 days (with the change vs. the previous 30), AI referrals and AI bot crawling.

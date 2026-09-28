@@ -50,6 +50,17 @@ class OverviewSnapshot {
 	const TTL = 900; // 15 min.
 
 	/**
+	 * Hard ceiling on how long a snapshot can be served stale before this class stops
+	 * trusting WP-Cron and rebuilds synchronously instead (docs/PENDING-1.3.1-FIXES.md
+	 * §4). Without this, a site with WP-Cron disabled and no system cron, or with
+	 * loopback requests blocked (self-signed local certs, staging behind basic auth),
+	 * never runs `REFRESH_HOOK` again after the first stale read — the widget then
+	 * shows the same numbers forever. Four times the TTL gives WP-Cron plenty of
+	 * chances to catch up before this fallback ever triggers on a healthy site.
+	 */
+	const MAX_STALE = self::TTL * 4; // 1 hour.
+
+	/**
 	 * Per-request guard: a bulk import triggering mark_stale() on every save_post
 	 * must not schedule the same single event dozens of times in one request.
 	 *
@@ -62,10 +73,12 @@ class OverviewSnapshot {
 	}
 
 	/**
-	 * Returns the snapshot to render, rebuilding synchronously only the first time
-	 * this ever runs on a site. Every later call is either a fresh read from the
-	 * option, a stale-but-usable read (with an async refresh scheduled), or a
-	 * "warming" placeholder while another request is doing the first build.
+	 * Returns the snapshot to render, rebuilding synchronously on the first call this
+	 * ever runs on a site, and again whenever an existing snapshot has gone past
+	 * `MAX_STALE` (WP-Cron never ran, or ran and failed silently). Every other call is
+	 * either a fresh read from the option, a stale-but-usable read (with an async
+	 * refresh scheduled), or a "warming" placeholder while another request is doing a
+	 * synchronous build.
 	 *
 	 * @return array
 	 */
@@ -73,20 +86,48 @@ class OverviewSnapshot {
 		$snapshot = get_option( self::OPTION_SNAPSHOT, null );
 
 		if ( is_array( $snapshot ) && isset( $snapshot['generated_at'] ) ) {
-			if ( ( time() - (int) $snapshot['generated_at'] ) < self::TTL ) {
+			$age = time() - (int) $snapshot['generated_at'];
+
+			if ( $age < self::TTL ) {
 				return $snapshot;
 			}
 
-			self::schedule_refresh();
-			$snapshot['stale'] = true;
+			if ( $age < self::MAX_STALE ) {
+				self::schedule_refresh();
+				$snapshot['stale'] = true;
 
-			return $snapshot;
+				return $snapshot;
+			}
+
+			// Past MAX_STALE: whatever kept the cron refresh from running has had four
+			// TTL windows to recover on its own and hasn't, so serve current data now
+			// rather than keep trusting it. Still respects the build lock — a stuck
+			// cron doesn't mean it's safe to run this query on every concurrent request.
+			if ( get_transient( self::LOCK_TRANSIENT ) ) {
+				$snapshot['stale'] = true;
+
+				return $snapshot;
+			}
+
+			return self::rebuild_synchronously();
 		}
 
 		if ( get_transient( self::LOCK_TRANSIENT ) ) {
 			return self::warming_payload();
 		}
 
+		return self::rebuild_synchronously();
+	}
+
+	/**
+	 * Builds a fresh snapshot and persists it, under the same short-lived lock used to
+	 * stop concurrent requests from all rebuilding at once — whether this is the very
+	 * first build a site ever needs, or a MAX_STALE fallback when the cron refresh
+	 * hasn't run.
+	 *
+	 * @return array
+	 */
+	private static function rebuild_synchronously(): array {
 		set_transient( self::LOCK_TRANSIENT, 1, self::LOCK_TTL );
 
 		try {

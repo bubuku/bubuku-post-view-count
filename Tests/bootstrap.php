@@ -887,6 +887,58 @@ namespace Bubuku\Plugins\PostViewCount {
 				);
 			}
 
+			// Query::momentum()'s per-post current/previous split — same cutoff-date shape
+			// as Query::overview()'s get_row() branch above, but grouped per post instead
+			// of summed site-wide.
+			if ( false !== strpos( $query, 'FROM wp_bbk_post_views_daily d' ) && false !== strpos( $query, 'GROUP BY d.post_id' )
+				&& preg_match( "/d\\.day >= '([^']+)' THEN d\\.views/", $query, $m ) ) {
+				$cutoff = $m[1];
+				$since  = '1970-01-01';
+				$until  = '9999-12-31';
+
+				if ( preg_match( "/d\\.day BETWEEN '([^']+)' AND '([^']+)'/", $query, $range ) ) {
+					$since = $range[1];
+					$until = $range[2];
+				}
+
+				$grouped = array();
+
+				foreach ( TestState::$daily as $key => $views ) {
+					list( $post_id, $day ) = explode( '|', $key, 2 );
+
+					if ( $day < $since || $day > $until ) {
+						continue;
+					}
+
+					$post_id = (int) $post_id;
+
+					if ( ! isset( $grouped[ $post_id ] ) ) {
+						$grouped[ $post_id ] = array(
+							'current_views'  => 0,
+							'previous_views' => 0,
+						);
+					}
+
+					if ( $day >= $cutoff ) {
+						$grouped[ $post_id ]['current_views'] += $views;
+					} else {
+						$grouped[ $post_id ]['previous_views'] += $views;
+					}
+				}
+
+				$rows = array();
+
+				foreach ( $grouped as $post_id => $totals ) {
+					$rows[] = array(
+						'post_id'        => $post_id,
+						'current_views'  => $totals['current_views'],
+						'previous_views' => $totals['previous_views'],
+					);
+				}
+
+				return $rows;
+			}
+
 			if ( preg_match( "/FROM wp_postmeta WHERE meta_key = 'views'/", $query ) ) {
 				$cursor = preg_match( '/meta_id > (\d+)/', $query, $m ) ? (int) $m[1] : 0;
 

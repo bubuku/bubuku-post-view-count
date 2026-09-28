@@ -587,6 +587,37 @@ class Query {
 	}
 
 	/**
+	 * Shrinks a requested momentum comparison window to what the daily aggregate
+	 * (`Schema::daily_data_since()`) can actually support (docs/PENDING-1.3.1-FIXES.md
+	 * §3). A "current 30 days vs. previous 30 days" comparison on a site whose daily
+	 * history only goes back 20 days would otherwise compare against an entirely empty
+	 * previous period — every post looks like it "rose" from zero, and nothing can ever
+	 * appear as falling. Halving the available history into two equal windows instead
+	 * gives a real, if shorter, comparison. Returns 0 when there is less than a day on
+	 * each side to compare yet.
+	 *
+	 * @param int         $requested_days Requested length of each period, already clamped to MAX_PERIOD_DAYS.
+	 * @param string      $today          Current day (Y-m-d, UTC).
+	 * @param string|null $history_since  `Schema::daily_data_since()`, or null if unknown (pre-1.2.1 site).
+	 * @return int
+	 */
+	private static function effective_momentum_period_days( int $requested_days, string $today, ?string $history_since ): int {
+		if ( null === $history_since ) {
+			return $requested_days;
+		}
+
+		$history_start  = substr( $history_since, 0, 10 );
+		$available_days = (int) floor( ( strtotime( $today ) - strtotime( $history_start ) ) / 86400 ) + 1;
+		$available_days = max( 0, $available_days );
+
+		if ( $available_days >= $requested_days * 2 ) {
+			return $requested_days;
+		}
+
+		return (int) floor( $available_days / 2 );
+	}
+
+	/**
 	 * Posts whose daily views are rising or falling, comparing the last `$period_days` days
 	 * against the equal-length period immediately before them (docs/ANALYTICS-PLAN.md §5,
 	 * "listados en alza/en caída" pendiente de la Fase 4). Unlike most_viewed(), this always
@@ -596,6 +627,12 @@ class Query {
 	 * percentage change and would otherwise dominate the "rising" list without meaning
 	 * anything. A post with zero views in both periods is never returned (nothing changed).
 	 *
+	 * When the daily aggregate doesn't yet cover two full `$period_days` windows, the
+	 * comparison is silently shortened (see `effective_momentum_period_days()`) and
+	 * `insufficient_history`/`requested_period_days`/`history_since` report the shortfall
+	 * so callers (UI, MCP) can explain it instead of showing a misleading empty "falling"
+	 * list.
+	 *
 	 * @param string[] $post_types  Post types to include; empty means every enabled type.
 	 * @param int      $period_days Length of each period being compared, in days.
 	 * @param int      $limit       Max rows per list (rising/falling), capped at self::MAX_LIMIT.
@@ -603,22 +640,51 @@ class Query {
 	 * @return array{
 	 *     rising: array<int, array{id:int,title:string,url:string,current_views:int,previous_views:int,delta:int,delta_pct:?float}>,
 	 *     falling: array<int, array{id:int,title:string,url:string,current_views:int,previous_views:int,delta:int,delta_pct:?float}>,
-	 *     period: array{current:array{from:string,to:string},previous:array{from:string,to:string}}
+	 *     period: array{current:array{from:string,to:string},previous:array{from:string,to:string}},
+	 *     requested_period_days: int,
+	 *     insufficient_history: bool,
+	 *     history_since: ?string
 	 * }
 	 */
 	public static function momentum( array $post_types = array(), int $period_days = 30, int $limit = 10, int $min_views = 1 ): array {
 		global $wpdb;
 
-		$current_end    = current_time( 'Y-m-d', true );
-		$period_days    = max( 1, min( self::MAX_PERIOD_DAYS, $period_days ) );
+		$current_end           = current_time( 'Y-m-d', true );
+		$requested_period_days = max( 1, min( self::MAX_PERIOD_DAYS, $period_days ) );
+		$history_since         = Schema::daily_data_since();
+		$period_days           = self::effective_momentum_period_days( $requested_period_days, $current_end, $history_since );
+		$insufficient_history  = $period_days < $requested_period_days;
+
+		// Fewer than 2 days of daily history on each side: there is nothing to compare yet.
+		// Report the shortfall without doing date math on a zero-length window.
+		if ( $period_days < 1 ) {
+			return array(
+				'rising'                => array(),
+				'falling'               => array(),
+				'period'                => array(
+					'current'  => array(
+						'from' => $current_end,
+						'to'   => $current_end,
+					),
+					'previous' => array(
+						'from' => $current_end,
+						'to'   => $current_end,
+					),
+				),
+				'requested_period_days' => $requested_period_days,
+				'insufficient_history'  => true,
+				'history_since'         => $history_since,
+			);
+		}
+
 		$current_start  = gmdate( 'Y-m-d', strtotime( "{$current_end} -" . ( $period_days - 1 ) . ' days' ) );
 		$previous_end   = gmdate( 'Y-m-d', strtotime( "{$current_start} -1 day" ) );
 		$previous_start = gmdate( 'Y-m-d', strtotime( "{$previous_end} -" . ( $period_days - 1 ) . ' days' ) );
 
 		$empty = array(
-			'rising'  => array(),
-			'falling' => array(),
-			'period'  => array(
+			'rising'                => array(),
+			'falling'               => array(),
+			'period'                => array(
 				'current'  => array(
 					'from' => $current_start,
 					'to'   => $current_end,
@@ -628,6 +694,9 @@ class Query {
 					'to'   => $previous_end,
 				),
 			),
+			'requested_period_days' => $requested_period_days,
+			'insufficient_history'  => $insufficient_history,
+			'history_since'         => $history_since,
 		);
 
 		$post_types = self::resolve_post_types( $post_types );
@@ -655,7 +724,7 @@ class Query {
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- {$daily_table} is an internal constant (Schema::table_daily()), never user input; {$type_placeholders} is a fixed run of %s placeholders.
 				"SELECT d.post_id AS post_id, SUM(CASE WHEN d.day >= %s THEN d.views ELSE 0 END) AS current_views, SUM(CASE WHEN d.day < %s THEN d.views ELSE 0 END) AS previous_views FROM {$daily_table} d INNER JOIN {$wpdb->posts} p ON p.ID = d.post_id WHERE p.post_type IN ({$type_placeholders}) AND p.post_status = 'publish' AND d.day BETWEEN %s AND %s GROUP BY d.post_id",
-				array_merge( array( $current_start, $current_start ), $post_types, array( $previous_start, $current_end ) )
+				...array_merge( array( $current_start, $current_start ), $post_types, array( $previous_start, $current_end ) )
 			),
 			ARRAY_A
 		);
