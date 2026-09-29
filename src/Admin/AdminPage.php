@@ -113,12 +113,22 @@ class AdminPage {
 
 		wp_set_script_translations( $this->plugin_name . '-admin', 'bubuku-post-view-count' );
 
+		global $wp_locale;
+
 		wp_add_inline_script(
 			$this->plugin_name . '-admin',
 			'window.BbkPostViewCount = ' . wp_json_encode(
 				array(
-					'api_url'    => rest_url( BBK_PLUGIN_ENDPOINTS_URL ),
-					'rest_nonce' => wp_create_nonce( 'wp_rest' ),
+					'api_url'       => rest_url( BBK_PLUGIN_ENDPOINTS_URL ),
+					'rest_nonce'    => wp_create_nonce( 'wp_rest' ),
+					// Same separators as `number_format_i18n()`, which the server-rendered
+					// DashboardWidget uses — keeps the two number groupings visually
+					// consistent instead of trusting `Intl.NumberFormat`'s locale data,
+					// which (e.g. for es-ES) only groups numbers of 5+ digits.
+					'number_format' => array(
+						'decimal_point' => $wp_locale->number_format['decimal_point'],
+						'thousands_sep' => $wp_locale->number_format['thousands_sep'],
+					),
 				)
 			) . ';',
 			'before'
