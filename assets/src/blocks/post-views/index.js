@@ -10,15 +10,28 @@ registerBlockType( metadata.name, {
 		return (
 			<>
 				<InspectorControls>
-					<PanelBody title={ __( 'View settings', 'bubuku-post-view-count' ) }>
+					<PanelBody
+						title={ __(
+							'View settings',
+							'bubuku-post-view-count'
+						) }
+					>
 						<ToggleControl
-							label={ __( 'Show last view date', 'bubuku-post-view-count' ) }
+							label={ __(
+								'Show last view date',
+								'bubuku-post-view-count'
+							) }
 							checked={ !! attributes.showLastViewed }
-							onChange={ ( value ) => setAttributes( { showLastViewed: value } ) }
+							onChange={ ( value ) =>
+								setAttributes( { showLastViewed: value } )
+							}
 						/>
 					</PanelBody>
 				</InspectorControls>
-				<ServerSideRender block={ metadata.name } attributes={ attributes } />
+				<ServerSideRender
+					block={ metadata.name }
+					attributes={ attributes }
+				/>
 			</>
 		);
 	},

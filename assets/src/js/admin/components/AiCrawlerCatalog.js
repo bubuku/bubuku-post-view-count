@@ -2,6 +2,7 @@ import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import CrawlerCategoryDot from './CrawlerCategoryDot';
 import CrawlerCategoryLegend from './CrawlerCategoryLegend';
+import { formatNumber } from '../format';
 
 /**
  * AiCrawlerCatalog — collapsible "Rastreadores IA monitorizados" panel inside
@@ -31,12 +32,12 @@ const AiCrawlerCatalog = ( { catalog } ) => {
 				onClick={ () => setOpen( ( prev ) => ! prev ) }
 			>
 				{ sprintf(
-					/* translators: %d: number of monitored AI crawlers. */
+					/* translators: %s: number of monitored AI crawlers. */
 					__(
-						'AI crawlers monitored (%d)',
+						'AI crawlers monitored (%s)',
 						'bubuku-post-view-count'
 					),
-					crawlers.length
+					formatNumber( crawlers.length )
 				) }
 			</button>
 

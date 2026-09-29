@@ -75,7 +75,8 @@ const ICON_BOT = (
  */
 function formatDelta( delta, deltaPct ) {
 	const sign = delta >= 0 ? '+' : '';
-	const pct = null !== deltaPct ? ` (${ sign }${ deltaPct }%)` : '';
+	const pct =
+		null !== deltaPct ? ` (${ sign }${ formatNumber( deltaPct ) }%)` : '';
 	return `${ sign }${ formatNumber( delta ) }${ pct }`;
 }
 

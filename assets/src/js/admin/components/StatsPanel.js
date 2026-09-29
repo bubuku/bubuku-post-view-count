@@ -269,7 +269,7 @@ const StatsPanel = ( { context } ) => {
 				'Coverage: %1$s%% (%2$s of %3$s accepted views). Categories are approximate.',
 				'bubuku-post-view-count'
 			),
-			coverage.percentage,
+			formatNumber( coverage.percentage ),
 			formatNumber( coverage.tracked_views ),
 			formatNumber( coverage.total_views )
 		);
@@ -293,7 +293,7 @@ const StatsPanel = ( { context } ) => {
 				const sign = row.delta >= 0 ? '+' : '';
 				const pct =
 					null !== row.delta_pct
-						? ` (${ sign }${ row.delta_pct }%)`
+						? ` (${ sign }${ formatNumber( row.delta_pct ) }%)`
 						: '';
 				return `${ sign }${ formatNumber( row.delta ) }${ pct }`;
 			},
@@ -372,10 +372,10 @@ const StatsPanel = ( { context } ) => {
 			? sprintf(
 					/* translators: 1: number of days compared (used for both the current and the previous period). */
 					__(
-						'Comparison between the last %1$d days and the previous %1$d.',
+						'Comparison between the last %1$s days and the previous %1$s.',
 						'bubuku-post-view-count'
 					),
-					momentumDays
+					formatNumber( momentumDays )
 			  )
 			: __(
 					'Comparison between the last 30 days and the previous 30.',
@@ -391,12 +391,12 @@ const StatsPanel = ( { context } ) => {
 				? sprintf(
 						/* translators: 1: shortened comparison length in days (used for both periods), 2: first date with daily history, 3: originally requested comparison length in days (used for both periods). */
 						__(
-							'Comparison shortened to %1$d vs %1$d days: daily history is only available since %2$s. A full %3$d-vs-%3$d comparison needs more time yet.',
+							'Comparison shortened to %1$s vs %1$s days: daily history is only available since %2$s. A full %3$s-vs-%3$s comparison needs more time yet.',
 							'bubuku-post-view-count'
 						),
-						momentumDays,
+						formatNumber( momentumDays ),
 						formatDate( historySince ),
-						momentum.requested_period_days
+						formatNumber( momentum.requested_period_days )
 				  )
 				: __(
 						'Not enough daily history yet to compare two periods — check back once the site has a few more days of data.',

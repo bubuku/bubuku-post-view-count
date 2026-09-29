@@ -27,7 +27,11 @@ const context = {
 	URL,
 	URLSearchParams,
 	bbk_post_view: { api_public: '', post_id: 1, respect_dnt: false },
-	document: { referrer: '', visibilityState: 'visible', addEventListener: () => {} },
+	document: {
+		referrer: '',
+		visibilityState: 'visible',
+		addEventListener: () => {},
+	},
 	fetch: () => Promise.resolve(),
 	location: { host: 'example.com', hostname: 'example.com', search: '' },
 	navigator: { doNotTrack: '0' },
@@ -91,17 +95,38 @@ test( 'does not accept partial-domain false positives', () => {
 } );
 
 test( 'resolves the specific AI assistant behind each known domain', () => {
-	assert.equal( classifyAssistant( 'https://chatgpt.com/c/example' ), 'chatgpt' );
-	assert.equal( classifyAssistant( 'https://chat.openai.com/c/example' ), 'chatgpt' );
-	assert.equal( classifyAssistant( 'https://claude.ai/chat/example' ), 'claude' );
-	assert.equal( classifyAssistant( 'https://www.perplexity.ai/search/example' ), 'perplexity' );
-	assert.equal( classifyAssistant( 'https://copilot.microsoft.com/chats/example' ), 'copilot' );
-	assert.equal( classifyAssistant( 'https://gemini.google.com/app/example' ), 'gemini' );
+	assert.equal(
+		classifyAssistant( 'https://chatgpt.com/c/example' ),
+		'chatgpt'
+	);
+	assert.equal(
+		classifyAssistant( 'https://chat.openai.com/c/example' ),
+		'chatgpt'
+	);
+	assert.equal(
+		classifyAssistant( 'https://claude.ai/chat/example' ),
+		'claude'
+	);
+	assert.equal(
+		classifyAssistant( 'https://www.perplexity.ai/search/example' ),
+		'perplexity'
+	);
+	assert.equal(
+		classifyAssistant( 'https://copilot.microsoft.com/chats/example' ),
+		'copilot'
+	);
+	assert.equal(
+		classifyAssistant( 'https://gemini.google.com/app/example' ),
+		'gemini'
+	);
 } );
 
 test( 'resolves the specific AI assistant from explicit attribution', () => {
 	assert.equal(
-		classifyAssistant( '', 'https://example.com/post/?utm_source=chatgpt.com' ),
+		classifyAssistant(
+			'',
+			'https://example.com/post/?utm_source=chatgpt.com'
+		),
 		'chatgpt'
 	);
 	assert.equal(
@@ -116,7 +141,10 @@ test( 'resolves the specific AI assistant from explicit attribution', () => {
 
 test( 'returns no AI assistant for non-AI or absent referrers', () => {
 	assert.equal( classifyAssistant( '' ), '' );
-	assert.equal( classifyAssistant( 'https://www.google.com/search?q=example' ), '' );
+	assert.equal(
+		classifyAssistant( 'https://www.google.com/search?q=example' ),
+		''
+	);
 	assert.equal( classifyAssistant( 'https://evilchatgpt.com/example' ), '' );
 } );
 
@@ -157,7 +185,8 @@ test( 'pauses in a hidden tab and resumes only the remaining visible time', () =
 
 test( 'falls back to fetch when sendBeacon declines the payload', () => {
 	let fetchCalls = 0;
-	context.bbk_post_view.api_public = 'https://example.com/wp-json/bbk_postview/v1';
+	context.bbk_post_view.api_public =
+		'https://example.com/wp-json/bbk_postview/v1';
 	context.tracker.end_point = context.bbk_post_view.api_public;
 	context.tracker.post_id = 9;
 	context.tracker.sent = false;
