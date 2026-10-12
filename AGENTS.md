@@ -56,6 +56,7 @@ Snapshot actual. Si cambia el enlace de skills, refrescar con `bash scripts/setu
 | `wp-php` | Lógica PHP, hooks, post meta, consultas y clases del plugin |
 | `wp-plugin-development` | Arquitectura general de plugin, hooks, seguridad y release packaging |
 | `wp-plugin-directory-guidelines` | Revisión de cumplimiento para WordPress.org (licencias, naming, políticas del directorio) |
+| `wp-plugin-listing` | Preparar o revisar el `readme.txt`, ficha pública del plugin y capturas para WordPress.org |
 | `wp-rest-api` | Endpoint REST `bbk_postview/v1`, permisos y validación |
 | `wp-scaffold` | Generar estructura inicial de plugin (referencia, no aplica a este ya scaffolded) |
 | `wp-security` | Endpoint REST público, deduplicación, sanitize/escape |
@@ -73,6 +74,7 @@ Snapshot actual. Si cambia el enlace de skills, refrescar con `bash scripts/setu
 | Rendimiento / consultas a `$wpdb` / transients | `wp-performance` + `wp-php` |
 | Integrar tools MCP del plugin con el hub | `wp-mcp-conex` + `wp-tools-architect` + `wp-php` |
 | Build, empaquetado, release | `wp-build` |
+| Publicación / ficha WordPress.org / capturas | `wp-plugin-listing` + `wp-plugin-directory-guidelines` + `wp-build` |
 | Revisión de cumplimiento para WordPress.org | `wp-plugin-directory-guidelines` |
 | Commits / PRs | `git-conventions` |
 
