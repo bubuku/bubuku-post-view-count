@@ -4,27 +4,41 @@ Tags: page view count, post views, post count, posts, post view count
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.1
+Stable tag: 1.3.2
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Complement to know how many times a Post has been seen
+Count post views without slowing your site down, and see which content is rising, falling or being crawled by AI bots.
 
 == Description ==
-With this plugin, you can easily see how many people have viewed a Post
+Most view counters add a database write to every page load, break behind a page cache, or store more visitor data than you ever wanted. Meanwhile your editors still need an honest answer to a simple question: which articles are actually being read?
 
-It only runs on Posts and after some time has passed through an Endpoint, so it doesn't affect CWV, and the page loads quickly.
+Bubuku Post View Count counts a visit with a tiny script that fires after the page has loaded, through a public REST endpoint. It stays out of the rendering path, so Core Web Vitals are not affected, and it works behind full-page caching. Totals and daily history live in the plugin's own indexed tables.
 
-The post meta that we store the value in is "views".
+= Know what is being read =
+* Summary cards: total views, last 30 days (and the change vs. the previous 30), AI referrals and AI bot crawling.
+* Views over time by day, week or month, plus "Rising & falling" content.
+* Most viewed and stale content, and sortable "Views" and "Last view" columns in the list tables.
+* A dashboard widget with a 7-day trend, rendered from a background snapshot.
 
-More information in Spanish about the plugin in the link [Show the most viewed Articles, without affecting the loading speed](https://www.bubuku.com/blog/mostrar-articulos-mas-vistos-sin-que-afecte-velocidad-de-carga/)
+= See where traffic comes from =
+* Optional device and referrer breakdown (direct, search, social, AI assistants).
+* Optional tracking of 63 known AI crawlers, kept apart from human views.
+
+= Show views to your readers =
+Use the `[bbk_post_views]` shortcode or the "Bubuku · Vistas del post" block. The total is also mirrored to the `views` post meta.
+
+= Built for privacy and performance =
+No raw IP address or User-Agent is stored, Do Not Track and Global Privacy Control are honored, and you choose which content types count and which roles or bots are excluded. WP-CLI and multisite are supported.
+
+More information in Spanish: [Show the most viewed Articles, without affecting the loading speed](https://www.bubuku.com/blog/mostrar-articulos-mas-vistos-sin-que-afecte-velocidad-de-carga/)
 
 == Installation ==
 1. Unzip the plugin ZIP file on your computer.
 2. Copy or move the resulting folder to the "wp-content/plugins/" directory of your WordPress installation.
 3. Log in to the WordPress admin area and navigate to the "Plugins" screen.
 4. Locate "Bubuku Post View Count" in the plugins list and click "Activate" to enable the plugin.
-5. Ensure your installation meets the requirements listed in the plugin header (WordPress and PHP versions) before using it in production.
+5. Go to Settings → Post View Count to choose which content types count views and to explore your statistics.
 
 == SUPPORT ==
 
@@ -42,109 +56,73 @@ Please [leave a 5-star review](https://wordpress.org/support/plugin/bubuku-post-
 We develop custom solutions for WordPress focused on performance, accessibility, and maintainable code. Our work includes plugins, themes, and integrations designed to improve the daily workflow of marketing and content teams.
 
 == Privacy ==
+This plugin never stores the visitor's raw IP address or User-Agent. To avoid duplicate views it keeps keyed, non-reversible HMAC tokens (derived from the post, network address and User-Agent) for up to 30 minutes, then deletes them. Reporting data is aggregated: total views and last-viewed date per post, daily views per post and, if you enable the optional session dimensions, a daily breakdown by device-width bucket and referrer category (never the raw width or referrer URL).
 
-This plugin never persists the visitor's raw IP address or User-Agent string. To avoid duplicate views and limit abuse, it stores keyed, non-reversible HMAC tokens derived from the post, network address and User-Agent in a dedicated table for up to 30 minutes; expired tokens are deleted automatically. All reporting data is aggregated: total views and last-viewed date per post, a daily view count per post, and — if you enable the optional session dimensions — a daily breakdown per post of device-width bucket and approximate referrer category (never the raw screen width or referrer URL/host).
+If the browser sends Do Not Track or Global Privacy Control, the optional device and referrer breakdown is skipped for that visit (default; can be turned off in Settings → Post View Count). Optional AI crawler tracking (off by default) is aggregated by day and bot name, in its own table.
 
-If a visitor's browser sends the "Do Not Track" (DNT) or Global Privacy Control (Sec-GPC) signal, the plugin skips recording the optional session dimensions (device width and referrer category) for that visit. This is enabled by default and can be turned off in Settings → Post View Count. The view count itself is unaffected either way, since it never stores anything that identifies the visitor.
+== Screenshots ==
 
-If you enable the optional "AI crawler tracking" setting (off by default), hits from known AI crawlers are counted in their own table, aggregated by day and bot name — never at the individual-request level and never mixed with human view data.
+1. Statistics tab: summary cards (total views, last 30 days, AI referrals, AI bot crawling) and the "Views over time" chart.
+2. "Post views summary" widget on the WordPress dashboard, with a 7-day trend.
+3. "Rising & falling" lists comparing the current period with the previous one.
+4. AI traffic: referrals from AI assistants and crawling by known AI bots, each with its category.
+5. Device and referrer breakdown, without storing the raw screen width or referrer.
+6. Settings tab: content types, excluded roles, bot exclusion and privacy options.
 
 == Frequently Asked Questions ==
+= How do I read the view count in code? =
+Use `get_post_meta( $post_id, 'views', true )`; the last view date is in `views_last`. The plugin's own tables are the source of truth, and the total is mirrored to post meta for compatibility.
 
-= How do I see the view count for a post? =
-Since 1.2.0 the source of truth is the plugin's own database table, but the total is still mirrored to post meta for backwards compatibility. You can keep using `get_post_meta( $post_id, 'views', true )`; the date of the last view is available as `get_post_meta( $post_id, 'views_last', true )`.
+= Will updating lose my existing view counts? =
+No. Existing `views` post meta is copied into the plugin's tables in the background, in batches. Only the last-view date is missing for posts counted before 1.2.0.
 
-= Does the 1.2.0 update lose my existing view counts? =
-No. On activation the plugin copies every existing `views` post meta into its new table in the background, in batches. The date of the last view isn't available for posts that were only counted before 1.2.0 — the count itself carries over intact.
+= Does uninstalling delete my data? =
+Yes by default (tables, options and deduplication data). You can turn this off in Settings → Post View Count.
 
-= Does uninstalling the plugin delete my view data? =
-Yes, by default — deleting the plugin removes its tables, options and deduplication data, in line with WordPress.org's guidelines against leaving data behind. You can turn this off from Settings → Post View Count if you'd rather keep your data for a future reinstall.
+= Can I choose which content types count, or exclude roles and bots? =
+Yes. In Settings → Post View Count choose the content types (Posts by default), exclude user roles and optionally exclude known bots. Unchecking a type never deletes recorded views.
 
-= Can I choose which content types count views, or exclude certain user roles and bots? =
-Yes, since 1.2.0. Go to Settings → Post View Count to choose which content types are counted (only Posts by default, same as before), exclude specific user roles (roles that can already edit content are excluded by default), and optionally exclude known bots and crawlers. Unchecking a content type stops counting new views for it but never deletes the views already recorded.
+= Can I reset the counts without uninstalling? =
+Yes, with the "Delete all data now" button in Settings → Post View Count.
 
-= Can I reset the view counts without uninstalling the plugin? =
-Yes. Settings → Post View Count has a "Delete all data now" button that clears every recorded view, with a confirmation prompt before it runs.
+= Does it affect page load speed? =
+The counter is deferred and sends its request after the page has been visible for a few seconds, so it stays outside the initial rendering path.
 
-= Does this plugin affect page load speed? =
-The lightweight counter is deferred and sends its request only after the page has accumulated five visible seconds, so it stays outside the initial rendering path. As with any analytics request, its actual server cost depends on the site's traffic and database performance.
+= Does it work on multisite? =
+Yes, including the uninstall routine.
 
-= Is this plugin compatible with multisite installations? =
-Yes, the plugin now includes multisite support, including in the uninstall routine.
+= Can I show the view count on a post or page? =
+Yes: the `[bbk_post_views]` shortcode (add `show_last_viewed="1"` for the last view date) or the "Bubuku · Vistas del post" block.
 
-= Can I show the view count inside a post or page? =
-Yes. Use the `[bbk_post_views]` shortcode, or add the "Bubuku · Vistas del post" block in the block editor. Both show the current post's view count; add `show_last_viewed="1"` to the shortcode (or toggle "Mostrar la fecha de la última visita" on the block) to also show the date of the last view. A content type that isn't counting views, per your settings, shows nothing.
-
-= Can I see how views have evolved over time? =
-Yes. Settings → Post View Count includes a chart of views over time (day/week/month) and a comparison of the current 30-day period against the previous one, both drawn from the same data used by the REST/MCP trend endpoints.
-
-= Does the plugin respect "Do Not Track" or Global Privacy Control? =
-Yes, by default. When a visitor's browser sends the DNT or Sec-GPC signal, the plugin still counts the view (it's already anonymous — no IP or User-Agent is ever stored) but skips recording the optional device-width and referrer breakdown for that visit. You can turn this off in Settings → Post View Count if you'd rather always record the full breakdown.
-
+= Does it respect Do Not Track and Global Privacy Control? =
+Yes, by default: the view is still counted, but the device and referrer breakdown is skipped.
 
 == Changelog ==
 
+= 1.3.2 =
+* Improved WordPress.org listing: description and screenshots.
+
 = 1.3.1 =
-* View counts in the "Views over time" chart (axis, summary and tooltip) now use the same thousand-separator formatting as the rest of the admin.
-* The "Rising & falling" comparison now shrinks itself to fit the daily history actually available, instead of always comparing against a full 30-day "previous" period that may still be entirely empty on a recently updated site — which made "Falling" look permanently empty and inflated "Rising" with posts that simply had no prior data. The card now reports the period it actually compared, and explains when there still isn't enough history for a full comparison.
-* Fixed a bug in the rising/falling query that silently dropped the comparison dates in some environments.
-* The "Post views summary" dashboard widget now falls back to a synchronous refresh once its snapshot is over an hour old, instead of depending entirely on WP-Cron — sites where WP-Cron is disabled or blocked no longer get stuck showing stale numbers indefinitely. The widget footer now also shows how long ago the summary was last calculated.
+* Fixed number formatting in the chart and the "Rising & falling" comparison.
+* The dashboard widget no longer depends only on WP-Cron to refresh.
 
 = 1.3.0 =
-* New "at a glance" summary cards above the Stats tab: total views, last 30 days (with the change vs. the previous 30), AI referrals and AI bot crawling.
-* New "Post views summary" widget on the WordPress dashboard (enable it from Screen Options if it's hidden), with the same four figures plus a 7-day trend sparkline. Fully server-rendered from a background-refreshed snapshot, so it adds no extra queries or JavaScript to wp-admin.
+* New summary cards in Stats and a dashboard widget.
 
 = 1.2.3 =
-* AI crawler tracking now recognizes 63 AI crawlers (up from 9), grouped into 4 categories — AI assistant, data scraper, AI search and AI training — each shown with its own color. Settings → Post View Count has a new collapsible "AI crawlers monitored" panel listing all of them with their vendor and category, and the "AI bot crawling" table in Stats shows a color dot next to each bot with a legend below it.
-* New privacy setting: "Respect Do Not Track / Global Privacy Control". When a visitor's browser sends the DNT or Sec-GPC signal, the view is still counted (it was already anonymous, with no IP or user agent stored) but the optional device/referrer breakdown is skipped for that visit.
-* Optional write buffer for high-traffic sites with a persistent object cache (Redis/Memcached): coalesces views for the same post into a single database write per minute instead of one per view. Off by default and has no effect without a persistent object cache.
+* 63 AI crawlers recognized, Do Not Track / GPC setting and optional write buffer.
 
 = 1.2.2 =
-* Evolution chart, period comparison, rising/falling content lists, device/referrer breakdown and the shortcode/block for showing view counts on the front end.
-* Session dimensions: traffic broken down by device screen size and by where visitors came from (direct, search, social, AI assistants, etc.), never storing the raw referrer host or exact screen width.
-* AI traffic reporting: a new "AI crawler tracking" setting (off by default) counts hits from known AI crawlers (GPTBot, ClaudeBot, PerplexityBot, CCBot, Google-Extended, Bytespider, Amazonbot, Applebot-Extended) in their own table, kept separate from the human view count; a new "AI traffic" section in Settings → Post View Count shows both AI referrals and crawler hits.
+* Charts, rising/falling lists, device and referrer breakdown, AI traffic report, shortcode and block.
 
 = 1.2.1 =
-* Read-only query layer (`Core\Query`) powering most-viewed content, stale content, per-post stats, trends and summary — used by the new admin columns, WP-CLI commands.
-* Sortable "Views" and "Last view" columns in the admin list table for every enabled content type.
-* WP-CLI commands `wp bbk-views top`, `wp bbk-views stale` and `wp bbk-views post <id>` (only registered when WP-CLI is present).
-* New: `GET /bbk_postview/v1/trends` REST endpoint (capability `edit_posts`, cacheable) for period-over-period view trends.
+* Sortable Views columns, WP-CLI commands and trends REST endpoint.
 
 = 1.2.0 =
-* The view counter now has its own database tables (`{prefix}bbk_post_views`, `{prefix}bbk_post_views_daily`), tracking the date and time of the first and last view per post in addition to the total — the first step towards analytics features (most-viewed content, stale content) planned for upcoming versions.
-* New: a settings page under Settings → Post View Count. Choose which content types count views (defaults to Posts, same as before), exclude specific user roles (defaults to roles that can already edit content), optionally exclude known bots and crawlers (Googlebot, Bingbot, GPTBot, ClaudeBot, etc.), and set how long the daily view history is kept.
-* New: a "delete all data now" button on the settings page to reset all recorded views without uninstalling the plugin.
-* Improvement: the counter increment is now a single atomic upsert per table (no read-then-write), removing the last possible race condition under concurrent traffic.
-* Improvement: existing `views` post meta is migrated automatically and incrementally (500 rows per batch via WP-Cron) into the new tables on upgrade — no data is lost, and the migration is safe to run more than once.
-* Kept: the `views` post meta is still written on every view as a compatibility mirror for themes and queries that already read it (e.g. `orderby=meta_value_num`); a new `views_last` post meta exposes the last-view date the same way.
-* Improvement: `uninstall.php` now removes the plugin's own tables, options and deduplication transients (in addition to post meta), including on multisite. Whether to delete this data on uninstall is now configurable from the settings page (enabled by default, per WordPress.org guidelines).
-* Note: this is a database schema change. Rolling back to 1.1.x after upgrading is safe — the `views` post meta is never removed, so the counter keeps working from where it was.
-
-= 1.1.1 =
-* Security: the view-count endpoint now also checks the request's `Origin`/`Referer` against the site's own URL, rejecting cross-origin browser requests in addition to the existing post_id validation and per-visitor deduplication.
-* Improvement: internal refactor to a PSR-4 class structure (`src/Core`, `src/Api`, `src/Frontend`) — no functional change for site visitors.
+* Own database tables, settings page and automatic data migration.
 
 = 1.1.0 =
-* Fix: production zip was missing the Composer autoloader, causing a fatal error on activation. The plugin now uses its own lightweight autoloader and no longer depends on `vendor/` at runtime.
-* Security: the view-count endpoint no longer accepts arbitrary/invalid post IDs, and now deduplicates repeated views per visitor instead of relying on a broken nonce check.
-* Fix: race condition that could undercount concurrent views; the counter is now incremented atomically.
-* Fix: the tracking script was loaded in the page `<head>` with jQuery as an unused dependency instead of deferred in the footer.
-* Removed: translation loading — WordPress.org already serves translations automatically for public plugins since 4.6, and the previous implementation never worked (wrong textdomain path).
-* Improvement: added multisite support to the uninstall routine.
-
-= 1.0.4 =
-* Compatibility: WordPress 6.2 - WordPress 6.5.3
-
-= 1.0.3 =
-* Compatibility: WordPress 6.1 - WordPress 6.2
-* Fix some PHP errors
-
-= 1.0.2 =
-* Updated for WordPress 6.1
-* Fix: Internationalization Issues
-
-= 1.0.1 =
-* Fix: It counted in categories.
+* Security, stability and multisite fixes.
 
 = 1.0.0 =
 * Initial release.

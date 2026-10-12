@@ -5,6 +5,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [1.3.2] - 2026-10-12
+### Cambiado
+- Ficha de WordPress.org: `readme.txt` reescrito (descripción corta orientada al beneficio, problema y solución en prosa, bloques por beneficio, instalación) y nuevas capturas en `.wordpress-org/`. Sin cambios funcionales.
+
 ## [1.3.1] - 2026-09-28
 ### Corregido
 - `docs/PENDING-1.3.1-FIXES.md`: los números de «Views over time» (eje, resumen y tooltip) ahora pasan por `formatNumber()` (`assets/src/js/admin/format.js`), igual que el resto de tablas y cards, en vez de mostrarse sin separador de miles.
