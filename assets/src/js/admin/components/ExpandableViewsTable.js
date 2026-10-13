@@ -15,6 +15,7 @@ import { formatNumber } from '../format';
  * @param {string}                [props.emptyLabel]      - Text shown when `rows` is empty. If omitted, renders nothing.
  * @param {string}                [props.totalLabel]      - Label shown in the footer row's first cell.
  * @param {Function}              [props.renderIndicator] - Optional `( key ) => node`, rendered before the row label (e.g. a CrawlerCategoryDot).
+ * @param {boolean}               [props.loading]         - Shows a "Loading data…" message instead of the rows or `emptyLabel`.
  */
 const ExpandableViewsTable = ( {
 	rows,
@@ -24,8 +25,17 @@ const ExpandableViewsTable = ( {
 	emptyLabel,
 	totalLabel,
 	renderIndicator,
+	loading = false,
 } ) => {
 	const [ expanded, setExpanded ] = useState( null );
+
+	if ( loading ) {
+		return (
+			<p className="bk-data-table__empty bk-data-table__empty--loading">
+				{ __( 'Loading data…', 'bubuku-post-view-count' ) }
+			</p>
+		);
+	}
 
 	if ( ! rows || rows.length === 0 ) {
 		return emptyLabel ? (

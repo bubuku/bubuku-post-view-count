@@ -8,7 +8,7 @@ Plugin público de WordPress (WordPress.org) que cuenta las visitas de un Post s
 
 | Concepto | Valor |
 |---|---|
-| **Versión actual** | `1.3.2` (Header PHP y `readme.txt` `Stable tag` sincronizados) |
+| **Versión actual** | `1.3.3` (Header PHP y `readme.txt` `Stable tag` sincronizados) |
 | **Prefijo PHP** | `bbk` (constantes, hooks, funciones globales). Las clases ya no llevan prefijo (`Plugin`, `Db`, `RestApi`, `Assets`) tras la migración PSR-4 |
 | **Namespace PHP** | `Bubuku\Plugins\PostViewCount\{Core,Api,Frontend}\` — ver `docs/MIGRATION-PSR4.md` |
 | **Estructura actual** | `src/{Core,Api,Frontend,Admin}/` por responsabilidad (migración PSR-4 completada; `Admin/` añadido en la Fase 2 de `docs/ANALYTICS-PLAN.md`) |
@@ -120,7 +120,7 @@ bash scripts/build.sh                # genera dist/bubuku-post-view-count-{versi
 
 - Solo el usuario decide cuándo subir la versión del plugin. El agente **nunca** sube la versión por iniciativa propia, aunque el cambio lo justifique (nueva feature, fix, etc.).
 - Si un cambio parece justificar un bump de versión, el agente debe **sugerirlo** (y proponer el tipo: patch/minor/major) y esperar confirmación explícita del usuario antes de tocar header PHP, `readme.txt` o `docs/CHANGELOG.md`.
-- Nota: el header PHP (`1.3.2`) y el `Stable tag` de `readme.txt` están sincronizados. Si en algún momento se detecta una desincronización, señalarla al usuario y no corregirla por iniciativa propia salvo que lo pida.
+- Nota: el header PHP (`1.3.3`) y el `Stable tag` de `readme.txt` están sincronizados. Si en algún momento se detecta una desincronización, señalarla al usuario y no corregirla por iniciativa propia salvo que lo pida.
 
 ### Plugin Check (WordPress.org)
 

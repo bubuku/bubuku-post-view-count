@@ -21,13 +21,13 @@
 }
 
 .bbk-trend-chart {
-	max-width: 900px;
+	width: 100%;
 }
 
 .bbk-trend-chart__canvas {
 	display: block;
 	width: 100%;
-	height: auto;
+	height: 260px; // Same as CHART_HEIGHT in TrendChart.js.
 	background: var(--surface-card);
 	border: 1px solid var(--border-card);
 	border-radius: var(--radius-button);
@@ -83,7 +83,65 @@
 	}
 }
 
+.bbk-trend-chart__tooltip-row {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	white-space: nowrap;
+}
+
+.bbk-trend-chart__swatch {
+	display: inline-block;
+	flex-shrink: 0;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+}
+
+.bbk-trend-chart__legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 16px;
+	margin: 10px 0 0;
+	padding: 0;
+	list-style: none;
+
+	li {
+		margin: 0;
+	}
+}
+
+.bbk-trend-chart__legend-item {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 2px 0;
+	border: 0;
+	background: none;
+	color: var(--text-body);
+	font-size: 12.5px;
+	cursor: pointer;
+
+	&[aria-pressed="false"] {
+		color: var(--text-muted);
+		text-decoration: line-through;
+
+		.bbk-trend-chart__swatch {
+			opacity: 0.35;
+		}
+	}
+
+	&:focus-visible {
+		outline: none;
+		border-radius: var(--radius-button);
+		box-shadow: var(--focus-ring);
+	}
+}
+
 .card-header-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
 
 	select.bbk-input {
 		border: 1.5px solid var(--border-card);
@@ -96,5 +154,12 @@
 			border-color: var(--brand);
 			box-shadow: var(--focus-ring);
 		}
+	}
+
+	// Wide enough for "AI referrals" plus the native dropdown arrow, which WP
+	// admin's own select padding would otherwise leave no room for.
+	select.bbk-input[aria-label="Source"] {
+		min-width: 160px;
+		padding-right: 28px;
 	}
 }

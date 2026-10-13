@@ -235,13 +235,7 @@ class Query {
 		}
 
 		$daily_table = Schema::table_daily();
-
-		$buckets = array(
-			'day'   => 'd.day',
-			'week'  => 'DATE(DATE_SUB(d.day, INTERVAL WEEKDAY(d.day) DAY))',
-			'month' => "DATE_FORMAT(d.day, '%%Y-%%m-01')",
-		);
-		$bucket  = $buckets[ $granularity ];
+		$bucket      = self::bucket_expression( $granularity );
 
 		$join   = '';
 		$where  = array( 'd.day BETWEEN %s AND %s' );
@@ -287,6 +281,109 @@ class Query {
 		wp_cache_set( $cache_key, $result, self::CACHE_GROUP, self::CACHE_TTL );
 
 		return $result;
+	}
+
+	/**
+	 * AI-referred views over time, one series per AI assistant (ChatGPT, Claude, ...),
+	 * bucketed like trend(). Reads the `ai_assistant` dimension of the daily dims table —
+	 * the same source as ai_traffic(). Views recorded before that dimension existed
+	 * (`assistant: 'unknown'` in ai_traffic()) have no per-day assistant and are not part
+	 * of any series.
+	 *
+	 * @param string[]    $post_types  Post types to include; empty means every enabled type.
+	 * @param string      $granularity One of 'day', 'week', 'month'.
+	 * @param string|null $from        Inclusive start day (Y-m-d, UTC). Null = 3 months ago.
+	 * @param string|null $to          Inclusive end day (Y-m-d, UTC). Null = today (UTC).
+	 * @return array<int, array{assistant:string,views:int,trend:array<int,array{bucket:string,total_views:int}>}> Sorted by views DESC.
+	 */
+	public static function trend_by_ai_assistant( array $post_types = array(), string $granularity = 'day', ?string $from = null, ?string $to = null ): array {
+		global $wpdb;
+
+		$granularity = in_array( $granularity, array( 'day', 'week', 'month' ), true ) ? $granularity : 'day';
+		$range       = self::trend_range( $from, $to );
+		$from        = $range['from'];
+		$to          = $range['to'];
+		$post_types  = self::resolve_post_types( $post_types );
+
+		if ( empty( $post_types ) ) {
+			return array();
+		}
+
+		$cache_key = self::cache_key( 'trend_ai_' . md5( (string) wp_json_encode( array( $post_types, $granularity, $from, $to ) ) ) );
+		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
+
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
+		$dims_table        = Schema::table_dims();
+		$bucket            = self::bucket_expression( $granularity );
+		$type_placeholders = self::placeholders( $post_types, '%s' );
+		$params            = array_merge( array( $from, $to ), $post_types );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Read query over the plugin's own table, no equivalent WP API. $dims_table is an internal constant (Schema::table_dims()), never user input.
+		$rows = $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- {$type_placeholders} expands to a dynamic run of %s placeholders at runtime, which this static sniff cannot count.
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- {$dims_table}/{$bucket}/{$type_placeholders} are internal constants or fixed placeholder runs, never user input; the sniff can't see the %s placeholders they expand to.
+				"SELECT {$bucket} AS bucket, d.value AS assistant, SUM(d.views) AS total_views FROM {$dims_table} d INNER JOIN {$wpdb->posts} p ON p.ID = d.post_id WHERE d.dimension = 'ai_assistant' AND d.day BETWEEN %s AND %s AND p.post_type IN ({$type_placeholders}) AND p.post_status = 'publish' GROUP BY bucket, d.value ORDER BY bucket ASC",
+				...$params
+			),
+			ARRAY_A
+		);
+
+		$grouped = array();
+
+		foreach ( is_array( $rows ) ? $rows : array() as $row ) {
+			$assistant = (string) $row['assistant'];
+			$views     = (int) $row['total_views'];
+
+			if ( ! isset( $grouped[ $assistant ] ) ) {
+				$grouped[ $assistant ] = array(
+					'assistant' => $assistant,
+					'views'     => 0,
+					'trend'     => array(),
+				);
+			}
+
+			$grouped[ $assistant ]['views']  += $views;
+			$grouped[ $assistant ]['trend'][] = array(
+				'bucket'      => (string) $row['bucket'],
+				'total_views' => $views,
+			);
+		}
+
+		$result = array_values( $grouped );
+
+		usort(
+			$result,
+			static function ( array $a, array $b ): int {
+				$by_views = $b['views'] <=> $a['views'];
+
+				return 0 !== $by_views ? $by_views : strcmp( $a['assistant'], $b['assistant'] );
+			}
+		);
+
+		wp_cache_set( $cache_key, $result, self::CACHE_GROUP, self::CACHE_TTL );
+
+		return $result;
+	}
+
+	/**
+	 * SQL expression (over the `d.day` column) that buckets a daily row by granularity.
+	 * `%%` is doubled because the expression is interpolated into a $wpdb->prepare() query.
+	 *
+	 * @param string $granularity One of 'day', 'week', 'month' (already validated).
+	 * @return string
+	 */
+	private static function bucket_expression( string $granularity ): string {
+		$buckets = array(
+			'day'   => 'd.day',
+			'week'  => 'DATE(DATE_SUB(d.day, INTERVAL WEEKDAY(d.day) DAY))',
+			'month' => "DATE_FORMAT(d.day, '%%Y-%%m-01')",
+		);
+
+		return $buckets[ $granularity ] ?? $buckets['day'];
 	}
 
 	/**

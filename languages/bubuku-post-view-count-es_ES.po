@@ -757,3 +757,61 @@ msgstr "Total"
 #: assets/src/js/admin/components/AiReferralsTable.js:14
 msgid "Older views (assistant unknown)"
 msgstr "Vistas antiguas (asistente desconocido)"
+
+#: assets/src/js/admin/components/DataTable.js
+#: assets/src/js/admin/components/ExpandableViewsTable.js
+#: assets/src/js/admin/components/TrendChart.js
+#: assets/src/js/admin/components/StatsPanel.js
+msgid "Loading data…"
+msgstr "Cargando datos…"
+
+#: assets/src/js/admin/components/StatsPanel.js
+msgid "All views"
+msgstr "Todas las visitas"
+
+#: assets/src/js/admin/components/StatsPanel.js
+msgid "Source"
+msgstr "Fuente"
+
+#: assets/src/js/admin/components/StatsPanel.js
+msgid "Grouping"
+msgstr "Agrupación"
+
+#. translators: 1: number of views, 2: first available date, 3: grouping unit.
+#: assets/src/js/admin/components/StatsPanel.js
+msgid "%1$s view from AI assistants since %2$s, grouped by %3$s."
+msgid_plural "%1$s views from AI assistants since %2$s, grouped by %3$s."
+msgstr[0] "%1$s visita desde asistentes de IA desde el %2$s, agrupada por %3$s."
+msgstr[1] "%1$s visitas desde asistentes de IA desde el %2$s, agrupadas por %3$s."
+
+#. translators: 1: number of views, 2: grouping unit.
+#: assets/src/js/admin/components/StatsPanel.js
+msgid "%1$s view from AI assistants in the last 3 months, grouped by %2$s."
+msgid_plural "%1$s views from AI assistants in the last 3 months, grouped by %2$s."
+msgstr[0] "%1$s visita desde asistentes de IA en los últimos 3 meses, agrupada por %2$s."
+msgstr[1] "%1$s visitas desde asistentes de IA en los últimos 3 meses, agrupadas por %2$s."
+
+#: assets/src/js/admin/components/StatsPanel.js
+msgid "AI-referred views recorded before per-assistant tracking existed are not part of these lines."
+msgstr "Las visitas referidas por IA registradas antes de que existiera el seguimiento por asistente no forman parte de estas líneas."
+
+#. translators: %s: number of views in the hovered bucket.
+#: assets/src/js/admin/components/TrendChart.js
+msgid "%s view"
+msgid_plural "%s views"
+msgstr[0] "%s visita"
+msgstr[1] "%s visitas"
+
+#. translators: 1: number of views, 2: first available date, 3: grouping unit.
+#: assets/src/js/admin/components/StatsPanel.js
+msgid "%1$s view received since %2$s, grouped by %3$s."
+msgid_plural "%1$s views received since %2$s, grouped by %3$s."
+msgstr[0] "%1$s visita recibida desde el %2$s, agrupada por %3$s."
+msgstr[1] "%1$s visitas recibidas desde el %2$s, agrupadas por %3$s."
+
+#. translators: 1: number of views, 2: grouping unit.
+#: assets/src/js/admin/components/StatsPanel.js
+msgid "%1$s view received in the last 3 months, grouped by %2$s."
+msgid_plural "%1$s views received in the last 3 months, grouped by %2$s."
+msgstr[0] "%1$s visita recibida en los últimos 3 meses, agrupada por %2$s."
+msgstr[1] "%1$s visitas recibidas en los últimos 3 meses, agrupadas por %2$s."

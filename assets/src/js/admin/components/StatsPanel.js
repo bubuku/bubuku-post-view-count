@@ -22,6 +22,17 @@ const AI_ASSISTANT_LABELS = {
 	unknown: __( 'Older views (assistant unknown)', 'bubuku-post-view-count' ),
 };
 
+// Fixed colour per assistant (CSS custom properties from config/_aliases.scss),
+// so a line keeps its colour whatever its position in the response.
+const AI_ASSISTANT_COLORS = {
+	chatgpt: '--chart-chatgpt',
+	claude: '--chart-claude',
+	perplexity: '--chart-perplexity',
+	copilot: '--chart-copilot',
+	gemini: '--chart-gemini',
+	other: '--chart-other',
+};
+
 const ICON_TREND = (
 	<svg
 		viewBox="0 0 24 24"
@@ -164,6 +175,14 @@ function formatDate( value ) {
 	} ).format( parseIsoDate( value ) );
 }
 
+const SOURCE_OPTIONS = [
+	{ value: 'all', label: __( 'All views', 'bubuku-post-view-count' ) },
+	{
+		value: 'ai_referrals',
+		label: __( 'AI referrals', 'bubuku-post-view-count' ),
+	},
+];
+
 const GRANULARITY_OPTIONS = [
 	{ value: 'day', label: __( 'Day', 'bubuku-post-view-count' ) },
 	{ value: 'week', label: __( 'Week', 'bubuku-post-view-count' ) },
@@ -181,8 +200,11 @@ const GRANULARITY_OPTIONS = [
  */
 const StatsPanel = ( { context } ) => {
 	const [ granularity, setGranularity ] = useState( 'day' );
+	const [ source, setSource ] = useState( 'all' );
 	const [ trend, setTrend ] = useState( [] );
+	const [ trendSeries, setTrendSeries ] = useState( null );
 	const [ trendRange, setTrendRange ] = useState( null );
+	const [ trendLoading, setTrendLoading ] = useState( true );
 
 	const [ momentum, setMomentum ] = useState( null );
 	const [ dimsViewport, setDimsViewport ] = useState( null );
@@ -192,23 +214,43 @@ const StatsPanel = ( { context } ) => {
 	const [ aiTraffic, setAiTraffic ] = useState( null );
 
 	useEffect( () => {
-		bbkFetch( `/trends?granularity=${ granularity }` )
+		const complete = ( rows, range ) =>
+			completeTrend(
+				rows,
+				range,
+				granularity,
+				context?.daily_data_since || null
+			);
+
+		setTrendLoading( true );
+		bbkFetch( `/trends?granularity=${ granularity }&source=${ source }` )
 			.then( ( body ) => {
-				setTrendRange( body.range || null );
-				setTrend(
-					completeTrend(
-						body.trend || [],
-						body.range || null,
-						granularity,
-						context?.daily_data_since || null
-					)
+				const range = body.range || null;
+
+				setTrendRange( range );
+				setTrend( complete( body.trend || [], range ) );
+				setTrendSeries(
+					'ai_referrals' === source
+						? ( body.series || [] ).map( ( item ) => ( {
+								key: item.assistant,
+								label:
+									AI_ASSISTANT_LABELS[ item.assistant ] ||
+									item.assistant,
+								color:
+									AI_ASSISTANT_COLORS[ item.assistant ] ||
+									AI_ASSISTANT_COLORS.other,
+								trend: complete( item.trend || [], range ),
+						  } ) )
+						: null
 				);
 			} )
 			.catch( () => {
 				setTrend( [] );
+				setTrendSeries( 'ai_referrals' === source ? [] : null );
 				setTrendRange( null );
-			} );
-	}, [ granularity, context?.daily_data_since ] );
+			} )
+			.finally( () => setTrendLoading( false ) );
+	}, [ granularity, source, context?.daily_data_since ] );
 
 	useEffect( () => {
 		bbkFetch( '/trends/momentum' )
@@ -252,7 +294,11 @@ const StatsPanel = ( { context } ) => {
 			numeric: true,
 		},
 	];
-	const coverageLabel = ( coverage ) => {
+	const coverageLabel = ( coverage, loading ) => {
+		if ( loading ) {
+			return __( 'Loading data…', 'bubuku-post-view-count' );
+		}
+
 		if (
 			coverage?.percentage === null ||
 			coverage?.percentage === undefined
@@ -325,7 +371,7 @@ const StatsPanel = ( { context } ) => {
 	let trendLabel = null;
 	let trendRangeLabel = null;
 
-	if ( trendRange ) {
+	if ( trendRange && ! trendLoading ) {
 		const displayedFrom = hasPartialHistory
 			? availableDay
 			: trendRange.from;
@@ -335,30 +381,57 @@ const StatsPanel = ( { context } ) => {
 			formatDate( displayedFrom ),
 			formatDate( trendRange.to )
 		);
-		trendLabel = hasPartialHistory
-			? sprintf(
-					/* translators: 1: number of views, 2: first available date, 3: grouping unit. */
-					_n(
-						'%1$s view received since %2$s, grouped by %3$s.',
-						'%1$s views received since %2$s, grouped by %3$s.',
-						trendTotal,
-						'bubuku-post-view-count'
-					),
-					formatNumber( trendTotal ),
-					formatDate( availableDay ),
-					granularityLabel
-			  )
-			: sprintf(
-					/* translators: 1: number of views, 2: grouping unit. */
-					_n(
-						'%1$s view received in the last 3 months, grouped by %2$s.',
-						'%1$s views received in the last 3 months, grouped by %2$s.',
-						trendTotal,
-						'bubuku-post-view-count'
-					),
-					formatNumber( trendTotal ),
-					granularityLabel
-			  );
+		if ( 'ai_referrals' === source ) {
+			trendLabel = hasPartialHistory
+				? sprintf(
+						/* translators: 1: number of views, 2: first available date, 3: grouping unit. */
+						_n(
+							'%1$s view from AI assistants since %2$s, grouped by %3$s.',
+							'%1$s views from AI assistants since %2$s, grouped by %3$s.',
+							trendTotal,
+							'bubuku-post-view-count'
+						),
+						formatNumber( trendTotal ),
+						formatDate( availableDay ),
+						granularityLabel
+				  )
+				: sprintf(
+						/* translators: 1: number of views, 2: grouping unit. */
+						_n(
+							'%1$s view from AI assistants in the last 3 months, grouped by %2$s.',
+							'%1$s views from AI assistants in the last 3 months, grouped by %2$s.',
+							trendTotal,
+							'bubuku-post-view-count'
+						),
+						formatNumber( trendTotal ),
+						granularityLabel
+				  );
+		} else {
+			trendLabel = hasPartialHistory
+				? sprintf(
+						/* translators: 1: number of views, 2: first available date, 3: grouping unit. */
+						_n(
+							'%1$s view received since %2$s, grouped by %3$s.',
+							'%1$s views received since %2$s, grouped by %3$s.',
+							trendTotal,
+							'bubuku-post-view-count'
+						),
+						formatNumber( trendTotal ),
+						formatDate( availableDay ),
+						granularityLabel
+				  )
+				: sprintf(
+						/* translators: 1: number of views, 2: grouping unit. */
+						_n(
+							'%1$s view received in the last 3 months, grouped by %2$s.',
+							'%1$s views received in the last 3 months, grouped by %2$s.',
+							trendTotal,
+							'bubuku-post-view-count'
+						),
+						formatNumber( trendTotal ),
+						granularityLabel
+				  );
+		}
 	}
 
 	// "Rising & falling" card: Query::momentum() shortens the comparison when the
@@ -423,17 +496,46 @@ const StatsPanel = ( { context } ) => {
 					'bubuku-post-view-count'
 				) }
 				headerMeta={
-					<select
-						className="bbk-input"
-						value={ granularity }
-						onChange={ ( e ) => setGranularity( e.target.value ) }
-					>
-						{ GRANULARITY_OPTIONS.map( ( option ) => (
-							<option key={ option.value } value={ option.value }>
-								{ option.label }
-							</option>
-						) ) }
-					</select>
+					<>
+						<select
+							className="bbk-input"
+							value={ source }
+							aria-label={ __(
+								'Source',
+								'bubuku-post-view-count'
+							) }
+							onChange={ ( e ) => setSource( e.target.value ) }
+						>
+							{ SOURCE_OPTIONS.map( ( option ) => (
+								<option
+									key={ option.value }
+									value={ option.value }
+								>
+									{ option.label }
+								</option>
+							) ) }
+						</select>
+						<select
+							className="bbk-input"
+							value={ granularity }
+							aria-label={ __(
+								'Grouping',
+								'bubuku-post-view-count'
+							) }
+							onChange={ ( e ) =>
+								setGranularity( e.target.value )
+							}
+						>
+							{ GRANULARITY_OPTIONS.map( ( option ) => (
+								<option
+									key={ option.value }
+									value={ option.value }
+								>
+									{ option.label }
+								</option>
+							) ) }
+						</select>
+					</>
 				}
 			>
 				{ trendLabel && (
@@ -447,13 +549,30 @@ const StatsPanel = ( { context } ) => {
 				<div className="bbk-trend-chart">
 					<TrendChart
 						trend={ trend }
+						series={ trendSeries || undefined }
 						granularity={ granularity }
-						noDataLabel={ __(
-							'Not enough data yet to draw the chart.',
-							'bubuku-post-view-count'
-						) }
+						loading={ trendLoading }
+						noDataLabel={
+							'ai_referrals' === source
+								? __(
+										'No views from AI assistants in this period.',
+										'bubuku-post-view-count'
+								  )
+								: __(
+										'Not enough data yet to draw the chart.',
+										'bubuku-post-view-count'
+								  )
+						}
 					/>
 				</div>
+				{ 'ai_referrals' === source && ! trendLoading && (
+					<p className="bbk-trend-chart__range">
+						{ __(
+							'AI-referred views recorded before per-assistant tracking existed are not part of these lines.',
+							'bubuku-post-view-count'
+						) }
+					</p>
+				) }
 			</DashboardCard>
 
 			<DashboardCard
@@ -473,6 +592,7 @@ const StatsPanel = ( { context } ) => {
 						<DataTable
 							columns={ momentumColumns }
 							rows={ momentum?.rising || [] }
+							loading={ null === momentum }
 							rowKey={ ( row ) => row.url }
 							emptyLabel={ momentumEmptyLabel }
 						/>
@@ -482,6 +602,7 @@ const StatsPanel = ( { context } ) => {
 						<DataTable
 							columns={ momentumColumns }
 							rows={ momentum?.falling || [] }
+							loading={ null === momentum }
 							rowKey={ ( row ) => row.url }
 							emptyLabel={ momentumEmptyLabel }
 						/>
@@ -498,10 +619,16 @@ const StatsPanel = ( { context } ) => {
 				<div className="bbk-two-columns">
 					<div>
 						<h3>{ __( 'Device', 'bubuku-post-view-count' ) }</h3>
-						<p>{ coverageLabel( viewportCoverage ) }</p>
+						<p>
+							{ coverageLabel(
+								viewportCoverage,
+								null === dimsViewport
+							) }
+						</p>
 						<DataTable
 							columns={ dimsColumns }
 							rows={ dimsViewport || [] }
+							loading={ null === dimsViewport }
 							rowKey={ ( row ) => row.value }
 							emptyLabel={ __(
 								'Not enough data yet.',
@@ -513,10 +640,16 @@ const StatsPanel = ( { context } ) => {
 					</div>
 					<div>
 						<h3>{ __( 'Referrer', 'bubuku-post-view-count' ) }</h3>
-						<p>{ coverageLabel( referrerCoverage ) }</p>
+						<p>
+							{ coverageLabel(
+								referrerCoverage,
+								null === dimsReferrer
+							) }
+						</p>
 						<DataTable
 							columns={ dimsColumns }
 							rows={ dimsReferrer || [] }
+							loading={ null === dimsReferrer }
 							rowKey={ ( row ) => row.value }
 							emptyLabel={ __(
 								'Not enough data yet.',
@@ -545,6 +678,7 @@ const StatsPanel = ( { context } ) => {
 						</h3>
 						<ExpandableViewsTable
 							rows={ aiTraffic?.referrals?.by_assistant || [] }
+							loading={ null === aiTraffic }
 							labelKey="assistant"
 							headerLabel={ __( 'AI', 'bubuku-post-view-count' ) }
 							labels={ AI_ASSISTANT_LABELS }
@@ -576,6 +710,7 @@ const StatsPanel = ( { context } ) => {
 						</h3>
 						<ExpandableViewsTable
 							rows={ aiTraffic?.crawlers || [] }
+							loading={ null === aiTraffic }
 							labelKey="bot"
 							headerLabel={ __(
 								'Bot',

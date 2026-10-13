@@ -4,7 +4,7 @@ Tags: page view count, post views, post count, posts, post view count
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.2
+Stable tag: 1.3.3
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -98,6 +98,9 @@ Yes: the `[bbk_post_views]` shortcode (add `show_last_viewed="1"` for the last v
 Yes, by default: the view is still counted, but the device and referrer breakdown is skipped.
 
 == Changelog ==
+
+= 1.3.3 =
+* Stats: "Loading data…" while each section loads, full-width chart and a new AI referrals view with one trend line per assistant.
 
 = 1.3.2 =
 * Improved WordPress.org listing: description and screenshots.

@@ -234,7 +234,8 @@ namespace {
 	}
 
 	function register_rest_route( string $namespace, string $route, array $args ): void {
-		TestState::$route = compact( 'namespace', 'route', 'args' );
+		TestState::$route                           = compact( 'namespace', 'route', 'args' );
+		TestState::$routes[ $namespace . '/' . $route ] = $args;
 	}
 
 	function absint( $value ): int {
@@ -509,6 +510,9 @@ namespace Bubuku\Plugins\PostViewCount {
 		/** @var array<string, mixed> */
 		public static $route = array();
 
+		/** @var array<string, array> Every registered route, keyed by "namespace/route". */
+		public static $routes = array();
+
 		/** @var array<int, string> */
 		public static $post_titles = array();
 
@@ -555,6 +559,7 @@ namespace Bubuku\Plugins\PostViewCount {
 			self::$options          = array();
 			self::$cache_deletions  = array();
 			self::$route            = array();
+			self::$routes           = array();
 			self::$post_titles      = array();
 			self::$cache            = array();
 			self::$url_to_post_id   = array();
@@ -996,6 +1001,33 @@ namespace Bubuku\Plugins\PostViewCount {
 						array_keys( array_slice( $grouped, 0, $limit, true ) ),
 						array_values( array_slice( $grouped, 0, $limit, true ) )
 					);
+				}
+
+				// Query::trend_by_ai_assistant(): per-bucket, per-assistant series. The mock
+				// supports the 'day' bucket (d.day) and the 'month' bucket (DATE_FORMAT).
+				if ( false !== strpos( $query, "d.dimension = 'ai_assistant'" ) && false !== strpos( $query, 'GROUP BY bucket, d.value' ) ) {
+					$monthly = false !== strpos( $query, 'DATE_FORMAT(d.day' );
+					$grouped = array();
+
+					foreach ( TestState::$dims as $key => $views ) {
+						list( , $day, $dimension, $value ) = explode( '|', $key, 4 );
+
+						if ( 'ai_assistant' !== $dimension || $day < $since || $day > $until ) {
+							continue;
+						}
+
+						$bucket                = $monthly ? substr( $day, 0, 8 ) . '01' : $day;
+						$group_key             = $bucket . '|' . $value;
+						$grouped[ $group_key ] = array(
+							'bucket'      => $bucket,
+							'assistant'   => $value,
+							'total_views' => ( $grouped[ $group_key ]['total_views'] ?? 0 ) + $views,
+						);
+					}
+
+					ksort( $grouped );
+
+					return array_values( $grouped );
 				}
 
 				// ai_traffic()'s own per-assistant/per-post query, grouped by (value, post_id) —

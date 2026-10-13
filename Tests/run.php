@@ -1376,17 +1376,111 @@ $tests = array(
 
 		bbk_test_same(
 			array(
-				'trend'       => array(),
 				'range'       => array(
 					'from' => '2025-10-01',
 					'to'   => '2026-01-01',
 				),
 				'granularity' => 'week',
+				'source'      => 'all',
+				'trend'       => array(),
 				'meta'        => Query::measurement_metadata(),
 			),
 			$response->get_data(),
 			'The endpoint must return the queried range and granularity with the series.'
 		);
+	},
+	'Query::trend_by_ai_assistant() returns no series without ai_assistant rows' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+
+		bbk_test_same( array(), Query::trend_by_ai_assistant( array(), 'day', '2026-01-01', '2026-01-31' ), 'No AI-referred views must mean no series.' );
+	},
+	'Query::trend_by_ai_assistant() groups by bucket and assistant, sorted by total views' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+		TestState::$dims = array(
+			'7|2026-01-02|ai_assistant|claude'  => 1,
+			'7|2026-01-02|ai_assistant|chatgpt' => 2,
+			'8|2026-01-03|ai_assistant|chatgpt' => 3,
+			'8|2026-01-03|referrer|ai'          => 5,
+			'8|2025-12-01|ai_assistant|claude'  => 9,
+		);
+
+		bbk_test_same(
+			array(
+				array(
+					'assistant' => 'chatgpt',
+					'views'     => 5,
+					'trend'     => array(
+						array(
+							'bucket'      => '2026-01-02',
+							'total_views' => 2,
+						),
+						array(
+							'bucket'      => '2026-01-03',
+							'total_views' => 3,
+						),
+					),
+				),
+				array(
+					'assistant' => 'claude',
+					'views'     => 1,
+					'trend'     => array(
+						array(
+							'bucket'      => '2026-01-02',
+							'total_views' => 1,
+						),
+					),
+				),
+			),
+			Query::trend_by_ai_assistant( array(), 'day', '2026-01-01', '2026-01-31' ),
+			'Each assistant must get its own bucketed series, out-of-range days and other dimensions excluded.'
+		);
+	},
+	'TrendsApi::get_trends() with source=ai_referrals returns per-assistant series and their per-bucket sum' => static function (): void {
+		TestState::reset();
+		update_option( Settings::OPTION_KEY, array( 'post_types' => array( 'post' ) ) );
+		TestState::$dims = array(
+			'7|2026-01-02|ai_assistant|claude'  => 1,
+			'7|2026-01-02|ai_assistant|chatgpt' => 2,
+			'8|2026-01-03|ai_assistant|chatgpt' => 3,
+		);
+		$request         = new WP_REST_Request(
+			array(
+				'granularity' => 'day',
+				'source'      => 'ai_referrals',
+				'from'        => '2026-01-01',
+				'to'          => '2026-01-31',
+			)
+		);
+
+		$data = ( new TrendsApi() )->get_trends( $request )->get_data();
+
+		bbk_test_same( 'ai_referrals', $data['source'], 'The response must echo the requested source.' );
+		bbk_test_same( array( 'chatgpt', 'claude' ), array_column( $data['series'], 'assistant' ), 'Series must be ordered by total views.' );
+		bbk_test_same(
+			array(
+				array(
+					'bucket'      => '2026-01-02',
+					'total_views' => 3,
+				),
+				array(
+					'bucket'      => '2026-01-03',
+					'total_views' => 3,
+				),
+			),
+			$data['trend'],
+			'`trend` must be the per-bucket sum of every assistant series.'
+		);
+	},
+	'TrendsApi registers `source` as an all/ai_referrals enum defaulting to all' => static function (): void {
+		TestState::reset();
+		( new TrendsApi() )->register_routes();
+
+		$args = TestState::$routes[ BBK_PLUGIN_ENDPOINTS_URL . '/trends' ]['args']['source'] ?? null;
+
+		bbk_test_same( array( 'all', 'ai_referrals' ), $args['enum'] ?? null, 'Only all/ai_referrals must be accepted, so any other value is rejected by REST validation.' );
+		bbk_test_same( 'all', $args['default'] ?? null, 'The default source must keep the previous behavior.' );
 	},
 	'TrendsApi::get_momentum() delegates to Query::momentum()' => static function (): void {
 		TestState::reset();

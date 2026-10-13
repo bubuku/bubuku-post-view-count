@@ -59,6 +59,12 @@
 	--gold-100: #fdf3d9;
 	--gold-700: #7a5400;
 
+	// ---- Series del gráfico «Views over time» en modo «AI referrals»: una
+	// línea por asistente. Reutiliza los 4 tonos de arriba y añade dos más
+	// (naranja/azul) para llegar a 6 colores distinguibles entre sí. ----
+	--orange-500: #d9622b;
+	--blue-500: #2f6fd6;
+
 	// ---- Sombra (bk26 theme.json → settings.shadow.presets) ----
 	--shadow-pluma: 0 1px 2px rgba(19, 38, 51, 0.06), 0 2px 8px rgba(19, 38, 51, 0.05);
 	--shadow-profunda: 0 4px 12px rgba(19, 38, 51, 0.08), 0 32px 64px -16px rgba(31, 130, 136, 0.22);

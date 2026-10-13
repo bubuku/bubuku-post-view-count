@@ -264,6 +264,41 @@
             ],
             "Older views (assistant unknown)": [
                 "Vistas antiguas (asistente desconocido)"
+            ],
+            "Loading data…": [
+                "Cargando datos…"
+            ],
+            "All views": [
+                "Todas las visitas"
+            ],
+            "Source": [
+                "Fuente"
+            ],
+            "Grouping": [
+                "Agrupación"
+            ],
+            "%1$s view from AI assistants since %2$s, grouped by %3$s.": [
+                "%1$s visita desde asistentes de IA desde el %2$s, agrupada por %3$s.",
+                "%1$s visitas desde asistentes de IA desde el %2$s, agrupadas por %3$s."
+            ],
+            "%1$s view from AI assistants in the last 3 months, grouped by %2$s.": [
+                "%1$s visita desde asistentes de IA en los últimos 3 meses, agrupada por %2$s.",
+                "%1$s visitas desde asistentes de IA en los últimos 3 meses, agrupadas por %2$s."
+            ],
+            "AI-referred views recorded before per-assistant tracking existed are not part of these lines.": [
+                "Las visitas referidas por IA registradas antes de que existiera el seguimiento por asistente no forman parte de estas líneas."
+            ],
+            "%s view": [
+                "%s visita",
+                "%s visitas"
+            ],
+            "%1$s view received since %2$s, grouped by %3$s.": [
+                "%1$s visita recibida desde el %2$s, agrupada por %3$s.",
+                "%1$s visitas recibidas desde el %2$s, agrupadas por %3$s."
+            ],
+            "%1$s view received in the last 3 months, grouped by %2$s.": [
+                "%1$s visita recibida en los últimos 3 meses, agrupada por %2$s.",
+                "%1$s visitas recibidas en los últimos 3 meses, agrupadas por %2$s."
             ]
         }
     }

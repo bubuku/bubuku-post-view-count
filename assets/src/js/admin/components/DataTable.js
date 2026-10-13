@@ -1,3 +1,4 @@
+import { __ } from '@wordpress/i18n';
 import { formatNumber } from '../format';
 
 /**
@@ -15,6 +16,7 @@ import { formatNumber } from '../format';
  * @param {string}        [props.emptyLabel] - Text shown when `rows` is empty. If omitted, renders nothing.
  * @param {boolean}       [props.showTotal]  - Adds a footer row summing every `numeric` column across `rows`.
  * @param {string}        [props.totalLabel] - Label shown in the footer row's first cell.
+ * @param {boolean}       [props.loading]    - Shows a "Loading data…" message instead of the rows or `emptyLabel`.
  */
 const DataTable = ( {
 	columns,
@@ -23,7 +25,16 @@ const DataTable = ( {
 	emptyLabel,
 	showTotal,
 	totalLabel,
+	loading = false,
 } ) => {
+	if ( loading ) {
+		return (
+			<p className="bk-data-table__empty bk-data-table__empty--loading">
+				{ __( 'Loading data…', 'bubuku-post-view-count' ) }
+			</p>
+		);
+	}
+
 	if ( ! rows || rows.length === 0 ) {
 		return emptyLabel ? (
 			<p className="bk-data-table__empty">{ emptyLabel }</p>

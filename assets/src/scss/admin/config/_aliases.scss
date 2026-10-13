@@ -42,4 +42,12 @@
 	--crawler-training: var(--gold-500);
 	--crawler-training-bg: var(--gold-100);
 	--crawler-training-text: var(--gold-700);
+
+	// ---- Líneas por asistente IA del gráfico de tendencia (StatsPanel.js) ----
+	--chart-chatgpt: var(--teal-500);
+	--chart-claude: var(--orange-500);
+	--chart-perplexity: var(--blue-500);
+	--chart-copilot: var(--violet-500);
+	--chart-gemini: var(--magenta-500);
+	--chart-other: var(--gold-500);
 }

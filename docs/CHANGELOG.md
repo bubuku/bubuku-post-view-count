@@ -5,6 +5,17 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [1.3.3] - 2026-10-13
+### Añadido
+- `docs/archive/1.3.3-STATS-TAB-IMPROVEMENTS.md`: el gráfico «Views over time» tiene un nuevo filtro «Source» (All views / AI referrals). En modo «AI referrals» pinta una línea por asistente (ChatGPT, Claude, Perplexity, Copilot, Gemini, Other) con color fijo por asistente, leyenda para ocultar/mostrar líneas y tooltip con el valor de todas las líneas en el bucket. Nuevo `Core\Query::trend_by_ai_assistant()` sobre la dimensión diaria `ai_assistant` (sin cambios de esquema) y nuevo parámetro `source` (`all`|`ai_referrals`, por defecto `all`) en `GET /trends`, que en modo IA devuelve `series` y mantiene `trend` como suma por bucket.
+
+### Cambiado
+- El gráfico «Views over time» ocupa todo el ancho de la card (antes limitado a 900 px) y se redibuja al redimensionar, con resolución `devicePixelRatio` para verse nítido en pantallas retina.
+
+### Corregido
+- La tab Estadísticas ya no muestra los mensajes de vacío («Sin cambios relevantes en este periodo.», «Sin visitas procedentes de asistentes de IA en este periodo.», etc.) mientras se cargan los datos: tablas, líneas de cobertura y gráfico muestran «Cargando datos…» (nuevo prop `loading` en `DataTable`, `ExpandableViewsTable` y `TrendChart`).
+- Traducidas al español las cadenas del resumen y del tooltip del gráfico que cambiaron de `%d` a `%s` en 1.3.1 y seguían en inglés.
+
 ## [1.3.2] - 2026-10-12
 ### Cambiado
 - Ficha de WordPress.org: `readme.txt` reescrito (descripción corta orientada al beneficio, problema y solución en prosa, bloques por beneficio, instalación) y nuevas capturas en `.wordpress-org/`. Sin cambios funcionales.
