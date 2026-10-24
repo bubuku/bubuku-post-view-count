@@ -45,8 +45,8 @@ More information in Spanish: [Show the most viewed Articles, without affecting t
 **Need help or have a suggestion?**
 Please use the [official WordPress.org Support Forum](https://wordpress.org/support/plugin/bubuku-post-view-count/) for any issues related to the plugin.
     
-**Official Website**
-For additional information or to get in touch with the development team, please visit our [official website](https://www.bubuku.com/).
+**Want to know more?**
+There is more to it than a view counter: the [plugin page](https://plugins.bubuku.com/plugins/bubuku-post-view-count/) explains how it works, what it records and what it deliberately leaves out. For anything else, or to get in touch with the development team, visit our [official website](https://www.bubuku.com/).
 
 **Like the plugin?**
 Please [leave a 5-star review](https://wordpress.org/support/plugin/bubuku-post-view-count/reviews/?filter=5) and help others discover Bubuku Post View Count.
@@ -63,11 +63,12 @@ If the browser sends Do Not Track or Global Privacy Control, the optional device
 == Screenshots ==
 
 1. Statistics tab: summary cards (total views, last 30 days, AI referrals, AI bot crawling) and the "Views over time" chart.
-2. "Post views summary" widget on the WordPress dashboard, with a 7-day trend.
-3. "Rising & falling" lists comparing the current period with the previous one.
-4. AI traffic: referrals from AI assistants and crawling by known AI bots, each with its category.
-5. Device and referrer breakdown, without storing the raw screen width or referrer.
-6. Settings tab: content types, excluded roles, bot exclusion and privacy options.
+2. "AI referrals" filter on the "Views over time" chart, with the tooltip of a single day listing the views from each AI assistant.
+3. "Post views summary" widget on the WordPress dashboard, with a 7-day trend.
+4. "Rising & falling" lists comparing the current period with the previous one.
+5. AI traffic: referrals from AI assistants and crawling by known AI bots, each with its category.
+6. Device and referrer breakdown, without storing the raw screen width or referrer.
+7. Settings tab: content types, excluded roles, bot exclusion and privacy options.
 
 == Frequently Asked Questions ==
 = How do I read the view count in code? =
@@ -100,7 +101,7 @@ Yes, by default: the view is still counted, but the device and referrer breakdow
 == Changelog ==
 
 = 1.3.3 =
-* Stats: "Loading data…" while each section loads, full-width chart and a new AI referrals view with one trend line per assistant.
+* Stats: "Loading data..." while each section loads, full-width chart and a new AI referrals view with one trend line per assistant.
 
 = 1.3.2 =
 * Improved WordPress.org listing: description and screenshots.
